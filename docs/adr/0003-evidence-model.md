@@ -1,0 +1,3 @@
+# Evidence model: verbatim Captures, two times, provenance, lock on Submission
+
+We don't know what the client's insurers actually require (asked Dorota 2026-10-28; silence = this stands). We assume a Shift Report is defensible if: raw Captures are kept verbatim next to AI Drafts; every Incident has Occurred-at and Captured-at; every field records whether it was AI-drafted then confirmed or entered by the Closing Manager, and which Capture it came from; and Submission locks the report, with later changes only as Addenda. This shapes the data model, so it's expensive to change later — and a reader might otherwise wonder why we never let the AI overwrite a Capture or let anyone edit a submitted report.
