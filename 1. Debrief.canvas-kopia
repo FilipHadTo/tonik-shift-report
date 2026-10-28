@@ -1,0 +1,12 @@
+{
+	"nodes":[
+		{"id":"a8dc51d420e40ce0","x":-100,"y":-180,"width":895,"height":540,"type":"group","label":"Notki po briefie"},
+		{"id":"5cc977043ba243bb","type":"file","file":"Treść zadania ENG.md","x":-1040,"y":-240,"width":720,"height":1160},
+		{"id":"fb9fd3707fefcd4f","type":"text","text":"**Kminy**\n- AI Braindum VS Form\n\t- jakie patterny mają inne apki\n- Brief wspomina o grupowym SMS'ie - dopytać / znaleźć o co chodzi \n- Voice to text w klubie? zagadać kogoś ze znajomych jak wygląda taki proces IRL zamykania lokalu","x":225,"y":-160,"width":250,"height":390},
+		{"id":"c3f85e4d7dc9224d","type":"text","text":"**Założenia**\n- VS + Claude Code heavy - odpuszczam figme, za mało czasu na ręczne rysowanie\n- Matt Pocock process full on (grill me, brainstroming, QA testing) - od briefu po produkt\n\t- dodatkowo /better-ui, /animte\n- yolo_mode ON - montuje też mikro backend - stack? tdl\n- Środa (dziś) zamknąć w 1h scope i ewentualne pytania do Doroty ","x":525,"y":-160,"width":250,"height":390},
+		{"id":"67b406048531e655","type":"text","text":"**Pomysły**\n- Desktop + mobile \n\t- Mobile do ad-hoc dokumentowania nagłych zadrzeń + opcja foto ipt\n\t- na desktop jakiś trick w stylu QR Code -> redirect na mobile do uploadu zdjęć jeśli ktoś woli wypełniać na desktp\n- Gemini Flash API - tani i wystarczający\n- Prowadzę log procesu tutaj + robie skila \"/deslog\" który dokumentuje w ultra którkiej formie postęp pracy w VS Code by zbierać białko do finalnego \"raportu\"","x":-80,"y":-160,"width":250,"height":500}
+	],
+	"edges":[
+		{"id":"a035a9f63652dc68","fromNode":"5cc977043ba243bb","fromSide":"right","toNode":"a8dc51d420e40ce0","toSide":"left"}
+	]
+}
