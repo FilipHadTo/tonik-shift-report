@@ -11,6 +11,8 @@ Collected during grilling. Each one carries the assumption we build on until ans
 
 ## For a real closing manager
 
+No closing manager available to ask — these stay as assumptions for the build.
+
 1. **Phone during the shift.** Can/do you use your phone mid-shift to log incidents, or is it end-of-night only?
 2. **"Group texts" today.** What does the current group chat look like — who's in it, what gets posted, is it the de facto incident log?
 3. **End of night.** When does your night actually end? We assume anything before 8am belongs to the previous night.
