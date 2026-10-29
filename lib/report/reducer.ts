@@ -8,6 +8,16 @@ import { seedReport } from "./seed"
 import { nightMinutes } from "./catalog"
 import type { Action, Incident, InboxCapture, Report } from "./types"
 
+/**
+ * Dismiss hides a New Capture (story 20). If part of it is already in the report, Dismiss covers only the rest:
+ * what was left to draft is dropped, so it counts as In report, stays cited and is never marked dismissed.
+ */
+function dismiss(c: InboxCapture, undo?: boolean): InboxCapture {
+  if (undo) return { ...c, dismissed: false }
+  if (c.applied.length > 0) return { ...c, found: [...c.applied] }
+  return { ...c, dismissed: true }
+}
+
 const tick = (r: Report): Report => ({ ...r, clock: r.clock + 1 })
 
 export function reducer(r: Report, a: Action): Report {
@@ -19,7 +29,7 @@ export function reducer(r: Report, a: Action): Report {
     case "draftFailed":
       return { ...r, captures: r.captures.map((c) => (a.ids.includes(c.id) ? { ...c, drafting: false } : c)) }
     case "dismiss":
-      return { ...r, captures: r.captures.map((c) => (c.id === a.id ? { ...c, dismissed: !a.undo } : c)) }
+      return { ...r, captures: r.captures.map((c) => (c.id === a.id ? dismiss(c, a.undo) : c)) }
     case "handled":
       return { ...r, captures: r.captures.map((c) => (c.id === a.id ? { ...c, handled: true } : c)) }
     case "addCapture": {

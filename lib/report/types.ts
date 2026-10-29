@@ -27,7 +27,7 @@ export type Scene = "start" | "end"
 export type InboxCapture = Capture & {
   /** Sections this Capture has already been drafted into. */
   applied: SectionId[]
-  /** Sections the AI found in it so far. Unset until it was first drafted; anything found but not applied keeps it New. */
+  /** Sections the AI found in it so far. Unset until it was first drafted; anything found but not applied keeps it New. Dismiss on a partly used Capture narrows it to what is applied. */
   found?: SectionId[]
   dismissed?: boolean
   /** Manager rewrote it by hand and marked it as in the report. */
