@@ -94,6 +94,14 @@ export function reducer(r: Report, a: Action): Report {
     }
     case "keep":
       return { ...r, blocks: r.blocks.map((b) => (b.id === a.block ? { ...b, status: "kept" } : b)) }
+    case "keepAll":
+      return {
+        ...r,
+        blocks: r.blocks.map((b) => (b.status === "draft" ? { ...b, status: "kept" } : b)),
+        incidents: r.incidents.map((i) =>
+          i.descriptionDraft !== undefined ? { ...i, description: i.descriptionDraft, descriptionDraft: undefined } : i,
+        ),
+      }
     case "discard":
       return {
         ...r,

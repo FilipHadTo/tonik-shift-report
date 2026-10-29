@@ -123,6 +123,13 @@ function SubmitSheet() {
                 meta={drafts.length ? `${drafts.length} left` : undefined}
                 action={drafts.length ? "Show" : undefined}
                 onAction={() => go(drafts[0])}
+                // Bulk Keep only here, as an explicit decision at Submission (story 53). Never for Incidents.
+                extra={drafts.length ? "Keep all" : undefined}
+                onExtra={() => {
+                  dispatch({ type: "keepAll" })
+                  // The buttons go away with the drafts: keep focus inside the sheet.
+                  popupRef.current?.focus()
+                }}
               />
             </ul>
 
@@ -179,26 +186,43 @@ function ChecklistItem({
   meta,
   action,
   onAction,
+  extra,
+  onExtra,
 }: {
   done: boolean
   label: string
   meta?: string
   action?: string
   onAction?: () => void
+  /** A second action, left of `action` so the Show buttons line up across rows. */
+  extra?: string
+  onExtra?: () => void
 }) {
   return (
-    <li className="flex h-9 items-center gap-2.5 text-[13px]">
+    <li className="flex min-h-9 items-center gap-2.5 py-1 text-[13px] leading-[1.4]">
       {done ? (
-        <Check className="size-4 text-ok" strokeWidth={2.25} aria-label="Done" />
+        <Check className="size-4 shrink-0 text-ok" strokeWidth={2.25} aria-label="Done" />
       ) : (
-        <Circle className="size-4 text-gap" strokeWidth={2} aria-label="Not done" />
+        <Circle className="size-4 shrink-0 text-gap" strokeWidth={2} aria-label="Not done" />
       )}
-      <span className={cn(done ? "text-ink-2" : "text-ink")}>{label}</span>
-      {meta && <span className="text-ink-3 tabular-nums">{meta}</span>}
-      {action && (
-        <Btn size="sm" variant="secondary" className="ml-auto" onClick={onAction}>
-          {action}
-        </Btn>
+      {/* Meta flows with the label so a long row wraps as one phrase and the count never splits. */}
+      <span className={cn("min-w-0 text-pretty", done ? "text-ink-2" : "text-ink")}>
+        {label}
+        {meta && <span className="ml-2.5 whitespace-nowrap text-ink-3 tabular-nums">{meta}</span>}
+      </span>
+      {(extra || action) && (
+        <span className="ml-auto flex shrink-0 gap-1.5">
+          {extra && (
+            <Btn size="sm" variant="secondary" onClick={onExtra}>
+              {extra}
+            </Btn>
+          )}
+          {action && (
+            <Btn size="sm" variant="secondary" onClick={onAction}>
+              {action}
+            </Btn>
+          )}
+        </span>
       )}
     </li>
   )

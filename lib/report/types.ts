@@ -105,6 +105,8 @@ export type Action =
   | { type: "deleteIncident"; incident: string }
   | { type: "addIncident" }
   | { type: "keep"; block: string }
+  /** Submit sheet only (story 53): keeps every remaining Section and Enhance Draft. Never confirms Incidents. */
+  | { type: "keepAll" }
   | { type: "discard"; block: string }
   | { type: "editBlock"; block: string; text: string }
   | { type: "write"; section: SectionId; text: string }
