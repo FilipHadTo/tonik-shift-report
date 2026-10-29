@@ -1,6 +1,6 @@
 // The report reducer: every change the Closing Manager makes is one Action.
 
-import { applyCapture } from "./apply"
+import { applyExtract } from "./extract"
 import { clockLabel, gapsIn } from "./derived"
 import { readiness } from "./readiness"
 import { seedReport } from "./seed"
@@ -13,8 +13,10 @@ export function reducer(r: Report, a: Action): Report {
   switch (a.type) {
     case "startDrafting":
       return { ...r, drafted: true, captures: r.captures.map((c) => (a.ids.includes(c.id) ? { ...c, drafting: true } : c)) }
-    case "draft":
-      return a.ids.reduce((acc, id) => applyCapture(acc, id, a.only), r)
+    case "extracted":
+      return applyExtract(r, a.result)
+    case "draftFailed":
+      return { ...r, captures: r.captures.map((c) => (a.ids.includes(c.id) ? { ...c, drafting: false } : c)) }
     case "dismiss":
       return { ...r, captures: r.captures.map((c) => (c.id === a.id ? { ...c, dismissed: !a.undo } : c)) }
     case "handled":

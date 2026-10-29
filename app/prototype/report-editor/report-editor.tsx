@@ -6,7 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, demoSession, reducer, seedReport, type Action, type PhoneCapture, type Report, type Scene, type SectionId } from "./data"
+import { CAPTURES_API, capturesInScope, demoSession, extract, fakeModel, reducer, seedReport, type Action, type ExtractScope, type PhoneCapture, type Report, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -22,7 +22,8 @@ export type EnhanceTarget = { block: string } | { incident: string }
 type Ctx = {
   report: Report
   dispatch: React.Dispatch<Action>
-  draft: (ids: string[], only?: SectionId) => void
+  /** Extract with the fake model: one Capture, one Section or everything New (ADR 0007). */
+  draft: (scope: ExtractScope) => void
   enhance: (target: EnhanceTarget, text: string) => void
   /** Id of the block or Incident being enhanced right now. */
   enhancing: string | null
@@ -61,10 +62,18 @@ export function ReportEditor() {
   const docRef = useRef<HTMLDivElement>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const draft = useCallback((ids: string[], only?: SectionId) => {
+  const latest = useRef(report)
+  useEffect(() => {
+    latest.current = report
+  }, [report])
+
+  const draft = useCallback(async (scope: ExtractScope) => {
+    const r = latest.current
+    const ids = capturesInScope(r, scope).map((c) => c.id)
     if (!ids.length) return
     dispatch({ type: "startDrafting", ids })
-    setTimeout(() => dispatch({ type: "draft", ids, only }), DRAFTING_MS)
+    const [result] = await Promise.all([extract(r, scope, fakeModel), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
+    dispatch(result ? { type: "extracted", result } : { type: "draftFailed", ids })
   }, [])
 
   const enhance = useCallback((target: EnhanceTarget, text: string) => {

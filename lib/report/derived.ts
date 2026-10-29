@@ -1,7 +1,7 @@
 // Derived state: Capture status, Section state, Incident order, what blocks Submit.
 
 import { SECTIONS, nightMinutes, timeOf } from "./catalog"
-import { effectsOf } from "./script"
+import { likelySections } from "./fake-model"
 import type { Field, Incident, InboxCapture, Report, SectionId } from "./types"
 
 export type CaptureStatus = "new" | "drafting" | "drafted" | "in-report" | "dismissed"
@@ -11,11 +11,16 @@ export function statusOf(r: Report, c: InboxCapture): CaptureStatus {
   if (c.drafting) return "drafting"
   if (c.handled) return "in-report"
   // Anything of it still outside the report (e.g. its Incident was deleted, story 40) makes it New again.
-  if (pendingSectionsOf(c).length > 0) return "new"
+  if (isNew(c)) return "new"
   const open =
     r.incidents.some((i) => i.sources.includes(c.id) && !i.confirmedAt) ||
     r.blocks.some((b) => b.sources.includes(c.id) && b.status === "draft")
   return open ? "drafted" : "in-report"
+}
+
+/** Something of it is not in the report yet: never drafted, or drafted only in part. */
+export function isNew(c: InboxCapture) {
+  return !c.dismissed && !c.handled && (c.found === undefined || pendingSectionsOf(c).length > 0)
 }
 
 /** Where a Capture landed, for the tile label: "Incident 2", "Maintenance". */
@@ -33,10 +38,9 @@ export function targetsOf(r: Report, c: InboxCapture) {
   return out
 }
 
+/** Sections a Capture still has to go into: what the AI found but didn't draft, or a guess before the first draft. */
 export function pendingSectionsOf(c: InboxCapture) {
-  return effectsOf(c)
-    .map((e) => e.section)
-    .filter((s) => !c.applied.includes(s))
+  return (c.found ?? likelySections(c)).filter((s) => !c.applied.includes(s))
 }
 
 export function orderedIncidents(r: Report) {
@@ -78,7 +82,7 @@ export function hasContent(r: Report, id: SectionId) {
 
 export function newCapturesFor(r: Report, id: SectionId) {
   return r.captures.filter(
-    (c) => !c.dismissed && !c.handled && !c.drafting && pendingSectionsOf(c).includes(id),
+    (c) => isNew(c) && !c.drafting && pendingSectionsOf(c).includes(id),
   )
 }
 

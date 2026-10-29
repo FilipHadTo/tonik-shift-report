@@ -1,9 +1,19 @@
 // The two demo scenes (story 60): 20:00 empty, 02:15 partly drafted and reviewed.
 
 import { DEFAULT_VISIBLE, SCENES, nightMinutes } from "./catalog"
-import { applyCapture } from "./apply"
-import { alex, jess, marek } from "./script"
-import type { InboxCapture, Report, Scene } from "./types"
+import { applyExtract, validateExtract } from "./extract"
+import { recordedExtract } from "./fake-model"
+import type { Author, InboxCapture, Report, Scene } from "./types"
+
+const alex: Author = { name: "Alex Morgan", role: "Closing Manager" }
+const marek: Author = { name: "Marek", role: "Door" }
+const jess: Author = { name: "Jess", role: "Bar" }
+
+/** Drafts one seeded Capture with the fake model's recorded answer. */
+function drafted(r: Report, id: string): Report {
+  const answer = recordedExtract(r.captures.filter((c) => c.id === id))
+  return applyExtract(r, validateExtract(r, { capture: id }, answer)!)
+}
 
 export function seedReport(scene: Scene = "end"): Report {
   const base: Report = {
@@ -92,8 +102,8 @@ export function seedReport(scene: Scene = "end"): Report {
     drafted: true,
   }
   // State at 02:15: Alex already drafted two Captures and confirmed one Incident.
-  r = applyCapture(r, "c1")
-  r = applyCapture(r, "c3")
+  r = drafted(r, "c1")
+  r = drafted(r, "c3")
   r = { ...r, incidents: r.incidents.map((i) => (i.id === "i-c3" ? { ...i, confirmedAt: "02:09" } : i)) }
   return r
 }

@@ -49,7 +49,7 @@ export function Inbox() {
             size="sm"
             className="ml-auto"
             disabled={fresh.every((c) => statusOf(report, c) === "drafting")}
-            onClick={() => draft(fresh.filter((c) => statusOf(report, c) === "new").map((c) => c.id))}
+            onClick={() => draft({ all: true })}
           >
             <Sparkles strokeWidth={1.75} />
             Draft all
@@ -266,7 +266,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
             <Btn
               variant="secondary"
               className="ml-auto"
-              onClick={() => draft([c.id])}
+              onClick={() => draft({ capture: c.id })}
               aria-label={`Draft into report: ${c.author.name}, ${c.capturedAt}`}
             >
               <Sparkles className="text-ai" strokeWidth={1.75} />

@@ -1,6 +1,7 @@
 // Report domain: types. Pure data, shared by the browser, the server and the tests.
 
 import type { Author, Capture, IncidentField } from "./catalog"
+import type { Extracted } from "./extract"
 
 export type { Author, Capture, IncidentField }
 
@@ -25,6 +26,8 @@ export type Scene = "start" | "end"
 export type InboxCapture = Capture & {
   /** Sections this Capture has already been drafted into. */
   applied: SectionId[]
+  /** Sections the AI found in it so far. Unset until it was first drafted; anything found but not applied keeps it New. */
+  found?: SectionId[]
   dismissed?: boolean
   /** Manager rewrote it by hand and marked it as in the report. */
   handled?: boolean
@@ -46,7 +49,7 @@ export type Block = {
 }
 
 export type Field =
-  | { status: "draft"; value: string }
+  | { status: "draft"; value: string; source?: string }
   | { status: "filled"; value: string }
   | { status: "gap"; hint?: string }
   | { status: "empty" }
@@ -90,7 +93,8 @@ export type Report = {
 
 export type Action =
   | { type: "startDrafting"; ids: string[] }
-  | { type: "draft"; ids: string[]; only?: SectionId }
+  | { type: "extracted"; result: Extracted }
+  | { type: "draftFailed"; ids: string[] }
   | { type: "dismiss"; id: string; undo?: boolean }
   | { type: "handled"; id: string }
   | { type: "addCapture"; text: string }

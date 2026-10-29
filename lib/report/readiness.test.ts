@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest"
-import { readiness, reducer, seedReport, type Action, type Report } from "."
+import { fakeModel, readiness, reducer, runExtract, seedReport, type Action, type Report } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
 describe("Submission readiness", () => {
-  test("lists each unconfirmed Incident with what it's missing, the open Drafts and the statement", () => {
-    const r = run(seedReport("end"), { type: "draft", ids: ["c6"] })
+  test("lists each unconfirmed Incident with what it's missing, the open Drafts and the statement", async () => {
+    const { report: r } = await runExtract(seedReport("end"), { capture: "c6" }, fakeModel)
     expect(readiness(r, { statement: false })).toEqual({
       ready: false,
       blockers: [

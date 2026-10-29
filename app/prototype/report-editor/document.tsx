@@ -128,7 +128,7 @@ function Section({ id, name }: { id: SectionId; name: string }) {
         {!locked && (
           <span className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/section:opacity-100 group-hover/section:opacity-100">
             {fresh.length > 0 && (
-              <Btn size="sm" variant="ai" onClick={() => draft(fresh.map((c) => c.id), id)}>
+              <Btn size="sm" variant="ai" onClick={() => draft({ section: id })}>
                 <Sparkles strokeWidth={1.75} />
                 Draft from inbox · {fresh.length}
               </Btn>
