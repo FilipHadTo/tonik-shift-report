@@ -1,7 +1,7 @@
 "use client"
 
 // PROTOTYPE — center column: the Shift Report as a document. Sections are free
-// text, Incidents are structured blocks. Tinted wash + hairline = Draft.
+// text, Incidents are structured blocks. Tinted wash = Draft.
 
 import { useState } from "react"
 import { Check, EyeOff, Lock, Plus, Sparkles } from "lucide-react"
@@ -121,7 +121,12 @@ function Incidents() {
         <p className="text-[15px] text-(--ink-3)">No Incidents tonight.</p>
       )}
       {incidents.map((i, n) => (
-        <IncidentBlock key={i.id} incident={i} number={n + 1} />
+        <IncidentBlock
+          key={i.id}
+          incident={i}
+          number={n + 1}
+          joinPrev={!!i.confirmedAt && !!incidents[n - 1]?.confirmedAt}
+        />
       ))}
       {!report.submittedAt && (
         <Btn variant="ghost" className="-ml-2 w-fit" onClick={() => dispatch({ type: "addIncident" })}>
@@ -146,7 +151,7 @@ function TextBlock({ block: b }: { block: Block }) {
       onMouseLeave={() => setHot(null)}
       className={cn(
         "enter -mx-4 scroll-mt-24 rounded-xl px-4 transition-[box-shadow,background-color] duration-200",
-        isDraft ? "bg-(image:--ai-wash) pt-2.5 pb-3.5 shadow-[inset_0_0_0_1px_var(--ai-ring)]" : "py-1",
+        isDraft ? "bg-(image:--ai-wash) pt-2.5 pb-3.5" : "py-1",
         lit && "linked",
       )}
     >

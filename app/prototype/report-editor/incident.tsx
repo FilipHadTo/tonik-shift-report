@@ -2,13 +2,13 @@
 
 // PROTOTYPE — an Incident as a structured block inside the document.
 // Properties (Gap = amber chip that opens a picker with Unknown), What happened,
-// Evidence, then a per-Incident Confirm. Four property layouts under review (E–H).
+// Evidence, then a per-Incident Confirm.
 
 import { useState } from "react"
-import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2, UserRound } from "lucide-react"
+import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEditor } from "./report-editor"
-import { INCIDENT_TYPES, LOCATIONS, gapsIn, type Author, type Field, type Incident, type IncidentField } from "./data"
+import { INCIDENT_TYPES, LOCATIONS, gapsIn, type Field, type Incident, type IncidentField } from "./data"
 import { Avatar, Btn, DraftLabel, IconBtn, PhotoThumb, Pop, VoiceThumb } from "./ui"
 
 const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: string }[] = [
@@ -17,36 +17,46 @@ const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: stri
   { field: "type", label: "Type", icon: Tag, add: "Pick type" },
 ]
 
-export function IncidentBlock({ incident: i, number }: { incident: Incident; number: number }) {
-  const { report, dispatch, hot, setHot, flash, meta } = useEditor()
+export function IncidentBlock({
+  incident: i,
+  number,
+  joinPrev,
+}: {
+  incident: Incident
+  number: number
+  /** The Incident above is confirmed too, so a divider separates the two. */
+  joinPrev?: boolean
+}) {
+  const { report, dispatch, hot, setHot, flash } = useEditor()
   const confirmed = !!i.confirmedAt
   const locked = !!report.submittedAt
   const gaps = gapsIn(i)
   const lit = (hot?.from === "inbox" && i.sources.some((s) => hot.captures.includes(s))) || flash === i.id
   const sources = report.captures.filter((c) => i.sources.includes(c.id))
   const editable = !confirmed && !locked
+  const wash = !confirmed && !i.manual
 
   return (
     <article
       id={i.id}
       aria-labelledby={`${i.id}-title`}
+      data-wash={wash || undefined}
       onMouseEnter={() => i.sources.length && setHot({ captures: i.sources, from: "doc" })}
       onMouseLeave={() => setHot(null)}
       className={cn(
-        "group/incident enter scroll-mt-24 rounded-2xl px-5 pt-[18px] transition-[box-shadow,background-color] duration-200",
+        // Hangs into the gutter like Draft blocks, so the text lines up with the rest of the document.
+        "group/incident incident enter -mx-5 scroll-mt-24 rounded-2xl px-5 pt-[18px] pb-2.5",
         confirmed
-          ? "pb-5 shadow-[inset_0_0_0_1px_var(--line)]"
+          ? "shadow-[inset_0_0_0_1px_transparent]"
           : i.manual
-            ? "bg-(--raise) pb-3.5 shadow-[inset_0_0_0_1px_var(--line-2)]"
-            : "bg-(image:--ai-wash) pb-3.5 shadow-[inset_0_0_0_1px_var(--ai-ring)]",
+            ? "bg-(--raise) shadow-[inset_0_0_0_1px_var(--line-2)]"
+            : "shadow-[inset_0_0_0_1px_transparent]",
         lit && "linked",
       )}
     >
-      <header className="flex items-start gap-2.5">
-        <span
-          aria-hidden
-          className="mt-px grid size-6 shrink-0 place-items-center rounded-md bg-(--raise) text-xs font-semibold text-(--ink-2) tabular-nums shadow-[inset_0_0_0_1px_var(--line)]"
-        >
+      <span aria-hidden data-on={(confirmed && joinPrev) || undefined} className="seam" />
+      <header className="flex items-start gap-2">
+        <span aria-hidden className="shrink-0 text-base leading-6 font-semibold text-(--ink-3) tabular-nums">
           {number}
         </span>
         <h3
@@ -60,7 +70,7 @@ export function IncidentBlock({ incident: i, number }: { incident: Incident; num
           {i.title}
         </h3>
         {confirmed && (
-          <span className="flex h-6 shrink-0 items-center gap-1">
+          <span className="appear flex h-6 shrink-0 items-center gap-1">
             {!locked && (
               <Btn
                 variant="ghost"
@@ -80,87 +90,60 @@ export function IncidentBlock({ incident: i, number }: { incident: Incident; num
         )}
       </header>
 
-      {meta === "side" ? (
-        <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)_184px] gap-8 pl-[34px]">
-          <Body incident={i} editable={editable} />
-          <SideMeta incident={i} editable={editable} />
-        </div>
-      ) : (
-        <>
-          {meta === "table" && <TableMeta incident={i} editable={editable} />}
-          {meta === "chips" && <ChipMeta incident={i} editable={editable} />}
-          {meta === "strip" && <StripMeta incident={i} editable={editable} />}
-          <div className={cn("pl-[34px]", meta === "strip" ? "mt-4" : "mt-3")}>
-            <Body incident={i} editable={editable} />
-          </div>
-        </>
-      )}
+      <ChipMeta incident={i} editable={editable} />
+      <div className="mt-3">
+        <Body incident={i} editable={editable} />
+      </div>
 
-      {!confirmed && (
-      <footer
-          className={cn(
-            "mt-4 flex min-h-8 items-center gap-2 border-t pt-3.5 pl-[34px] text-xs text-(--ink-3)",
-            i.manual ? "border-(--line)" : "border-(--ai-ring)",
-          )}
-        >
-          {i.manual ? (
-            <span>Added by {report.manager.name}</span>
-          ) : (
-            <DraftLabel sources={sources} />
-          )}
-  
-          {editable && (
-            <span className="ml-auto flex items-center gap-1.5">
-              {gaps > 0 && (
-                <span className="mr-1.5 text-(--gap)">
-                  Fill {gaps === 1 ? "the Gap" : `${gaps} Gaps`} to confirm
-                </span>
-              )}
-              <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
-                <Trash2 strokeWidth={1.75} />
-              </IconBtn>
-              <Btn
-                variant="primary"
-                size="sm"
-                disabled={gaps > 0}
-                onClick={() => dispatch({ type: "confirm", incident: i.id })}
-              >
-                <Check strokeWidth={2.25} />
-                Confirm
-              </Btn>
-            </span>
-          )}
-        </footer>
-      )}
+      {/* Stays mounted so Confirm can fold it away instead of cutting it. */}
+      <div className="fold" data-folded={confirmed || undefined} inert={confirmed}>
+        <div className="-mx-1 px-1 pb-1">
+          <footer
+            className={cn(
+              "mt-4 flex min-h-8 items-center gap-2 border-t pt-3.5 text-xs text-(--ink-3)",
+              i.manual ? "border-(--line)" : "border-(--ai-ring)",
+            )}
+          >
+            {i.manual ? (
+              <span>Added by {report.manager.name}</span>
+            ) : (
+              <DraftLabel sources={sources} />
+            )}
+
+            {editable && (
+              <span className="ml-auto flex items-center gap-1.5">
+                {gaps > 0 && (
+                  <span className="mr-1.5 text-(--gap)">
+                    Fill {gaps === 1 ? "the Gap" : `${gaps} Gaps`} to confirm
+                  </span>
+                )}
+                <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
+                  <Trash2 strokeWidth={1.75} />
+                </IconBtn>
+                <Btn
+                  variant="primary"
+                  size="sm"
+                  disabled={gaps > 0}
+                  onClick={() => dispatch({ type: "confirm", incident: i.id })}
+                >
+                  <Check strokeWidth={2.25} />
+                  Confirm
+                </Btn>
+              </span>
+            )}
+          </footer>
+        </div>
+      </div>
     </article>
   )
 }
 
 type MetaProps = { incident: Incident; editable: boolean }
 
-/** E: label column + value column, like a property sheet. */
-function TableMeta({ incident: i, editable }: MetaProps) {
-  return (
-    <dl className="mt-3.5 grid grid-cols-[124px_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 pl-[34px] text-[13px]">
-      {ROWS.map((row) => (
-        <Row key={row.field} icon={row.icon} label={row.label}>
-          <FieldChip incident={i} row={row} editable={editable} />
-          {row.field === "occurredAt" && <CapturedAt incident={i} className="ml-2" />}
-        </Row>
-      ))}
-      {i.fromStaff && (
-        <Row icon={UserRound} label="Reported by">
-          <ReportedBy author={i.fromStaff} />
-        </Row>
-      )}
-    </dl>
-  )
-}
-
-/** F: one wrap-around row of property chips under the title, labels carried by icons. */
+/** One wrap-around row of property chips under the title, labels carried by icons. */
 function ChipMeta({ incident: i, editable }: MetaProps) {
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-1.5 pl-[34px]">
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
       {ROWS.map((row) => (
         <FieldChip key={row.field} incident={i} row={row} editable={editable} icon />
       ))}
@@ -172,81 +155,6 @@ function ChipMeta({ incident: i, editable }: MetaProps) {
         </span>
       )}
     </div>
-  )
-}
-
-/** G: the story on the left, properties stacked in a narrow column on the right. */
-function SideMeta({ incident: i, editable }: MetaProps) {
-  return (
-    <dl className="flex flex-col gap-3.5 text-[13px]">
-      {ROWS.map((row) => (
-        <div key={row.field}>
-          <dt className="mb-1 text-xs text-(--ink-3)">{row.label}</dt>
-          <dd className="flex min-w-0 flex-col items-start">
-            <FieldChip incident={i} row={row} editable={editable} bare />
-            {row.field === "occurredAt" && <CapturedAt incident={i} className="mt-0.5" />}
-          </dd>
-        </div>
-      ))}
-      {i.fromStaff && (
-        <div>
-          <dt className="mb-1 text-xs text-(--ink-3)">Reported by</dt>
-          <dd>
-            <ReportedBy author={i.fromStaff} stacked />
-          </dd>
-        </div>
-      )}
-    </dl>
-  )
-}
-
-/** H: a single band of equal cells, label over value, like a spec strip. */
-function StripMeta({ incident: i, editable }: MetaProps) {
-  const cells = i.fromStaff ? 4 : 3
-  return (
-    <dl
-      className={cn(
-        "mt-4 ml-[34px] grid rounded-xl text-[13px] shadow-[inset_0_0_0_1px_var(--line)]",
-        cells === 4 ? "grid-cols-4" : "grid-cols-3",
-      )}
-    >
-      {ROWS.map((row, n) => (
-        <div key={row.field} className={cn("min-w-0 px-3.5 py-2.5", n > 0 && "shadow-[inset_1px_0_0_var(--line)]")}>
-          <dt className="flex items-center gap-1.5 text-xs text-(--ink-3)">
-            <row.icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-            {row.label}
-          </dt>
-          <dd className="mt-1 flex min-w-0 pr-2">
-            <FieldChip incident={i} row={row} editable={editable} bare />
-          </dd>
-        </div>
-      ))}
-      {i.fromStaff && (
-        <div className="min-w-0 px-3.5 py-2.5 shadow-[inset_1px_0_0_var(--line)]">
-          <dt className="flex items-center gap-1.5 text-xs text-(--ink-3)">
-            <UserRound className="size-3.5" strokeWidth={1.75} aria-hidden />
-            Reported by
-          </dt>
-          <dd className="mt-1">
-            <ReportedBy author={i.fromStaff} compact />
-          </dd>
-        </div>
-      )}
-    </dl>
-  )
-}
-
-function CapturedAt({ incident: i, className }: { incident: Incident; className?: string }) {
-  return <span className={cn("text-xs text-(--ink-3) tabular-nums", className)}>Captured at {i.capturedAt}</span>
-}
-
-function ReportedBy({ author, stacked, compact }: { author: Author; stacked?: boolean; compact?: boolean }) {
-  return (
-    <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-(--ink)", !compact && "h-7")}>
-      <Avatar author={author} size={18} />
-      <span className="truncate">{author.name}</span>
-      {!stacked && !compact && <span className="text-(--ink-3)">{author.role}</span>}
-    </span>
   )
 }
 
@@ -285,18 +193,6 @@ function Body({ incident: i, editable }: MetaProps) {
   )
 }
 
-function Row({ icon: Icon, label, children }: { icon: typeof Clock; label: string; children: React.ReactNode }) {
-  return (
-    <>
-      <dt className="flex items-center gap-1.5 text-(--ink-3)">
-        <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-        {label}
-      </dt>
-      <dd className="flex min-w-0 items-center">{children}</dd>
-    </>
-  )
-}
-
 const chip =
   "press inline-flex h-7 max-w-full items-center gap-1.5 truncate rounded-md px-2 text-[13px] whitespace-nowrap"
 
@@ -305,15 +201,12 @@ function FieldChip({
   row,
   editable,
   icon,
-  bare,
 }: {
   incident: Incident
   row: (typeof ROWS)[number]
   editable: boolean
-  /** Put the property's icon inside the chip, for layouts with no label column. */
+  /** Put the property's icon inside the chip, since there's no label column. */
   icon?: boolean
-  /** Set values read as plain text until hovered, for layouts that already frame each value. */
-  bare?: boolean
 }) {
   const { dispatch } = useEditor()
   const [open, setOpen] = useState(false)
@@ -323,7 +216,8 @@ function FieldChip({
     setOpen(false)
   }
 
-  const look = chipLook(f, row.add, bare)
+  const look = chipLook(f, row.add)
+  const title = row.field === "occurredAt" ? `${row.label} ${look.label} · Captured at ${i.capturedAt}` : `${row.label}: ${look.label}`
   const Icon = row.icon
   const lead = icon && (f.status === "draft" || f.status === "filled") && (
     <Icon className="size-3.5 text-(--ink-3)" strokeWidth={1.75} aria-hidden />
@@ -337,7 +231,7 @@ function FieldChip({
         )}
       >
         {icon && <Icon className="size-3.5 text-(--ink-3)" strokeWidth={1.75} aria-hidden />}
-        <span className="truncate" title={look.label}>{look.label}</span>
+        <span className="truncate" title={title}>{look.label}</span>
       </span>
     )
 
@@ -347,7 +241,7 @@ function FieldChip({
       onOpenChange={setOpen}
       className={row.field === "occurredAt" ? "w-[328px] p-3" : "w-[232px]"}
       trigger={
-        <button type="button" aria-label={`${row.label}: ${look.label}`} title={look.label} className={cn(chip, look.cls)}>
+        <button type="button" aria-label={title} title={title} className={cn(chip, look.cls)}>
           {lead}
           {look.text}
         </button>
@@ -370,10 +264,8 @@ function valueOf(f: Field) {
   return f.status === "draft" || f.status === "filled" ? f.value : undefined
 }
 
-function chipLook(f: Field, add: string, bare?: boolean): { text: React.ReactNode; label: string; cls: string } {
-  const set = bare
-    ? "-mx-2 text-(--ink) hover:bg-(--raise) tabular-nums"
-    : "bg-(--raise) text-(--ink) shadow-[inset_0_0_0_1px_var(--line)] hover:bg-(--press) tabular-nums"
+function chipLook(f: Field, add: string): { text: React.ReactNode; label: string; cls: string } {
+  const set = "bg-(--raise) text-(--ink) shadow-[inset_0_0_0_1px_var(--line)] hover:bg-(--press) tabular-nums"
   switch (f.status) {
     case "draft":
     case "filled":
