@@ -6,10 +6,12 @@
 import { useState } from "react"
 import { Check, EyeOff, Lock, Plus, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Avatar } from "@/components/avatar"
+import { Btn, IconBtn } from "@/components/btn"
+import { DraftLabel } from "@/components/draft-label"
 import { useEditor } from "./report-editor"
 import { SECTIONS, hasContent, newCapturesFor, orderedIncidents, type Block, type SectionId } from "./data"
 import { IncidentBlock } from "./incident"
-import { Avatar, Btn, DraftLabel, IconBtn } from "./ui"
 
 export function Document() {
   const { report, docRef } = useEditor()
@@ -21,15 +23,15 @@ export function Document() {
     <main
       ref={docRef}
       aria-label="Shift Report"
-      className="min-h-0 overflow-y-auto rounded-2xl bg-(--panel) shadow-(--shadow-panel)"
+      className="min-h-0 overflow-y-auto rounded-2xl bg-panel shadow-panel"
     >
       <div className="mx-auto max-w-[720px] px-14 pt-16 pb-40">
-        <p className="text-xs font-medium tracking-[0.04em] text-(--ink-3) uppercase">Shift Report · {report.venue}</p>
+        <p className="text-xs font-medium tracking-[0.04em] text-ink-3 uppercase">Shift Report · {report.venue}</p>
         <h1 className="mt-2 text-[32px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance">
           Night of {report.night}
         </h1>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-(--ink-3)">
-          <span className="inline-flex items-center gap-1.5 text-(--ink-2)">
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-3">
+          <span className="inline-flex items-center gap-1.5 text-ink-2">
             <Avatar author={report.manager} size={18} />
             {report.manager.name}
           </span>
@@ -42,8 +44,8 @@ export function Document() {
         </p>
 
         {report.submittedAt && (
-          <p className="mt-6 flex items-center gap-2 rounded-lg bg-(--raise) px-3 py-2.5 text-[13px] text-(--ink-2) shadow-[inset_0_0_0_1px_var(--line)]">
-            <Lock className="size-4 text-(--ink-3)" aria-hidden />
+          <p className="mt-6 flex items-center gap-2 rounded-lg bg-raise px-3 py-2.5 text-[13px] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
+            <Lock className="size-4 text-ink-3" aria-hidden />
             Submitted {report.submittedAt} by {report.manager.name}. Locked. Changes only as an Addendum.
           </p>
         )}
@@ -77,7 +79,7 @@ function Section({ id, name }: { id: SectionId; name: string }) {
           {name}
         </h2>
         {id === "incidents" && report.incidents.length > 0 && (
-          <span className="text-[13px] text-(--ink-3) tabular-nums">
+          <span className="text-[13px] text-ink-3 tabular-nums">
             {report.incidents.filter((i) => i.confirmedAt).length} of {report.incidents.length} confirmed
           </span>
         )}
@@ -118,7 +120,7 @@ function Incidents() {
   return (
     <div className="flex flex-col gap-4">
       {incidents.length === 0 && (
-        <p className="text-[15px] text-(--ink-3)">No Incidents tonight.</p>
+        <p className="text-[15px] text-ink-3">No Incidents tonight.</p>
       )}
       {incidents.map((i, n) => (
         <IncidentBlock

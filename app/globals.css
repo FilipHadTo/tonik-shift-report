@@ -4,7 +4,35 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Design system: docs/design-system.md. Values live in :root (light) and .dark (dark, the default theme);
+   @theme exposes them as utilities (bg-canvas, text-ink-2, shadow-pop, ease-out…). */
+
 @theme inline {
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-raise: var(--raise);
+  --color-press: var(--press);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-line: var(--ai-line);
+  --color-ai-ring: var(--ai-ring);
+  --color-gap: var(--gap);
+  --color-gap-soft: var(--gap-soft);
+  --color-gap-line: var(--gap-line);
+  --color-gap-ring: var(--gap-ring);
+  --color-ok: var(--ok);
+  --color-cta: var(--cta);
+  --color-cta-ink: var(--cta-ink);
+  --color-img-outline: var(--img-outline);
+  --shadow-pop: var(--elevation-pop);
+  --shadow-panel: var(--elevation-panel);
+
+  /* Stock shadcn names, mapped onto the tokens above so components/ui follows the same look. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -48,73 +76,101 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --canvas: oklch(0.962 0.003 260);
+  --panel: oklch(1 0 0);
+  --raise: oklch(0.972 0.003 260);
+  --press: oklch(0.945 0.004 260);
+  --line: oklch(0 0 0 / 0.07);
+  --line-2: oklch(0 0 0 / 0.13);
+  --ink: oklch(0.21 0.01 260);
+  --ink-2: oklch(0.42 0.01 260);
+  --ink-3: oklch(0.54 0.01 260);
+  --ai: oklch(0.52 0.16 258);
+  --ai-soft: oklch(0.55 0.16 258 / 0.055);
+  --ai-line: oklch(0.55 0.16 258 / 0.38);
+  --ai-ring: oklch(0.55 0.16 258 / 0.22);
+  /* A long, stretched glow from the top-left over a faint flat base, so the edge holds all round without a ring. */
+  --ai-wash: radial-gradient(180% 140% at 0% 0%, oklch(0.55 0.16 258 / 0.055), transparent 72%),
+    linear-gradient(oklch(0.55 0.16 258 / 0.022), oklch(0.55 0.16 258 / 0.022));
+  --gap: oklch(0.55 0.13 62);
+  --gap-soft: oklch(0.75 0.14 70 / 0.14);
+  --gap-line: oklch(0.65 0.14 62 / 0.6);
+  --gap-ring: oklch(0.65 0.14 62 / 0.35);
+  --ok: oklch(0.55 0.13 155);
+  --cta: oklch(0.21 0.01 260);
+  --cta-ink: oklch(0.99 0 0);
+  --img-outline: oklch(0 0 0 / 0.1);
+  --elevation-pop: 0 0 0 1px oklch(0 0 0 / 0.06), 0 8px 24px -6px oklch(0 0 0 / 0.16), 0 2px 6px -2px oklch(0 0 0 / 0.08);
+  --elevation-panel: 0 0 0 1px oklch(0 0 0 / 0.05), 0 1px 2px oklch(0 0 0 / 0.04);
+
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--panel);
+  --card-foreground: var(--ink);
+  --popover: var(--panel);
+  --popover-foreground: var(--ink);
+  --primary: var(--cta);
+  --primary-foreground: var(--cta-ink);
+  --secondary: var(--raise);
+  --secondary-foreground: var(--ink);
+  --muted: var(--raise);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--raise);
+  --accent-foreground: var(--ink);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: var(--line);
+  --input: var(--line-2);
+  --ring: var(--ai);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--panel);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--cta);
+  --sidebar-primary-foreground: var(--cta-ink);
+  --sidebar-accent: var(--raise);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--ai);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --canvas: oklch(0.135 0.004 260);
+  --panel: oklch(0.172 0.005 260);
+  --raise: oklch(0.205 0.006 260);
+  --press: oklch(0.235 0.006 260);
+  --line: oklch(1 0 0 / 0.07);
+  --line-2: oklch(1 0 0 / 0.12);
+  --ink: oklch(0.96 0.003 260);
+  --ink-2: oklch(0.79 0.006 260);
+  --ink-3: oklch(0.63 0.008 260);
+  --ai: oklch(0.76 0.11 252);
+  --ai-soft: oklch(0.76 0.11 252 / 0.06);
+  --ai-line: oklch(0.76 0.11 252 / 0.4);
+  --ai-ring: oklch(0.76 0.11 252 / 0.26);
+  --ai-wash: radial-gradient(180% 140% at 0% 0%, oklch(0.76 0.11 252 / 0.075), transparent 72%),
+    linear-gradient(oklch(0.76 0.11 252 / 0.03), oklch(0.76 0.11 252 / 0.03));
+  --gap: oklch(0.84 0.13 78);
+  --gap-soft: oklch(0.84 0.13 78 / 0.1);
+  --gap-line: oklch(0.84 0.13 78 / 0.55);
+  --gap-ring: oklch(0.84 0.13 78 / 0.3);
+  --ok: oklch(0.78 0.13 155);
+  --cta: oklch(0.96 0.003 260);
+  --cta-ink: oklch(0.17 0.005 260);
+  --img-outline: oklch(1 0 0 / 0.1);
+  --elevation-pop: 0 0 0 1px oklch(1 0 0 / 0.08), 0 12px 32px -8px oklch(0 0 0 / 0.6);
+  --elevation-panel: 0 0 0 1px oklch(1 0 0 / 0.06);
+
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -123,8 +179,198 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Motion. Unlayered on purpose: these own transition-property and win over Tailwind
+   transition utilities on the same element, so don't combine them. Every class has a
+   reduced-motion fallback at the end of the file. */
+
+/* Press feedback on anything clickable */
+.press {
+  transition-property: scale, background-color, color, opacity;
+  transition-duration: 140ms;
+  transition-timing-function: var(--ease-out);
+}
+.press:active:not(:disabled) {
+  scale: 0.96;
+}
+
+/* Focus: one ring for every control */
+:is(button, a, input, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--ai);
+  outline-offset: 2px;
+}
+/* Editable document text: the caret is the focus cue, like any editor. */
+[contenteditable="true"] {
+  outline: none;
+}
+
+/* Editable text placeholder */
+[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+/* New blocks settle in once, when they mount. */
+.enter {
+  transition-property: opacity, translate;
+  transition-duration: 240ms;
+  transition-timing-function: var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+/* Fade in once, after a neighbouring change has started (e.g. "Confirmed 02:09"). */
+.appear {
+  transition: opacity 200ms var(--ease-out) 80ms;
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Fold a block away to height 0. The second track keeps a 10px bottom spacer when folded,
+   so the parent's padding doesn't have to animate. */
+.fold {
+  display: grid;
+  grid-template-rows: 1fr 0px;
+  transition-property: grid-template-rows, opacity;
+  transition-duration: 240ms, 160ms;
+  transition-timing-function: var(--ease-out);
+}
+.fold[data-folded] {
+  grid-template-rows: 0fr 10px;
+  opacity: 0;
+}
+.fold > :first-child {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Disclosure: collapsed by default, opens in place with [data-open]. */
+.disclose {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition-property: grid-template-rows, opacity;
+  transition-duration: 200ms, 160ms;
+  transition-timing-function: var(--ease-out);
+}
+.disclose[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.disclose > :first-child {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Seam: a hairline centred in the 1rem gap above a block, shown with [data-on]. */
+.seam {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 100%;
+  height: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms var(--ease-out);
+}
+.seam::after {
+  content: "";
+  position: absolute;
+  inset-inline: 1.25rem;
+  top: 50%;
+  height: 1px;
+  background: var(--line);
+}
+.seam[data-on] {
+  opacity: 1;
+}
+
+/* Pending AI label ("Drafting…") */
+.shimmer {
+  background: linear-gradient(90deg, var(--ink-3) 0%, var(--ink) 50%, var(--ink-3) 100%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Cross-highlight between a Capture and the report items drafted from it */
+.linked {
+  box-shadow: 0 0 0 2px var(--ai-line);
+}
+
+/* Popover / tooltip popup (Base UI): scale from the trigger */
+.pop-motion {
+  transform-origin: var(--transform-origin);
+  transition-property: opacity, scale;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+.pop-motion[data-starting-style],
+.pop-motion[data-ending-style] {
+  opacity: 0;
+  scale: 0.96;
+}
+
+/* Side sheet (Base UI Dialog popup) and its backdrop */
+.sheet-motion {
+  transition-property: translate, opacity;
+  transition-duration: 320ms;
+  transition-timing-function: var(--ease-drawer);
+}
+.sheet-motion[data-starting-style],
+.sheet-motion[data-ending-style] {
+  translate: 100% 0;
+}
+.backdrop-motion {
+  transition-property: opacity;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-out);
+}
+.backdrop-motion[data-starting-style],
+.backdrop-motion[data-ending-style] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press:active:not(:disabled) {
+    scale: 1;
+  }
+  .enter {
+    @starting-style {
+      translate: 0 0;
+    }
+  }
+  .fold,
+  .disclose {
+    transition-property: opacity;
+  }
+  .shimmer {
+    animation: none;
+    color: var(--ink-2);
+    background: none;
+  }
+  .pop-motion[data-starting-style],
+  .pop-motion[data-ending-style] {
+    scale: 1;
+  }
+  .sheet-motion[data-starting-style],
+  .sheet-motion[data-ending-style] {
+    translate: 0 0;
+    opacity: 0;
   }
 }

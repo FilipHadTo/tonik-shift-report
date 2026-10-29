@@ -66,7 +66,7 @@ export function ReportEditor() {
 
   return (
     <EditorCtx.Provider value={value}>
-      <div className="rx flex h-dvh bg-(--canvas) min-h-[640px] min-w-[1180px] flex-col text-[14px]">
+      <div className="rx flex h-dvh bg-canvas min-h-[640px] min-w-[1180px] flex-col text-[14px]">
         <TopBar />
         <div className="grid min-h-0 flex-1 grid-cols-[336px_minmax(0,1fr)_280px] gap-3 px-3 pb-3">
           <Inbox />

@@ -6,6 +6,7 @@ Create Shift Report — tonik Senior Product Designer recruitment task. Brief: `
 
 - Filip is the designer; this repo is his submission. tonik grades the AI-first workflow as much as the product, and reviewers (Dorota, senior PD at tonik) will get repo access — keep repo files professional. `deslog.md` is private and gitignored.
 - Domain language lives in `GLOSSARY.md`, decisions in `docs/adr/`, scope in `.scratch/shift-report/spec.md`. Read them before building; don't restate them here.
+- Read `docs/design-system.md` before any UI work.
 - Repo files, code and commits in English; talk to Filip in Polish.
 - Git: everything goes to `FilipHadTo` (private account), never `filipm-masterborn`. Check `gh auth status` before any push or `gh` write.
 - Don't estimate or plan time — Filip owns it.

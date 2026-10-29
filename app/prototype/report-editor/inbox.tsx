@@ -6,9 +6,12 @@
 import { useRef, useState } from "react"
 import { Archive, ArrowUp, Check, ChevronRight, CornerDownRight, Paperclip, PenLine, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Avatar } from "@/components/avatar"
+import { Btn, IconBtn } from "@/components/btn"
+import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
 import { useEditor } from "./report-editor"
 import { pendingSectionsOf, statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
-import { Avatar, Btn, IconBtn, KindLabel, PhotoThumb, VoiceThumb } from "./ui"
+import { KindLabel } from "./ui"
 
 export function Inbox() {
   const { report, draft } = useEditor()
@@ -19,11 +22,11 @@ export function Inbox() {
   const dismissed = byTime.filter((c) => c.dismissed)
 
   return (
-    <aside aria-label="Inbox" className="flex min-h-0 flex-col rounded-2xl bg-(--panel) shadow-(--shadow-panel)">
+    <aside aria-label="Inbox" className="flex min-h-0 flex-col rounded-2xl bg-panel shadow-panel">
       <header className="flex h-14 shrink-0 items-center gap-2 pr-3 pl-5">
         <h2 className="text-sm font-semibold">Inbox</h2>
         {fresh.length > 0 && (
-          <span className="rounded-full bg-(--ai-soft) px-1.5 py-px text-xs font-medium text-(--ai) tabular-nums shadow-[inset_0_0_0_1px_var(--ai-ring)]">
+          <span className="rounded-full bg-ai-soft px-1.5 py-px text-xs font-medium text-ai tabular-nums shadow-[inset_0_0_0_1px_var(--ai-ring)]">
             {fresh.length} new
           </span>
         )}
@@ -50,9 +53,9 @@ export function Inbox() {
           </ul>
         ) : (
           <div className="flex flex-col items-center rounded-xl px-6 py-8 text-center shadow-[inset_0_0_0_1px_var(--line)]">
-            <Check className="size-5 text-(--ok)" strokeWidth={2} aria-hidden />
+            <Check className="size-5 text-ok" strokeWidth={2} aria-hidden />
             <p className="mt-2.5 text-[13px] font-medium">You&apos;re through the inbox</p>
-            <p className="mt-1 text-xs leading-[1.5] text-pretty text-(--ink-3)">
+            <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
               New Captures from you and your staff show up here.
             </p>
           </div>
@@ -75,7 +78,7 @@ export function Inbox() {
               type="button"
               aria-expanded={showDismissed}
               onClick={() => setShowDismissed((v) => !v)}
-              className="mt-7 mb-2 flex items-center gap-1 rounded-md px-2 text-xs font-medium text-(--ink-3) hover:text-(--ink-2)"
+              className="mt-7 mb-2 flex items-center gap-1 rounded-md px-2 text-xs font-medium text-ink-3 hover:text-ink-2"
             >
               <ChevronRight className={cn("size-3.5 transition-[rotate] duration-150", showDismissed && "rotate-90")} aria-hidden />
               Dismissed
@@ -99,7 +102,7 @@ export function Inbox() {
 
 function GroupLabel({ children, count }: { children: React.ReactNode; count: number }) {
   return (
-    <h3 className="mt-7 mb-2 flex items-center gap-1.5 px-2 text-xs font-medium text-(--ink-3)">
+    <h3 className="mt-7 mb-2 flex items-center gap-1.5 px-2 text-xs font-medium text-ink-3">
       {children}
       <span className="tabular-nums">{count}</span>
     </h3>
@@ -113,9 +116,9 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
       <div className="min-w-0 flex-1 leading-tight">
         <div className="flex items-baseline gap-2">
           <span className="truncate text-[13px] font-medium">{c.author.name}</span>
-          <time className="ml-auto shrink-0 text-xs text-(--ink-3) tabular-nums">{c.capturedAt}</time>
+          <time className="ml-auto shrink-0 text-xs text-ink-3 tabular-nums">{c.capturedAt}</time>
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-(--ink-3)">
+        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-3">
           <span className="truncate">{c.author.role}</span>
           <span aria-hidden>·</span>
           <KindLabel kind={c.kind} />
@@ -130,7 +133,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
   const drafting = statusOf(report, c) === "drafting"
 
   return (
-    <li className="enter rounded-xl bg-(--raise) p-4 shadow-[inset_0_0_0_1px_var(--line)]">
+    <li className="enter rounded-xl bg-raise p-4 shadow-[inset_0_0_0_1px_var(--line)]">
       <Byline capture={c} />
 
       <div className="mt-3">
@@ -145,7 +148,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
 
       <div className="mt-4 flex h-8 items-center gap-0.5">
         {drafting ? (
-          <span className="flex items-center gap-1.5 text-xs text-(--ai)" role="status">
+          <span className="flex items-center gap-1.5 text-xs text-ai" role="status">
             <Sparkles className="size-3.5" strokeWidth={1.75} aria-hidden />
             <span className="shimmer font-medium">Drafting into the report…</span>
           </span>
@@ -163,7 +166,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
               onClick={() => draft([c.id])}
               aria-label={`Draft into report: ${c.author.name}, ${c.capturedAt}`}
             >
-              <Sparkles className="text-(--ai)" strokeWidth={1.75} />
+              <Sparkles className="text-ai" strokeWidth={1.75} />
               Draft into report
             </Btn>
           </>
@@ -185,25 +188,25 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
       onMouseEnter={() => status !== "dismissed" && setHot({ captures: [c.id], from: "inbox" })}
       onMouseLeave={() => setHot(null)}
       className={cn(
-        "rounded-xl px-3 py-3 transition-[background-color,box-shadow] duration-150 hover:bg-(--raise)",
-        lit && "linked bg-(--raise)",
+        "rounded-xl px-3 py-3 transition-[background-color,box-shadow] duration-150 hover:bg-raise",
+        lit && "linked bg-raise",
       )}
     >
       <div className="flex items-center gap-2 text-xs">
         <Avatar author={c.author} size={20} />
-        <span className="truncate font-medium text-(--ink-2)">{c.author.name}</span>
-        <span className="truncate text-(--ink-3)">{c.author.role}</span>
-        <time className="ml-auto shrink-0 text-(--ink-3) tabular-nums">{c.capturedAt}</time>
+        <span className="truncate font-medium text-ink-2">{c.author.name}</span>
+        <span className="truncate text-ink-3">{c.author.role}</span>
+        <time className="ml-auto shrink-0 text-ink-3 tabular-nums">{c.capturedAt}</time>
       </div>
 
-      <p className="mt-1.5 line-clamp-2 pl-7 text-[13px] leading-[1.5] text-(--ink-3)">
+      <p className="mt-1.5 line-clamp-2 pl-7 text-[13px] leading-[1.5] text-ink-3">
         {c.kind === "chat" && c.chatLines ? `${c.text} · ${c.chatLines.length} messages` : c.text}
       </p>
 
       <div className="mt-2 flex min-h-6 flex-wrap items-center gap-x-1 gap-y-0.5 pl-7 text-xs">
         {status === "dismissed" ? (
           <>
-            <span className="text-(--ink-3)">Not in the report</span>
+            <span className="text-ink-3">Not in the report</span>
             <Btn size="sm" variant="ghost" className="-my-1 ml-auto" onClick={() => dispatch({ type: "dismiss", id: c.id, undo: true })}>
               Restore
             </Btn>
@@ -211,26 +214,26 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
         ) : (
           <>
             {status === "drafted" ? (
-              <CornerDownRight className="size-3.5 shrink-0 text-(--ai)" aria-hidden />
+              <CornerDownRight className="size-3.5 shrink-0 text-ai" aria-hidden />
             ) : (
-              <Check className="size-3.5 shrink-0 text-(--ok)" strokeWidth={2.25} aria-hidden />
+              <Check className="size-3.5 shrink-0 text-ok" strokeWidth={2.25} aria-hidden />
             )}
             {c.handled ? (
-              <span className="text-(--ink-2)">Written into the report by hand</span>
+              <span className="text-ink-2">Written into the report by hand</span>
             ) : (
               targets.map((t, i) => (
                 <button
                   key={t.anchor}
                   type="button"
                   onClick={() => reveal(t.anchor)}
-                  className="rounded-sm font-medium text-(--ink-2) hover:text-(--ink) hover:underline hover:underline-offset-2"
+                  className="rounded-sm font-medium text-ink-2 hover:text-ink hover:underline hover:underline-offset-2"
                 >
                   {t.label}
                   {i < targets.length - 1 ? "," : ""}
                 </button>
               ))
             )}
-            {status === "drafted" && <span className="text-(--ai)">· to review</span>}
+            {status === "drafted" && <span className="text-ai">· to review</span>}
             {pending.length > 0 && !c.handled && (
               <Btn size="sm" variant="ai" className="-my-1 ml-auto" onClick={() => draft([c.id])}>
                 Draft the rest
@@ -248,20 +251,20 @@ function ChatPreview({ capture: c, lines: max }: { capture: InboxCapture; lines:
   const shown = lines.slice(0, max)
   return (
     <div>
-      <p className="text-xs text-(--ink-3)">
+      <p className="text-xs text-ink-3">
         {c.text} · {lines.length} messages
       </p>
-      <ol className="mt-2 flex flex-col gap-1.5 rounded-lg bg-(--panel) px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
+      <ol className="mt-2 flex flex-col gap-1.5 rounded-lg bg-panel px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
         {shown.map((l) => (
           <li key={l.at} className="grid grid-cols-[36px_1fr] text-[13px] leading-[1.45]">
-            <span className="pt-px text-xs text-(--ink-3) tabular-nums">{l.at}</span>
+            <span className="pt-px text-xs text-ink-3 tabular-nums">{l.at}</span>
             <span>
-              <span className="font-medium">{l.who}</span> <span className="text-(--ink-2)">{l.text}</span>
+              <span className="font-medium">{l.who}</span> <span className="text-ink-2">{l.text}</span>
             </span>
           </li>
         ))}
         {lines.length > shown.length && (
-          <li className="pl-9 text-xs text-(--ink-3)">{lines.length - shown.length} more messages</li>
+          <li className="pl-9 text-xs text-ink-3">{lines.length - shown.length} more messages</li>
         )}
       </ol>
     </div>
@@ -287,7 +290,7 @@ function Composer() {
     <div className="composer shrink-0 px-3 pb-3">
       <div
         className={cn(
-          "rounded-xl bg-(--raise) transition-shadow duration-150",
+          "rounded-xl bg-raise transition-shadow duration-150",
           open
             ? "shadow-[inset_0_0_0_1px_var(--line-2),0_0_0_3px_var(--ai-soft)]"
             : "shadow-[inset_0_0_0_1px_var(--line)] hover:shadow-[inset_0_0_0_1px_var(--line-2)]",
@@ -311,7 +314,7 @@ function Composer() {
           }}
           placeholder={open ? "What happened? Type it, or paste the group chat." : "Add a Capture…"}
           className={cn(
-            "block w-full resize-none bg-transparent px-3.5 pt-3 text-[13.5px] leading-[1.5] outline-none placeholder:text-(--ink-3)",
+            "block w-full resize-none bg-transparent px-3.5 pt-3 text-[13.5px] leading-[1.5] outline-none placeholder:text-ink-3",
             open ? "h-28" : "h-11",
           )}
         />
@@ -320,7 +323,7 @@ function Composer() {
             <Paperclip strokeWidth={1.75} />
           </IconBtn>
           <span
-            className={cn("ml-1 text-xs text-(--ink-3) transition-opacity duration-150", open ? "opacity-100" : "opacity-0")}
+            className={cn("ml-1 text-xs text-ink-3 transition-opacity duration-150", open ? "opacity-100" : "opacity-0")}
             aria-hidden={!open}
           >
             Kept as written · <kbd className="font-sans">↵</kbd> to add
@@ -332,7 +335,7 @@ function Composer() {
             // Keep focus in the textarea so the ring doesn't jump to a button that's about to disable itself.
             onMouseDown={(e) => e.preventDefault()}
             onClick={send}
-            className="press ml-auto grid size-7 place-items-center rounded-lg bg-(--cta) text-(--cta-ink) disabled:bg-(--press) disabled:text-(--ink-3)"
+            className="press ml-auto grid size-7 place-items-center rounded-lg bg-cta text-cta-ink disabled:bg-press disabled:text-ink-3"
           >
             <ArrowUp className="size-4" strokeWidth={2.25} />
           </button>

@@ -7,9 +7,12 @@ import { useRef, useState } from "react"
 import { Dialog } from "@base-ui/react/dialog"
 import { Check, ChevronRight, Circle, Copy, Link2, Lock, UserPlus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Avatar } from "@/components/avatar"
+import { Btn } from "@/components/btn"
+import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
 import { SECTIONS, blockers, gapsIn, hasContent, orderedIncidents, statusOf } from "./data"
-import { Avatar, Btn, FakeQr, Pop } from "./ui"
+import { FakeQr } from "./ui"
 
 export function TopBar() {
   const { report } = useEditor()
@@ -18,16 +21,16 @@ export function TopBar() {
     <header className="flex h-16 shrink-0 items-center gap-3.5 px-5">
       <span
         aria-hidden
-        className="grid size-8 place-items-center rounded-lg bg-(--panel) text-[11px] font-bold tracking-tight text-(--ink-2) shadow-(--shadow-panel)"
+        className="grid size-8 place-items-center rounded-lg bg-panel text-[11px] font-bold tracking-tight text-ink-2 shadow-panel"
       >
         SR
       </span>
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px]">
-        <span className="text-(--ink-3)">{report.venue}</span>
-        <ChevronRight className="size-3.5 text-(--ink-3)" aria-hidden />
+        <span className="text-ink-3">{report.venue}</span>
+        <ChevronRight className="size-3.5 text-ink-3" aria-hidden />
         <span className="font-medium">Night of {report.night}</span>
       </nav>
-      <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-(--panel) px-2.5 text-xs text-(--ink-2) shadow-(--shadow-panel)">
+      <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-panel px-2.5 text-xs text-ink-2 shadow-panel">
         {report.submittedAt ? (
           <>
             <Lock className="size-3" aria-hidden />
@@ -35,7 +38,7 @@ export function TopBar() {
           </>
         ) : (
           <>
-            <span className="size-1.5 rounded-full bg-(--ok)" aria-hidden />
+            <span className="size-1.5 rounded-full bg-ok" aria-hidden />
             Open since {report.openedAt}
           </>
         )}
@@ -76,26 +79,26 @@ function SubmitSheet() {
         {report.submittedAt ? "Submitted" : "Submit"}
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Backdrop className="rx-backdrop fixed inset-0 z-40 bg-black/30 dark:bg-black/55" />
+        <Dialog.Backdrop className="backdrop-motion fixed inset-0 z-40 bg-black/30 dark:bg-black/55" />
         <Dialog.Popup
           ref={popupRef}
           // Mouse opens focus the sheet itself, keyboard opens the first control.
           initialFocus={(type) => (type === "keyboard" ? true : popupRef.current)}
-          className="rx rx-sheet fixed inset-y-2 right-2 z-50 flex w-[420px] flex-col rounded-2xl bg-(--panel) shadow-(--shadow-pop) outline-none">
+          className="sheet-motion fixed inset-y-2 right-2 z-50 flex w-[420px] flex-col rounded-2xl bg-panel shadow-pop outline-none">
           <div className="flex items-start gap-3 px-6 pt-6">
             <div className="flex-1">
               <Dialog.Title className="text-lg font-semibold tracking-[-0.01em]">Submit Shift Report</Dialog.Title>
-              <Dialog.Description className="mt-1 text-[13px] text-(--ink-3)">
+              <Dialog.Description className="mt-1 text-[13px] text-ink-3">
                 {report.venue} · Night of {report.night}
               </Dialog.Description>
             </div>
-            <Dialog.Close className="press -mt-1 -mr-2 grid size-8 place-items-center rounded-lg text-(--ink-3) hover:bg-(--raise) hover:text-(--ink)" aria-label="Close">
+            <Dialog.Close className="press -mt-1 -mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-raise hover:text-ink" aria-label="Close">
               <X className="size-4" />
             </Dialog.Close>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-6">
-            <h3 className="mb-2 text-xs font-medium text-(--ink-3)">Needed to submit</h3>
+            <h3 className="mb-2 text-xs font-medium text-ink-3">Needed to submit</h3>
             <ul className="flex flex-col gap-1">
               <ChecklistItem
                 done={b.unconfirmed === 0}
@@ -113,8 +116,8 @@ function SubmitSheet() {
               />
             </ul>
 
-            <h3 className="mt-6 mb-2 text-xs font-medium text-(--ink-3)">Worth a look</h3>
-            <ul className="flex flex-col gap-1 text-[13px] text-(--ink-2)">
+            <h3 className="mt-6 mb-2 text-xs font-medium text-ink-3">Worth a look</h3>
+            <ul className="flex flex-col gap-1 text-[13px] text-ink-2">
               <Info>
                 {fresh ? `${fresh} Captures in the inbox not in the report yet` : "Every Capture is handled"}
               </Info>
@@ -126,18 +129,18 @@ function SubmitSheet() {
               </Info>
             </ul>
 
-            <label className="mt-6 flex cursor-pointer gap-3 rounded-xl bg-(--raise) p-3.5 shadow-[inset_0_0_0_1px_var(--line)]">
+            <label className="mt-6 flex cursor-pointer gap-3 rounded-xl bg-raise p-3.5 shadow-[inset_0_0_0_1px_var(--line)]">
               <input
                 type="checkbox"
                 checked={reviewed}
                 onChange={(e) => setReviewed(e.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-(--ink)"
+                className="mt-0.5 size-4 shrink-0 accent-ink"
               />
               <span className="text-[13px] leading-[1.5]">
                 I reviewed this report and it matches what I remember.
               </span>
             </label>
-            <p className="mt-3 text-xs leading-[1.5] text-(--ink-3)">
+            <p className="mt-3 text-xs leading-[1.5] text-ink-3">
               The report will say: “AI-assisted. Reviewed and submitted by {report.manager.name}.” After submitting it
               locks, and changes are only possible as a dated Addendum.
             </p>
@@ -179,12 +182,12 @@ function ChecklistItem({
   return (
     <li className="flex h-9 items-center gap-2.5 text-[13px]">
       {done ? (
-        <Check className="size-4 text-(--ok)" strokeWidth={2.25} aria-label="Done" />
+        <Check className="size-4 text-ok" strokeWidth={2.25} aria-label="Done" />
       ) : (
-        <Circle className="size-4 text-(--gap)" strokeWidth={2} aria-label="Not done" />
+        <Circle className="size-4 text-gap" strokeWidth={2} aria-label="Not done" />
       )}
-      <span className={cn(done ? "text-(--ink-2)" : "text-(--ink)")}>{label}</span>
-      {meta && <span className="text-(--ink-3) tabular-nums">{meta}</span>}
+      <span className={cn(done ? "text-ink-2" : "text-ink")}>{label}</span>
+      {meta && <span className="text-ink-3 tabular-nums">{meta}</span>}
       {action && (
         <Btn size="sm" variant="secondary" className="ml-auto" onClick={onAction}>
           {action}
@@ -197,7 +200,7 @@ function ChecklistItem({
 function Info({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-2.5 py-1 leading-[1.5]">
-      <span className="mt-[9px] size-1 shrink-0 rounded-full bg-(--ink-3)" aria-hidden />
+      <span className="mt-[9px] size-1 shrink-0 rounded-full bg-ink-3" aria-hidden />
       <span>{children}</span>
     </li>
   )
@@ -218,15 +221,15 @@ function InviteStaff() {
       }
     >
       <h3 className="text-sm font-semibold">Invite staff to tonight&apos;s report</h3>
-      <p className="mt-1 text-xs leading-[1.5] text-pretty text-(--ink-3)">
+      <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
         Door, bar and security add Captures from their phones. No account needed, and they can&apos;t see the report.
       </p>
       <div className="mt-4 grid place-items-center rounded-xl bg-white p-4 shadow-[inset_0_0_0_1px_oklch(0_0_0/0.06)]">
         <FakeQr size={164} />
       </div>
-      <div className="mt-3 flex items-center gap-1 rounded-lg bg-(--raise) py-1 pr-1 pl-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
-        <Link2 className="size-3.5 shrink-0 text-(--ink-3)" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-xs text-(--ink-2)" title={url}>
+      <div className="mt-3 flex items-center gap-1 rounded-lg bg-raise py-1 pr-1 pl-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
+        <Link2 className="size-3.5 shrink-0 text-ink-3" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-xs text-ink-2" title={url}>
           {url}
         </span>
         <Btn
@@ -242,7 +245,7 @@ function InviteStaff() {
           {copied ? "Copied" : "Copy"}
         </Btn>
       </div>
-      <p className="mt-3 text-xs text-(--ink-3)">The link stops working when you submit the report.</p>
+      <p className="mt-3 text-xs text-ink-3">The link stops working when you submit the report.</p>
     </Pop>
   )
 }

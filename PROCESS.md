@@ -64,8 +64,8 @@ Update after every step. If the chat is lost: read this, then `deslog.md` (story
 - [ ] 2a. Shape (see Phase 2a plan)
   - [x] `/prototype`: structure variants (`/prototype/report` A–D, `/prototype/tonight` A–C, `/prototype/night`); the Report screen then designed by hand as prototype E (`/prototype/report-editor`, branch `AI-Exploration`, commit 00fd36f), with diffs logged in `.scratch/shift-report/design-changelog.md`
   - [x] 2a.1 Fold back: `/grill-with-docs`, giving GLOSSARY, ADR 0005–0007, `spec.md`, `report-structure.md`, screenshots in `docs/design/`
-  - [ ] 2a.2 Design system, from the prompt in Phase 2a plan  ← **next**
-  - [ ] 2a.3 Remaining UI in E: demo switch, empty state/onboarding, Enhance, mobile capture page, from the prompt in Phase 2a plan
+  - [x] 2a.2 Design system: tokens and motion in `app/globals.css` (dark default), E's primitives in `components/`, `docs/design-system.md`; E verified unchanged in Chrome (computed styles + pixel diff, dark and light)
+  - [ ] 2a.3 Remaining UI in E: demo switch, empty state/onboarding, Enhance, mobile capture page, from the prompt in Phase 2a plan  ← **next**
   - [ ] 2a.4 Snapshot on branch `prototype/report-editor`, tick 2a
 - [ ] 2b. `/to-tickets` → `/implement` per ticket. Tickets wire E to the backend (domain module, Neon, Gemini, polling); each UI ticket points at E's files and has the AC "looks and works like prototype E, per `docs/design-system.md`". Tickets with UI/UX decisions → `ready-for-human`.
 - [ ] 2c. Polish — Report screen first (incident confirmation), then the empty report, then everything; light mode last

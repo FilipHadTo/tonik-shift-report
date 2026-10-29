@@ -7,9 +7,14 @@
 import { useState } from "react"
 import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Avatar } from "@/components/avatar"
+import { Btn, IconBtn } from "@/components/btn"
+import { chip, type ChipTone } from "@/components/chip"
+import { DraftLabel } from "@/components/draft-label"
+import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
+import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
 import { INCIDENT_TYPES, LOCATIONS, type Field, type Incident, type IncidentField } from "./data"
-import { Avatar, Btn, DraftLabel, IconBtn, PhotoThumb, Pop, VoiceThumb } from "./ui"
 
 const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: string }[] = [
   { field: "occurredAt", label: "Occurred at", icon: Clock, add: "Add time" },
@@ -49,14 +54,14 @@ export function IncidentBlock({
         confirmed
           ? "shadow-[inset_0_0_0_1px_transparent]"
           : i.manual
-            ? "bg-(--raise) shadow-[inset_0_0_0_1px_var(--line-2)]"
+            ? "bg-raise shadow-[inset_0_0_0_1px_var(--line-2)]"
             : "shadow-[inset_0_0_0_1px_transparent]",
         lit && "linked",
       )}
     >
       <span aria-hidden data-on={(confirmed && joinPrev) || undefined} className="seam" />
       <header className="flex items-start gap-2">
-        <span aria-hidden className="shrink-0 text-base leading-6 font-semibold text-(--ink-3) tabular-nums">
+        <span aria-hidden className="shrink-0 text-base leading-6 font-semibold text-ink-3 tabular-nums">
           {number}
         </span>
         <h3
@@ -82,7 +87,7 @@ export function IncidentBlock({
                 Reopen
               </Btn>
             )}
-            <span className="flex items-center gap-1 text-xs text-(--ok)">
+            <span className="flex items-center gap-1 text-xs text-ok">
               <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
               Confirmed {i.confirmedAt}
             </span>
@@ -100,8 +105,8 @@ export function IncidentBlock({
         <div className="-mx-1 px-1 pb-1">
           <footer
             className={cn(
-              "mt-4 flex min-h-8 items-center gap-2 border-t pt-3.5 text-xs text-(--ink-3)",
-              i.manual ? "border-(--line)" : "border-(--ai-ring)",
+              "mt-4 flex min-h-8 items-center gap-2 border-t pt-3.5 text-xs text-ink-3",
+              i.manual ? "border-line" : "border-ai-ring",
             )}
           >
             {i.manual ? (
@@ -150,8 +155,8 @@ function ChipMeta({ incident: i, editable }: MetaProps) {
         <FieldChip key={row.field} incident={i} row={row} editable={editable} icon />
       ))}
       {i.fromStaff && (
-        <span className="ml-1.5 inline-flex items-center gap-1.5 text-[13px] text-(--ink-2)">
-          <span className="text-(--ink-3)">by</span>
+        <span className="ml-1.5 inline-flex items-center gap-1.5 text-[13px] text-ink-2">
+          <span className="text-ink-3">by</span>
           <Avatar author={i.fromStaff} size={18} />
           {i.fromStaff.name}
         </span>
@@ -185,7 +190,7 @@ function Body({ incident: i, editable }: MetaProps) {
         </div>
       ) : (
         editable && (
-          <Btn variant="ghost" size="sm" className="mt-2 -ml-2.5 text-(--ink-3)">
+          <Btn variant="ghost" size="sm" className="mt-2 -ml-2.5 text-ink-3">
             <Paperclip strokeWidth={1.75} />
             Add Evidence
           </Btn>
@@ -194,9 +199,6 @@ function Body({ incident: i, editable }: MetaProps) {
     </div>
   )
 }
-
-const chip =
-  "press inline-flex h-7 max-w-full items-center gap-1.5 truncate rounded-md px-2 text-[13px] whitespace-nowrap"
 
 function FieldChip({
   incident: i,
@@ -222,17 +224,17 @@ function FieldChip({
   const title = row.field === "occurredAt" ? `${row.label} ${look.label} · Captured at ${i.capturedAt}` : `${row.label}: ${look.label}`
   const Icon = row.icon
   const lead = icon && (f.status === "draft" || f.status === "filled") && (
-    <Icon className="size-3.5 text-(--ink-3)" strokeWidth={1.75} aria-hidden />
+    <Icon className="size-3.5 text-ink-3" strokeWidth={1.75} aria-hidden />
   )
   if (!editable)
     return (
       <span
         className={cn(
-          "inline-flex h-7 max-w-full min-w-0 items-center gap-1.5 text-[13px] text-(--ink) tabular-nums",
+          "inline-flex h-7 max-w-full min-w-0 items-center gap-1.5 text-[13px] text-ink tabular-nums",
           icon && "rounded-md px-2 shadow-[inset_0_0_0_1px_var(--line)]",
         )}
       >
-        {icon && <Icon className="size-3.5 text-(--ink-3)" strokeWidth={1.75} aria-hidden />}
+        {icon && <Icon className="size-3.5 text-ink-3" strokeWidth={1.75} aria-hidden />}
         <span className="truncate" title={title}>{look.label}</span>
       </span>
     )
@@ -243,15 +245,15 @@ function FieldChip({
       onOpenChange={setOpen}
       className={row.field === "occurredAt" ? "w-[328px] p-3" : "w-[232px]"}
       trigger={
-        <button type="button" data-field={row.field} aria-label={title} title={title} className={cn(chip, look.cls)}>
+        <button type="button" data-field={row.field} aria-label={title} title={title} className={chip({ tone: look.tone })}>
           {lead}
           {look.text}
         </button>
       }
     >
       {f.status === "gap" && f.hint && (
-        <p className={cn("flex gap-2 text-xs leading-[1.45] text-(--ink-2)", row.field === "occurredAt" ? "mb-3" : "mx-1.5 mt-1 mb-2")}>
-          <Sparkles className="mt-px size-3.5 shrink-0 text-(--ai)" strokeWidth={1.75} aria-hidden />
+        <p className={cn("flex gap-2 text-xs leading-[1.45] text-ink-2", row.field === "occurredAt" ? "mb-3" : "mx-1.5 mt-1 mb-2")}>
+          <Sparkles className="mt-px size-3.5 shrink-0 text-ai" strokeWidth={1.75} aria-hidden />
           {f.hint}
         </p>
       )}
@@ -266,12 +268,11 @@ function valueOf(f: Field) {
   return f.status === "draft" || f.status === "filled" ? f.value : undefined
 }
 
-function chipLook(f: Field, add: string): { text: React.ReactNode; label: string; cls: string } {
-  const set = "bg-(--raise) text-(--ink) shadow-[inset_0_0_0_1px_var(--line)] hover:bg-(--press) tabular-nums"
+function chipLook(f: Field, add: string): { text: React.ReactNode; label: string; tone: ChipTone } {
   switch (f.status) {
     case "draft":
     case "filled":
-      return { text: <span className="truncate">{f.value}</span>, label: f.value, cls: set }
+      return { text: <span className="truncate">{f.value}</span>, label: f.value, tone: "set" }
     case "unknown":
       return {
         text: (
@@ -281,18 +282,18 @@ function chipLook(f: Field, add: string): { text: React.ReactNode; label: string
           </>
         ),
         label: "Unknown",
-        cls: cn(set, "text-(--ink-2)"),
+        tone: "unknown",
       }
     case "gap":
       return {
         text: (
           <>
-            <span className="size-1.5 rounded-full bg-(--gap)" aria-hidden />
+            <span className="size-1.5 rounded-full bg-gap" aria-hidden />
             {add}
           </>
         ),
         label: `Gap, ${add.toLowerCase()}`,
-        cls: "bg-(--gap-soft) font-medium text-(--gap) shadow-[inset_0_0_0_1px_var(--gap-ring)] hover:shadow-[inset_0_0_0_1px_var(--gap-line)]",
+        tone: "gap",
       }
     case "empty":
       return {
@@ -303,7 +304,7 @@ function chipLook(f: Field, add: string): { text: React.ReactNode; label: string
           </>
         ),
         label: add,
-        cls: "text-(--ink-3) shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-(--raise) hover:text-(--ink)",
+        tone: "add",
       }
   }
 }
@@ -327,7 +328,7 @@ function TimePicker({
   const quick = [0, -10, -30, -60, -120].map((d) => ({ d, t: shift(capturedAt, d) }))
   return (
     <div>
-      <p className="mb-1.5 text-xs text-(--ink-3)">Before it was captured ({capturedAt})</p>
+      <p className="mb-1.5 text-xs text-ink-3">Before it was captured ({capturedAt})</p>
       <div className="grid grid-cols-5 gap-1">
         {quick.map(({ d, t }) => (
           <button
@@ -335,14 +336,14 @@ function TimePicker({
             type="button"
             onClick={() => onPick(t)}
             className={cn(
-              chip,
-              "flex-col justify-center gap-0 px-0 py-1.5 leading-tight tabular-nums shadow-[inset_0_0_0_1px_var(--line)] hover:bg-(--press)",
+              chip(),
+              "flex-col justify-center gap-0 px-0 py-1.5 leading-tight tabular-nums shadow-[inset_0_0_0_1px_var(--line)] hover:bg-press",
               "h-auto",
-              current === t ? "bg-(--press)" : "bg-(--raise)",
+              current === t ? "bg-press" : "bg-raise",
             )}
           >
             <span className="text-[13px] font-medium">{t}</span>
-            <span className="text-[10px] text-(--ink-3)">{d === 0 ? "at capture" : `${-d >= 60 ? `${-d / 60}h` : `${-d}m`} before`}</span>
+            <span className="text-[10px] text-ink-3">{d === 0 ? "at capture" : `${-d >= 60 ? `${-d / 60}h` : `${-d}m`} before`}</span>
           </button>
         ))}
       </div>
@@ -361,7 +362,7 @@ function TimePicker({
           type="time"
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
-          className="h-8 flex-1 rounded-lg bg-(--raise) px-2.5 text-[13px] tabular-nums shadow-[inset_0_0_0_1px_var(--line)] outline-none [color-scheme:light] dark:[color-scheme:dark]"
+          className="h-8 flex-1 rounded-lg bg-raise px-2.5 text-[13px] tabular-nums shadow-[inset_0_0_0_1px_var(--line)] outline-none [color-scheme:light] dark:[color-scheme:dark]"
         />
         <Btn type="submit" variant="primary" disabled={!custom}>
           Set
@@ -392,15 +393,15 @@ function ListPicker({
           role="option"
           aria-selected={current === o}
           onClick={() => onPick(o)}
-          className="flex h-8 shrink-0 items-center rounded-md px-2 text-left hover:bg-(--raise) aria-selected:font-medium"
+          className="flex h-8 shrink-0 items-center rounded-md px-2 text-left hover:bg-raise aria-selected:font-medium"
         >
           {o}
-          {current === o && <Check className="ml-auto size-3.5 text-(--ink-2)" aria-hidden />}
+          {current === o && <Check className="ml-auto size-3.5 text-ink-2" aria-hidden />}
         </button>
       ))}
       {allowUnknown && (
         <>
-          <div className="my-1 h-px shrink-0 bg-(--line)" />
+          <div className="my-1 h-px shrink-0 bg-line" />
           <UnknownButton onPick={() => onPick(null)} />
         </>
       )}
@@ -413,13 +414,13 @@ function UnknownButton({ onPick, className }: { onPick: () => void; className?: 
     <button
       type="button"
       onClick={onPick}
-      className={cn("flex h-auto shrink-0 flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-(--raise)", className)}
+      className={cn("flex h-auto shrink-0 flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-raise", className)}
     >
       <span className="flex items-center gap-1.5">
-        <HelpCircle className="size-3.5 text-(--ink-3)" strokeWidth={1.75} aria-hidden />
+        <HelpCircle className="size-3.5 text-ink-3" strokeWidth={1.75} aria-hidden />
         Mark as Unknown
       </span>
-      <span className="pl-5 text-xs text-(--ink-3)">You can&apos;t know it. Doesn&apos;t block submitting.</span>
+      <span className="pl-5 text-xs text-ink-3">You can&apos;t know it. Doesn&apos;t block submitting.</span>
     </button>
   )
 }
