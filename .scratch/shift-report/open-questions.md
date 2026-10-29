@@ -59,3 +59,7 @@ Question 2: what does the manager see when Enhance fails (degraded)? Today in E 
 Not blocking (built with A; easy to flip). Ticket says a partly dismissed Capture "becomes In report".
 - A. (built) Keep the normal derived status: shows Drafted ("to review") while its AI draft is unchecked, In report once kept.
 - B. Force In report right away, even with an unchecked draft.
+
+### 2026-10-30 — Ticket 07: Submit sheet checklist row layout (review)
+
+Not blocking. To fit "Keep all" next to "Show", the checklist meta now sits inline with the label (no wrap) and the row is `min-h-9` instead of `h-9`. Other rows look the same. Filip to eyeball the Submit sheet in E (02:15 scene) and keep or revert.
