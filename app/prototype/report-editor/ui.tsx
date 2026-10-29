@@ -5,7 +5,7 @@
 
 import { Popover } from "@base-ui/react/popover"
 import { Tooltip } from "@base-ui/react/tooltip"
-import { Camera, MessagesSquare, Mic, Type } from "lucide-react"
+import { Camera, Image as ImageIcon, MessagesSquare, Mic, Sparkles, Type } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Author, Capture } from "./data"
 
@@ -95,6 +95,8 @@ export function Pop({
       <Popover.Portal>
         <Popover.Positioner side={side} align={align} sideOffset={6} className="z-50">
           <Popover.Popup
+            // Mouse opens keep focus off the first button so no ring flashes; keyboard opens move focus in.
+            initialFocus={(type) => type === "keyboard"}
             className={cn(
               "rx rx-pop rounded-xl bg-(--panel) p-1.5 text-[13px] shadow-(--shadow-pop) outline-none",
               className,
@@ -151,27 +153,18 @@ export function KindLabel({ kind }: { kind: Capture["kind"] }) {
   )
 }
 
-/** Stand-in for a phone photo: a dark pane with a crack. Upload is fake in the prototype. */
+/** Photo Evidence placeholder. Upload is fake in the prototype, so no real image. */
 export function PhotoThumb({ className }: { className?: string }) {
   return (
     <span
       role="img"
-      aria-label="Photo of a smashed window"
-      className={cn("relative block overflow-hidden rounded-md", className)}
-      style={{
-        background:
-          "radial-gradient(120% 90% at 30% 20%, oklch(0.55 0.04 230), oklch(0.28 0.03 240) 60%, oklch(0.18 0.02 250))",
-        outline: "1px solid var(--img-outline)",
-        outlineOffset: -1,
-      }}
+      aria-label="Photo"
+      className={cn(
+        "grid place-items-center rounded-lg bg-(--press) text-(--ink-3) shadow-[inset_0_0_0_1px_var(--line)]",
+        className,
+      )}
     >
-      <svg viewBox="0 0 80 60" className="absolute inset-0 size-full" aria-hidden>
-        <g stroke="oklch(0.95 0 0 / 0.75)" strokeWidth="0.7" fill="none" strokeLinecap="round">
-          <path d="M44 26 L58 6 M44 26 L76 22 M44 26 L70 50 M44 26 L40 58 M44 26 L12 44 M44 26 L18 8 M44 26 L36 2" />
-          <path d="M50 18 L54 28 L48 34 L38 32 L36 22 Z" />
-          <path d="M56 12 L64 26 L58 40 L42 42 L28 36 L26 20 L36 12 Z" strokeWidth="0.5" />
-        </g>
-      </svg>
+      <ImageIcon className="size-5" strokeWidth={1.5} aria-hidden />
     </span>
   )
 }
@@ -230,5 +223,24 @@ export function FakeQr({ size = 152 }: { size?: number }) {
 export function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd className="rounded border border-(--line-2) px-1 font-sans text-[10px] text-(--ink-3)">{children}</kbd>
+  )
+}
+
+/** "AI draft from …" line on top of every Draft, Section or Incident. */
+export function DraftLabel({ sources, className }: { sources: Capture[]; className?: string }) {
+  return (
+    <p className={cn("flex items-center gap-1.5 text-xs text-(--ink-3)", className)}>
+      <Sparkles className="size-3.5 text-(--ai)" strokeWidth={1.75} aria-hidden />
+      <span className="font-medium text-(--ai)">AI draft</span>
+      {sources.length > 0 && <span>from</span>}
+      {sources.map((c, i) => (
+        <span key={c.id} className="inline-flex items-center gap-1 text-(--ink-2)">
+          <Avatar author={c.author} size={16} />
+          {c.author.name.split(" ")[0]}
+          <span className="text-(--ink-3) tabular-nums">{c.capturedAt}</span>
+          {i < sources.length - 1 && <span className="text-(--ink-3)">,</span>}
+        </span>
+      ))}
+    </p>
   )
 }

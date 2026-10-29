@@ -5,7 +5,7 @@
 // Capture ↔ report cross-highlight shared by all three columns.
 
 import { createContext, useCallback, useContext, useMemo, useReducer, useRef, useState } from "react"
-import { PrototypeSwitcher } from "@/components/prototype/prototype-switcher"
+import { PrototypeSwitcher, useVariant } from "@/components/prototype/prototype-switcher"
 import { reducer, seedReport, type Action, type Report, type SectionId } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
@@ -14,6 +14,15 @@ import { TopBar } from "./top-bar"
 import "./editor.css"
 
 type Hot = { captures: string[]; from: "inbox" | "doc" } | null
+
+/** Incident metadata layouts under review, switched with the prototype bar. */
+export type MetaLayout = "table" | "chips" | "side" | "strip"
+const VARIANTS: { key: string; name: string; meta: MetaLayout }[] = [
+  { key: "E", name: "Incident meta: table", meta: "table" },
+  { key: "F", name: "Incident meta: chip row", meta: "chips" },
+  { key: "G", name: "Incident meta: side column", meta: "side" },
+  { key: "H", name: "Incident meta: strip", meta: "strip" },
+]
 
 type Ctx = {
   report: Report
@@ -24,6 +33,7 @@ type Ctx = {
   flash: string | null
   reveal: (anchor: string) => void
   docRef: React.RefObject<HTMLDivElement | null>
+  meta: MetaLayout
 }
 
 const EditorCtx = createContext<Ctx | null>(null)
@@ -37,6 +47,8 @@ export function useEditor() {
 const DRAFTING_MS = 1100
 
 export function ReportEditor() {
+  const variant = useVariant(VARIANTS)
+  const meta = VARIANTS.find((v) => v.key === variant.key)!.meta
   const [report, dispatch] = useReducer(reducer, undefined, seedReport)
   const [hot, setHot] = useState<Hot>(null)
   const [flash, setFlash] = useState<string | null>(null)
@@ -60,23 +72,23 @@ export function ReportEditor() {
   }, [])
 
   const value = useMemo(
-    () => ({ report, dispatch, draft, hot, setHot, flash, reveal, docRef }),
-    [report, draft, hot, flash, reveal],
+    () => ({ report, dispatch, draft, hot, setHot, flash, reveal, docRef, meta }),
+    [report, draft, hot, flash, reveal, meta],
   )
 
   return (
     <EditorCtx.Provider value={value}>
       <div className="rx flex h-dvh bg-(--canvas) min-h-[640px] min-w-[1180px] flex-col text-[14px]">
         <TopBar />
-        <div className="grid min-h-0 flex-1 grid-cols-[328px_minmax(0,1fr)_272px] gap-2 px-2 pb-2">
+        <div className="grid min-h-0 flex-1 grid-cols-[336px_minmax(0,1fr)_280px] gap-3 px-3 pb-3">
           <Inbox />
           <Document />
           <Rail />
         </div>
       </div>
       <PrototypeSwitcher
-        variants={[{ key: "E", name: "Inbox + editor" }]}
-        current={{ key: "E", name: "Inbox + editor" }}
+        variants={VARIANTS}
+        current={variant}
         onReset={() => dispatch({ type: "reset" })}
         links={[
           { href: "/prototype/report", label: "Report A–D" },

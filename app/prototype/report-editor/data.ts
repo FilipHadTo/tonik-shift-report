@@ -194,8 +194,21 @@ const EFFECTS: Record<string, Effect[]> = {
   c6: [{ section: "inventory", text: "Aperol ran out around 01:00. Two cases needed before Friday." }],
 }
 
+// Typed Captures without a script land in the Section their words point to.
+const KEYWORDS: [Exclude<SectionId, "incidents">, RegExp][] = [
+  ["kitchen", /kitchen|chef|food/i],
+  ["bar", /\bbar\b|bartender|till/i],
+  ["door", /door|queue|entry|guest ?list/i],
+  ["security", /security|barrier|bouncer/i],
+  ["artist", /\bdj\b|artist|band|crew|rider/i],
+  ["maintenance", /leak|broken|repair|machine|light|toilet/i],
+  ["inventory", /stock|ran out|run out|cases|crates|keg/i],
+]
+
 export function effectsOf(c: InboxCapture): Effect[] {
-  return EFFECTS[c.id] ?? [{ section: "overview", text: sentence(c.text) }]
+  if (EFFECTS[c.id]) return EFFECTS[c.id]
+  const section = KEYWORDS.find(([, re]) => re.test(c.text))?.[0] ?? "overview"
+  return [{ section, text: sentence(c.text) }]
 }
 
 function sentence(t: string) {
@@ -243,7 +256,7 @@ export function seedReport(): Report {
       kind: "chat",
       capturedAt: "02:10",
       author: alex,
-      text: "Pasted group chat, Halo staff",
+      text: "Halo staff group",
       chatLines: [
         { at: "22:58", who: "Jess", text: "ice machine leaking again 🙃" },
         { at: "00:12", who: "Tom", text: "front of stage is packed, opening 2nd barrier" },

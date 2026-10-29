@@ -1,75 +1,51 @@
 "use client"
 
-// PROTOTYPE — top bar: where you are, what's left, the whole-report AI action
-// and Submit. Submit always opens the sheet; the sheet says what blocks it.
+// PROTOTYPE — top bar: where you are, inviting staff, and Submit.
+// Submit always opens the sheet; what's left to do lives in the right rail.
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Dialog } from "@base-ui/react/dialog"
-import { Check, ChevronRight, Circle, Lock, Sparkles, X } from "lucide-react"
+import { Check, ChevronRight, Circle, Copy, Link2, Lock, UserPlus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEditor } from "./report-editor"
 import { SECTIONS, blockers, gapsIn, hasContent, orderedIncidents, statusOf } from "./data"
-import { Avatar, Btn } from "./ui"
+import { Avatar, Btn, FakeQr, Pop } from "./ui"
 
 export function TopBar() {
-  const { report, draft, reveal } = useEditor()
-  const b = blockers(report)
-  const incidents = orderedIncidents(report)
-  const fresh = report.captures.filter((c) => statusOf(report, c) === "new")
-  const firstGap = incidents.find((i) => gapsIn(i) > 0)
-  const firstOpen = incidents.find((i) => !i.confirmedAt)
+  const { report } = useEditor()
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 px-4">
+    <header className="flex h-16 shrink-0 items-center gap-3.5 px-5">
       <span
         aria-hidden
-        className="grid size-7 place-items-center rounded-lg bg-(--cta) text-[11px] font-bold tracking-tight text-(--cta-ink)"
+        className="grid size-8 place-items-center rounded-lg bg-(--panel) text-[11px] font-bold tracking-tight text-(--ink-2) shadow-(--shadow-panel)"
       >
         SR
       </span>
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[13px]">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px]">
         <span className="text-(--ink-3)">{report.venue}</span>
         <ChevronRight className="size-3.5 text-(--ink-3)" aria-hidden />
         <span className="font-medium">Night of {report.night}</span>
       </nav>
-      {report.submittedAt ? (
-        <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-(--panel) px-2.5 text-xs text-(--ink-2) shadow-(--shadow-panel)">
-          <Lock className="size-3" aria-hidden />
-          Submitted {report.submittedAt}
-        </span>
-      ) : (
-        <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-(--panel) px-2.5 text-xs text-(--ink-2) shadow-(--shadow-panel)">
-          <span className="size-1.5 rounded-full bg-(--ok)" aria-hidden />
-          Open since {report.openedAt}
-        </span>
-      )}
-
-      <div className="ml-auto flex items-center gap-1">
-        {!report.submittedAt && (
+      <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-(--panel) px-2.5 text-xs text-(--ink-2) shadow-(--shadow-panel)">
+        {report.submittedAt ? (
           <>
-            {b.gaps > 0 && firstGap && (
-              <Btn variant="ghost" onClick={() => reveal(firstGap.id)} className="text-(--gap) hover:text-(--gap)">
-                <span className="size-1.5 rounded-full bg-(--gap)" aria-hidden />
-                {b.gaps === 1 ? "1 Gap" : `${b.gaps} Gaps`}
-              </Btn>
-            )}
-            {b.unconfirmed > 0 && firstOpen && (
-              <Btn variant="ghost" onClick={() => reveal(firstOpen.id)}>
-                <span className="size-1.5 rounded-full bg-(--ai)" aria-hidden />
-                {b.unconfirmed} to confirm
-              </Btn>
-            )}
-            {(b.gaps > 0 || b.unconfirmed > 0) && <span className="mx-2 h-5 w-px bg-(--line-2)" aria-hidden />}
-            <Btn variant="secondary" disabled={!fresh.length} onClick={() => draft(fresh.map((c) => c.id))}>
-              <Sparkles className="text-(--ai)" strokeWidth={1.75} />
-              Draft all from inbox
-              {fresh.length > 0 && <span className="text-(--ink-3) tabular-nums">{fresh.length}</span>}
-            </Btn>
+            <Lock className="size-3" aria-hidden />
+            Submitted {report.submittedAt}
+          </>
+        ) : (
+          <>
+            <span className="size-1.5 rounded-full bg-(--ok)" aria-hidden />
+            Open since {report.openedAt}
           </>
         )}
+      </span>
+
+      <div className="ml-auto flex items-center gap-2">
+        {!report.submittedAt && <InviteStaff />}
         <SubmitSheet />
-        <span className="ml-2">
-          <Avatar author={report.manager} size={28} />
+        <span className="ml-2.5">
+          <Avatar author={report.manager} size={30} />
         </span>
       </div>
     </header>
@@ -80,6 +56,7 @@ function SubmitSheet() {
   const { report, dispatch, reveal } = useEditor()
   const [open, setOpen] = useState(false)
   const [reviewed, setReviewed] = useState(false)
+  const popupRef = useRef<HTMLDivElement>(null)
   const b = blockers(report)
   const incidents = orderedIncidents(report)
   const confirmed = incidents.filter((i) => i.confirmedAt).length
@@ -95,12 +72,16 @@ function SubmitSheet() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<Btn variant="primary" className="ml-1" disabled={!!report.submittedAt} />}>
+      <Dialog.Trigger render={<Btn variant="primary" disabled={!!report.submittedAt} />}>
         {report.submittedAt ? "Submitted" : "Submit"}
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Backdrop className="rx-backdrop fixed inset-0 z-40 bg-black/30" />
-        <Dialog.Popup className="rx rx-sheet fixed inset-y-2 right-2 z-50 flex w-[420px] flex-col rounded-2xl bg-(--panel) shadow-(--shadow-pop) outline-none">
+        <Dialog.Backdrop className="rx-backdrop fixed inset-0 z-40 bg-black/30 dark:bg-black/55" />
+        <Dialog.Popup
+          ref={popupRef}
+          // Mouse opens focus the sheet itself, keyboard opens the first control.
+          initialFocus={(type) => (type === "keyboard" ? true : popupRef.current)}
+          className="rx rx-sheet fixed inset-y-2 right-2 z-50 flex w-[420px] flex-col rounded-2xl bg-(--panel) shadow-(--shadow-pop) outline-none">
           <div className="flex items-start gap-3 px-6 pt-6">
             <div className="flex-1">
               <Dialog.Title className="text-lg font-semibold tracking-[-0.01em]">Submit Shift Report</Dialog.Title>
@@ -137,7 +118,9 @@ function SubmitSheet() {
               <Info>
                 {fresh ? `${fresh} Captures in the inbox not in the report yet` : "Every Capture is handled"}
               </Info>
-              <Info>{drafts ? `${drafts} Section drafts not kept yet. They're submitted as they are.` : "No open Section drafts"}</Info>
+              <Info>{drafts
+                  ? `${drafts === 1 ? "1 Section draft isn't" : `${drafts} Section drafts aren't`} kept yet. They're submitted as they are.`
+                  : "No open Section drafts"}</Info>
               <Info>
                 {written.length} Sections written. Not covered tonight: {notCovered.map((s) => s.name).join(", ")}.
               </Info>
@@ -217,5 +200,49 @@ function Info({ children }: { children: React.ReactNode }) {
       <span className="mt-[9px] size-1 shrink-0 rounded-full bg-(--ink-3)" aria-hidden />
       <span>{children}</span>
     </li>
+  )
+}
+
+function InviteStaff() {
+  const [copied, setCopied] = useState(false)
+  const url = "halo.shift.report/n/24-oct/j8k2"
+  return (
+    <Pop
+      align="end"
+      className="w-[300px] p-4"
+      trigger={
+        <Btn variant="secondary">
+          <UserPlus strokeWidth={1.75} />
+          Invite staff
+        </Btn>
+      }
+    >
+      <h3 className="text-sm font-semibold">Invite staff to tonight&apos;s report</h3>
+      <p className="mt-1 text-xs leading-[1.5] text-pretty text-(--ink-3)">
+        Door, bar and security add Captures from their phones. No account needed, and they can&apos;t see the report.
+      </p>
+      <div className="mt-4 grid place-items-center rounded-xl bg-white p-4 shadow-[inset_0_0_0_1px_oklch(0_0_0/0.06)]">
+        <FakeQr size={164} />
+      </div>
+      <div className="mt-3 flex items-center gap-1 rounded-lg bg-(--raise) py-1 pr-1 pl-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
+        <Link2 className="size-3.5 shrink-0 text-(--ink-3)" aria-hidden />
+        <span className="min-w-0 flex-1 truncate text-xs text-(--ink-2)" title={url}>
+          {url}
+        </span>
+        <Btn
+          size="sm"
+          variant="primary"
+          onClick={() => {
+            navigator.clipboard?.writeText(`https://${url}`)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1600)
+          }}
+        >
+          {copied ? <Check /> : <Copy />}
+          {copied ? "Copied" : "Copy"}
+        </Btn>
+      </div>
+      <p className="mt-3 text-xs text-(--ink-3)">The link stops working when you submit the report.</p>
+    </Pop>
   )
 }
