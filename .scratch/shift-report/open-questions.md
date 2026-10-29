@@ -28,3 +28,28 @@ No closing manager available to ask — these stay as assumptions for the build.
 - Department check-out: when leaving, a Staff Member gets "Anything from the bar tonight?" — a short voice/text Capture the AI turns into that Section's Draft. Strong Loom "what's next" story even if unbuilt.
 
 Cut: AI photo analysis (Filip, 2026-10-29: the AI never reads photos), the desktop-to-phone QR handoff (the capture page covers it), "I saw it too" witness joins (no witness fields). Also cut: push notifications asking staff for their version of an Incident (would be pure fake in a prototype).
+
+## Phase 2b
+
+### 2026-10-30 — Ticket 17: layout of the submitted report document
+
+Blocks: 17 (ready-for-human, also blocked by 16). New screen, Filip designs it in E before it can be built.
+
+Question: how should the submitted Shift Report read as a document (header, Sections, Incidents, "Not covered tonight", attachments, verbatim Captures, statement + footer, Share stub)?
+
+Options:
+- A. Same route as the editor, locked view swaps to a document layout (single column, print stylesheet).
+- B. Separate read-only route under `app/prototype/report-editor/` (e.g. `/submitted`), the editor links to it after Submit; doubles as the Owner view.
+- C. Filip sketches it in E by hand first (as with the Report screen), then an agent builds it.
+
+### 2026-10-30 — Ticket 15: "Enhancing…" timing and failed Enhance message
+
+Blocks: 15 (only these two details; the rest can be built). Raised by ticket 05.
+
+Question 1: with the fake model "Enhancing…" only shows after the answer (instant). With Gemini there is a real wait.
+- A. Show "Enhancing…" before the call; "Already reads clean." appears after the wait.
+- B. Keep the current order (nothing visible until the model answers).
+
+Question 2: what does the manager see when Enhance fails (degraded)? Today in E nothing happens.
+- A. Calm inline note under the block, e.g. "Couldn't enhance right now. Your text is unchanged."
+- B. Silent no-op (current behaviour).
