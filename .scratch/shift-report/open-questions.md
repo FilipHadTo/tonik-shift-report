@@ -53,3 +53,9 @@ Question 1: with the fake model "Enhancing…" only shows after the answer (inst
 Question 2: what does the manager see when Enhance fails (degraded)? Today in E nothing happens.
 - A. Calm inline note under the block, e.g. "Couldn't enhance right now. Your text is unchanged."
 - B. Silent no-op (current behaviour).
+
+### 2026-10-30 — Ticket 06: status of a partly dismissed Capture
+
+Not blocking (built with A; easy to flip). Ticket says a partly dismissed Capture "becomes In report".
+- A. (built) Keep the normal derived status: shows Drafted ("to review") while its AI draft is unchecked, In report once kept.
+- B. Force In report right away, even with an unchecked draft.
