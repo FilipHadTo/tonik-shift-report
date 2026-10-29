@@ -30,7 +30,7 @@ Update after every step. If the chat is lost: read this, then `deslog.md` (story
 - [x] 1a. `/grill-with-docs` — `GLOSSARY.md`, ADR 0001–0002, `.scratch/shift-report/open-questions.md`
 - [x] 1b. `/to-questionnaire` — Dorota: email sent 2026-10-28 (one open legal question; silence = our assumptions stand). Closing manager: skipped, nobody available → assumptions. `to-questionnaire-dorota-shift-report.md` is the internal detailed version, not what was sent.
 - [x] 1c. `/to-spec` → `.scratch/shift-report/spec.md` (ready-for-agent), ADR 0003–0004. Test seam: one pure report-domain module with a fake LLM.
-- [ ] 2a. `/prototype` — capture-screen variants, pick one  ← **next**
+- [ ] 2a. `/prototype` — variants built (`pnpm prototype` → `/prototype/report` A–D, `/prototype/tonight` A–C), plus `/prototype/night` walkthrough. Report screen now mocked on localhost instead of Paper (`/prototype/report-editor`, variant E: inbox + document + section rail; branch `AI-Exploration`), diffs vs spec logged in `.scratch/shift-report/design-changelog.md` by the `spec-diff` agent. Next: iterate on E, then fold changes back into GLOSSARY/ADRs/spec (`.scratch/shift-report/paper-design-plan.md`), then capture on a `prototype/*` branch  ← **next**
 - [ ] 2b. `/to-tickets` → `/implement` per ticket
 - [ ] 2c. Polish — Report screen first (incident confirmation), then everything
 - [ ] 2d. `/code-review`, deploy (Vercel + Neon)
