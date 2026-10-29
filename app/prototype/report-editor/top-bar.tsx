@@ -5,14 +5,14 @@
 
 import { useRef, useState } from "react"
 import { Dialog } from "@base-ui/react/dialog"
-import { Check, ChevronRight, Circle, Copy, Link2, Lock, UserPlus, X } from "lucide-react"
+import { Check, ChevronRight, Circle, Copy, ExternalLink, Link2, Lock, UserPlus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
-import { Btn } from "@/components/btn"
+import { Btn, IconBtn } from "@/components/btn"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
-import { SECTIONS, blockers, gapsIn, hasContent, orderedIncidents, statusOf } from "./data"
-import { FakeQr } from "./ui"
+import { SECTIONS, blockers, demoSession, gapsIn, hasContent, openDrafts, orderedIncidents, statusOf } from "./data"
+import { Qr } from "./ui"
 
 export function TopBar() {
   const { report } = useEditor()
@@ -39,7 +39,7 @@ export function TopBar() {
         ) : (
           <>
             <span className="size-1.5 rounded-full bg-ok" aria-hidden />
-            Open since {report.openedAt}
+            Open since {report.startedAt}
           </>
         )}
       </span>
@@ -65,7 +65,6 @@ function SubmitSheet() {
   const confirmed = incidents.filter((i) => i.confirmedAt).length
   const written = SECTIONS.filter((s) => s.id !== "incidents" && hasContent(report, s.id))
   const notCovered = SECTIONS.filter((s) => s.id !== "incidents" && !hasContent(report, s.id))
-  const drafts = report.blocks.filter((x) => x.status === "draft").length
   const fresh = report.captures.filter((c) => statusOf(report, c) === "new").length
   const go = (anchor?: string) => {
     if (!anchor) return
@@ -104,15 +103,22 @@ function SubmitSheet() {
                 done={b.unconfirmed === 0}
                 label={`Every Incident confirmed`}
                 meta={`${confirmed} of ${incidents.length}`}
-                action={b.unconfirmed ? "Review" : undefined}
+                action={b.unconfirmed ? "Show" : undefined}
                 onAction={() => go(incidents.find((i) => !i.confirmedAt)?.id)}
               />
               <ChecklistItem
                 done={b.gaps === 0}
                 label="No Gaps left"
                 meta={b.gaps ? `${b.gaps} left` : undefined}
-                action={b.gaps ? "Fill" : undefined}
+                action={b.gaps ? "Show" : undefined}
                 onAction={() => go(incidents.find((i) => gapsIn(i) > 0)?.id)}
+              />
+              <ChecklistItem
+                done={b.drafts === 0}
+                label="Every AI draft kept or discarded"
+                meta={b.drafts ? `${b.drafts} left` : undefined}
+                action={b.drafts ? "Show" : undefined}
+                onAction={() => go(openDrafts(report)[0])}
               />
             </ul>
 
@@ -121,9 +127,6 @@ function SubmitSheet() {
               <Info>
                 {fresh ? `${fresh} Captures in the inbox not in the report yet` : "Every Capture is handled"}
               </Info>
-              <Info>{drafts
-                  ? `${drafts === 1 ? "1 Section draft isn't" : `${drafts} Section drafts aren't`} kept yet. They're submitted as they are.`
-                  : "No open Section drafts"}</Info>
               <Info>
                 {written.length} Sections written. Not covered tonight: {notCovered.map((s) => s.name).join(", ")}.
               </Info>
@@ -147,7 +150,7 @@ function SubmitSheet() {
           </div>
 
           <div className="flex items-center justify-end gap-2 px-6 py-5">
-            <Dialog.Close render={<Btn variant="ghost" />}>Keep editing</Dialog.Close>
+            <Dialog.Close render={<Btn variant="ghost" />}>Back to report</Dialog.Close>
             <Btn
               variant="primary"
               disabled={!b.ready || !reviewed}
@@ -207,36 +210,62 @@ function Info({ children }: { children: React.ReactNode }) {
 }
 
 function InviteStaff() {
-  const [copied, setCopied] = useState(false)
-  const url = "halo.shift.report/n/24-oct/j8k2"
+  const { dispatch, invite, setInvite } = useEditor()
   return (
     <Pop
       align="end"
       className="w-[300px] p-4"
+      open={invite.open}
+      onOpenChange={(open) => {
+        setInvite({ open, halo: false })
+        // Counts as invited once the QR was shown (on close, so the onboarding hint stays put meanwhile).
+        if (!open) dispatch({ type: "invited" })
+      }}
       trigger={
-        <Btn variant="secondary">
+        <Btn variant="secondary" className={cn("relative", invite.halo && "halo")}>
           <UserPlus strokeWidth={1.75} />
           Invite staff
         </Btn>
       }
     >
+      <InviteCard />
+    </Pop>
+  )
+}
+
+export const CAPTURE_PATH = "/prototype/report-editor/capture"
+
+/** QR and link to the capture page. Used by Invite staff and the empty Inbox. */
+export function InviteCard() {
+  const [copied, setCopied] = useState(false)
+  const origin = typeof window === "undefined" ? "" : window.location.origin
+  const link = `${CAPTURE_PATH}?d=${typeof window === "undefined" ? "" : demoSession()}`
+  const href = `${origin}${link}`
+  const shown = href.replace(/^https?:\/\//, "")
+  const local = /^https?:\/\/(localhost|127\.)/.test(origin)
+  return (
+    <>
       <h3 className="text-sm font-semibold">Invite staff to tonight&apos;s report</h3>
       <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
         Door, bar and security add Captures from their phones. No account needed, and they can&apos;t see the report.
+        You can use it too.
       </p>
       <div className="mt-4 grid place-items-center rounded-xl bg-white p-4 shadow-[inset_0_0_0_1px_oklch(0_0_0/0.06)]">
-        <FakeQr size={164} />
+        <Qr value={href} size={164} />
       </div>
       <div className="mt-3 flex items-center gap-1 rounded-lg bg-raise py-1 pr-1 pl-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
         <Link2 className="size-3.5 shrink-0 text-ink-3" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-xs text-ink-2" title={url}>
-          {url}
+        <span className="min-w-0 flex-1 truncate text-xs text-ink-2" title={shown}>
+          {shown}
         </span>
+        <IconBtn label="Open on this computer" nativeButton={false} render={<a href={link} target="_blank" rel="noreferrer" />}>
+          <ExternalLink strokeWidth={1.75} />
+        </IconBtn>
         <Btn
           size="sm"
           variant="primary"
           onClick={() => {
-            navigator.clipboard?.writeText(`https://${url}`)
+            navigator.clipboard?.writeText(href)
             setCopied(true)
             setTimeout(() => setCopied(false), 1600)
           }}
@@ -245,7 +274,11 @@ function InviteStaff() {
           {copied ? "Copied" : "Copy"}
         </Btn>
       </div>
-      <p className="mt-3 text-xs text-ink-3">The link stops working when you submit the report.</p>
-    </Pop>
+      <p className="mt-3 text-xs text-ink-3">
+        {local
+          ? "Demo on localhost: a phone can't reach it. Open the Network address from next dev to scan."
+          : "The link stops working when you submit the report."}
+      </p>
+    </>
   )
 }

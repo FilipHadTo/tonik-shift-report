@@ -26,6 +26,44 @@
   opacity: 1;
 }
 
+/* The Incident's label line sits on top, so its fold keeps no bottom spacer (see .fold in globals.css). */
+.rx .incident .fold[data-folded] {
+  grid-template-rows: 0fr 0px;
+}
+
+/* Halo: marks where a feature lives when the onboarding points at it (Invite staff).
+   A steady ring, plus a soft pulse three times. */
+.rx .halo::before,
+.rx .halo::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 12px;
+  pointer-events: none;
+}
+.rx .halo::before {
+  box-shadow: 0 0 0 1.5px var(--ink-3), 0 0 18px 2px color-mix(in oklch, var(--ink) 16%, transparent);
+  transition: opacity 200ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+  }
+}
+.rx .halo::after {
+  box-shadow: 0 0 0 1.5px var(--ink-2);
+  animation: halo 1.4s var(--ease-out) 3;
+  opacity: 0;
+}
+@keyframes halo {
+  from {
+    opacity: 0.9;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.18;
+  }
+}
+
 /* Composer grows on focus */
 .rx .composer textarea {
   transition-property: height;
@@ -36,5 +74,8 @@
 @media (prefers-reduced-motion: reduce) {
   .rx .composer textarea {
     transition: none;
+  }
+  .rx .halo::after {
+    animation: none;
   }
 }

@@ -14,12 +14,13 @@ import { DraftLabel } from "@/components/draft-label"
 import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
+import { Enhancing } from "./enhance"
 import { INCIDENT_TYPES, LOCATIONS, type Field, type Incident, type IncidentField } from "./data"
 
 const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: string }[] = [
   { field: "occurredAt", label: "Occurred at", icon: Clock, add: "Add time" },
   { field: "location", label: "Location", icon: MapPin, add: "Add location" },
-  { field: "type", label: "Type", icon: Tag, add: "Pick type" },
+  { field: "type", label: "Type", icon: Tag, add: "Add type" },
 ]
 
 export function IncidentBlock({
@@ -35,7 +36,7 @@ export function IncidentBlock({
   const { report, dispatch, hot, setHot, flash } = useEditor()
   const confirmed = !!i.confirmedAt
   const locked = !!report.submittedAt
-  const gap = ROWS.find((r) => i.fields[r.field].status === "gap")
+  const gap = ROWS.find((r) => ["gap", "empty"].includes(i.fields[r.field].status))
   const lit = (hot?.from === "inbox" && i.sources.some((s) => hot.captures.includes(s))) || flash === i.id
   const sources = report.captures.filter((c) => i.sources.includes(c.id))
   const editable = !confirmed && !locked
@@ -50,7 +51,7 @@ export function IncidentBlock({
       onMouseLeave={() => setHot(null)}
       className={cn(
         // Hangs into the gutter like Draft blocks, so the text lines up with the rest of the document.
-        "group/incident incident enter -mx-5 scroll-mt-24 rounded-2xl px-5 pt-[18px] pb-2.5",
+        "group/incident incident enter -mx-5 scroll-mt-24 rounded-2xl px-5 pt-2.5 pb-4",
         confirmed
           ? "shadow-[inset_0_0_0_1px_transparent]"
           : i.manual
@@ -60,6 +61,40 @@ export function IncidentBlock({
       )}
     >
       <span aria-hidden data-on={(confirmed && joinPrev) || undefined} className="seam" />
+      {/* Label line with the actions on the right, like a Section Draft. Stays mounted so Confirm can fold it away. */}
+      <div className="fold" data-folded={confirmed || undefined} inert={confirmed}>
+        <div className="-mx-1 px-1">
+          <div className="mb-2 flex h-8 items-center gap-1 text-xs text-ink-3">
+            {i.manual ? <span>Added by {report.manager.name}</span> : <DraftLabel sources={sources} />}
+            {editable && (
+              <span className="ml-auto flex items-center gap-1">
+                <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
+                  <Trash2 strokeWidth={1.75} />
+                </IconBtn>
+                {gap ? (
+                  // Confirm can't happen yet, so the button offers the next step instead: it opens the first Gap's picker.
+                  <Btn
+                    variant="secondary"
+                    size="sm"
+                    className="-mr-1.5"
+                    onClick={() => document.querySelector<HTMLButtonElement>(`#${i.id} [data-field="${gap.field}"]`)?.click()}
+                  >
+                    <gap.icon strokeWidth={1.75} />
+                    {gap.add} to confirm
+                  </Btn>
+                ) : i.descriptionDraft !== undefined ? (
+                  <span className="ml-1">Keep or discard the AI draft to confirm</span>
+                ) : (
+                  <Btn variant="primary" size="sm" className="-mr-1.5" onClick={() => dispatch({ type: "confirm", incident: i.id })}>
+                    <Check strokeWidth={2.25} />
+                    Confirm
+                  </Btn>
+                )}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
       <header className="flex items-start gap-2">
         <span aria-hidden className="shrink-0 text-base leading-6 font-semibold text-ink-3 tabular-nums">
           {number}
@@ -100,47 +135,6 @@ export function IncidentBlock({
         <Body incident={i} editable={editable} />
       </div>
 
-      {/* Stays mounted so Confirm can fold it away instead of cutting it. */}
-      <div className="fold" data-folded={confirmed || undefined} inert={confirmed}>
-        <div className="-mx-1 px-1 pb-1">
-          <footer
-            className={cn(
-              "mt-4 flex min-h-8 items-center gap-2 border-t pt-3.5 text-xs text-ink-3",
-              i.manual ? "border-line" : "border-ai-ring",
-            )}
-          >
-            {i.manual ? (
-              <span>Added by {report.manager.name}</span>
-            ) : (
-              <DraftLabel sources={sources} />
-            )}
-
-            {editable && (
-              <span className="ml-auto flex items-center gap-1.5">
-                <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
-                  <Trash2 strokeWidth={1.75} />
-                </IconBtn>
-                {gap ? (
-                  // Confirm can't happen yet, so the button offers the next step instead: it opens the first Gap's picker.
-                  <Btn
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => document.querySelector<HTMLButtonElement>(`#${i.id} [data-field="${gap.field}"]`)?.click()}
-                  >
-                    <gap.icon strokeWidth={1.75} />
-                    {gap.add} to confirm
-                  </Btn>
-                ) : (
-                  <Btn variant="primary" size="sm" onClick={() => dispatch({ type: "confirm", incident: i.id })}>
-                    <Check strokeWidth={2.25} />
-                    Confirm
-                  </Btn>
-                )}
-              </span>
-            )}
-          </footer>
-        </div>
-      </div>
     </article>
   )
 }
@@ -167,21 +161,49 @@ function ChipMeta({ incident: i, editable }: MetaProps) {
 
 /** What happened, then Evidence. Same in every layout. */
 function Body({ incident: i, editable }: MetaProps) {
-  const { dispatch } = useEditor()
+  const { dispatch, enhancing } = useEditor()
+  const busy = enhancing === i.id
+  const pending = i.descriptionDraft !== undefined
   return (
     <div className="min-w-0">
-      <p
-        contentEditable={editable}
-        suppressContentEditableWarning
-        data-placeholder="What happened?"
-        aria-label="What happened"
-        onBlur={(e) =>
-          dispatch({ type: "editIncident", incident: i.id, patch: { description: e.currentTarget.textContent ?? "" } })
-        }
-        className="rounded-sm text-[15px] leading-[1.6] text-pretty outline-none"
-      >
-        {i.description}
-      </p>
+      {busy && <Enhancing />}
+      {pending ? (
+        // Enhance result: a Draft inside the Incident, kept or discarded on its own (story 27).
+        <div className="-mx-3 rounded-xl bg-(image:--ai-wash) px-3 pt-1 pb-2.5">
+          <div className="flex h-8 items-center gap-1">
+            <DraftLabel sources={[]} note="from your text" className="mr-auto" />
+            <Btn size="sm" variant="ghost" onClick={() => dispatch({ type: "discardIncidentDraft", incident: i.id })}>
+              Discard
+            </Btn>
+            <Btn
+              size="sm"
+              variant="secondary"
+              className="-mr-1.5"
+              onClick={() => dispatch({ type: "keepIncidentDraft", incident: i.id })}
+            >
+              <Check strokeWidth={2.25} />
+              Keep
+            </Btn>
+          </div>
+          <p className="mt-1 text-[15px] leading-[1.6] text-pretty">{i.descriptionDraft}</p>
+        </div>
+      ) : (
+        <p
+          key={i.description}
+          contentEditable={editable && !busy}
+          suppressContentEditableWarning
+          data-placeholder="What happened?"
+          aria-label="What happened"
+          // Only an Incident the manager added holds their own words; an AI Incident is a Draft already.
+          data-enhance={editable && i.manual && !busy ? `incident:${i.id}` : undefined}
+          onBlur={(e) =>
+            dispatch({ type: "editIncident", incident: i.id, patch: { description: e.currentTarget.textContent ?? "" } })
+          }
+          className="rounded-sm text-[15px] leading-[1.6] text-pretty outline-none"
+        >
+          {i.description}
+        </p>
+      )}
 
       {i.evidence.length > 0 ? (
         <div className="mt-3 flex items-center gap-2">

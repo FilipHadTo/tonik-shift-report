@@ -58,13 +58,13 @@ Weights: 400, `font-medium` for labels and buttons, `font-semibold` for headings
 
 ## Spacing and sizing
 
-Tailwind 4px scale. Inline gaps are `gap-1` to `gap-2.5` (`gap-1.5` is the default icon-to-label gap); block gaps `gap-3` / `gap-4`. Control heights: `h-7` small (chips, sm buttons, icon buttons), `h-8` default buttons and inputs, `h-9` list rows in the rail. Icons are `size-4` in controls and `size-3.5` in metadata, `strokeWidth={1.75}`. Every hit area is at least 36px: `IconBtn` adds an `after:-inset-1` pseudo-element over its 28px box. Draft blocks and Incidents hang into the gutter (`-mx-4 px-4`, `-mx-5 px-5`) so their text lines up with plain text.
+Tailwind 4px scale. Inline gaps are `gap-1` to `gap-2.5` (`gap-1.5` is the default icon-to-label gap); block gaps `gap-3` / `gap-4`. Control heights: `h-7` small (chips, sm buttons, icon buttons), `h-8` default buttons and inputs, `h-9` list rows in the rail. The mobile capture page uses touch sizes instead: `h-11` buttons and inputs (`Btn size="lg"`), 16px input text so iOS doesn't zoom. Icons are `size-4` in controls and `size-3.5` in metadata, `strokeWidth={1.75}`. Every hit area is at least 36px: `IconBtn` adds an `after:-inset-1` pseudo-element over its 28px box. Draft blocks and Incidents hang into the gutter (`-mx-4 px-4`, `-mx-5 px-5`) so their text lines up with plain text.
 
 ## Components (`components/`)
 
 | Component | Use it for | Notes |
 |---|---|---|
-| `Btn` | Every text button. `variant`: `primary` (one per area, the next step: Submit, Confirm), `secondary` (default), `ghost` (low-weight actions in a row: Discard, Add Evidence), `ai` (actions that call AI: Draft all, Draft into report). `size`: `md` (default) / `sm` (inside blocks) | Base UI `Button`. Lucide icon as first child |
+| `Btn` | Every text button. `variant`: `primary` (one per area, the next step: Submit, Confirm), `secondary` (default), `ghost` (low-weight actions in a row: Discard, Add Evidence), `ai` (actions that call AI: Draft all, Draft into report). `size`: `md` (default) / `sm` (inside blocks) / `lg` (44px, mobile capture page only) | Base UI `Button`. Lucide icon as first child |
 | `IconBtn` | Icon-only actions | `label` is required: it becomes `aria-label` and the `Tip`. Never an unlabelled icon |
 | `Tip` | Hover/focus hint for one control | Needs `TooltipProvider` (in `app/layout.tsx`). Short noun phrase, no punctuation |
 | `Pop` | Anything anchored to a trigger: pickers, small menus, the QR card | Controlled via `open` / `onOpenChange`. Keyboard opens move focus in, mouse opens don't |
@@ -74,7 +74,7 @@ Tailwind 4px scale. Inline gaps are `gap-1` to `gap-2.5` (`gap-1.5` is the defau
 | `PhotoThumb`, `VoiceThumb` | Evidence and Capture previews | Placeholders until real uploads exist |
 | `Kbd` | Keyboard hint inside a `Tip` or menu row | |
 
-Sheets and dialogs use Base UI `Dialog` directly with `sheet-motion` / `backdrop-motion` (see the Submit sheet in `app/prototype/report-editor/top-bar.tsx`). Prototype-only bits (`KindLabel`, `FakeQr`) stay in E's `ui.tsx`.
+Sheets and dialogs use Base UI `Dialog` directly with `sheet-motion` / `backdrop-motion` (see the Submit sheet in `app/prototype/report-editor/top-bar.tsx`). Prototype-only bits (`KindLabel`, `Qr`) stay in E's `ui.tsx`.
 
 ## States: AI, Draft, Gap, Confirmed
 

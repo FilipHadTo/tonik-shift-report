@@ -4,12 +4,16 @@ import { Avatar } from "./avatar"
 
 export type DraftSource = { id: string; author: { name: string }; capturedAt: string }
 
-/** "AI draft from …" line on top of every Draft: Section, Incident or Enhance result. */
-export function DraftLabel({ sources, className }: { sources: DraftSource[]; className?: string }) {
+/**
+ * "AI draft from …" line on top of every Draft: Section, Incident or Enhance result.
+ * An Enhance result has no source Captures; pass `note="from your text"` instead.
+ */
+export function DraftLabel({ sources, note, className }: { sources: DraftSource[]; note?: string; className?: string }) {
   return (
     <p className={cn("flex items-center gap-1.5 text-xs text-ink-3", className)}>
       <Sparkles className="size-3.5 text-ai" strokeWidth={1.75} aria-hidden />
       <span className="font-medium text-ai">AI draft</span>
+      {note && <span>{note}</span>}
       {sources.length > 0 && <span>from</span>}
       {sources.map((c, i) => (
         <span key={c.id} className="inline-flex items-center gap-1 text-ink-2">

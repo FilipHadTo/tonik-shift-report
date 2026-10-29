@@ -4,13 +4,26 @@
 // curates by hand. Draft into report, mark as written by hand, or dismiss.
 
 import { useRef, useState } from "react"
-import { Archive, ArrowUp, Check, ChevronRight, CornerDownRight, Paperclip, PenLine, Sparkles } from "lucide-react"
+import {
+  Archive,
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  ChevronRight,
+  CornerDownRight,
+  CornerLeftDown,
+  Paperclip,
+  PenLine,
+  Smartphone,
+  Sparkles,
+  UserPlus,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
 import { useEditor } from "./report-editor"
-import { pendingSectionsOf, statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
+import { statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
 import { KindLabel } from "./ui"
 
 export function Inbox() {
@@ -45,7 +58,10 @@ export function Inbox() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
-        {fresh.length > 0 ? (
+        {!report.invited && !report.submittedAt && report.captures.length > 0 && <InviteNudge />}
+        {report.captures.length === 0 ? (
+          <EmptyInbox />
+        ) : fresh.length > 0 ? (
           <ul className="flex flex-col gap-2.5">
             {fresh.map((c) => (
               <NewTile key={c.id} capture={c} />
@@ -100,6 +116,83 @@ export function Inbox() {
   )
 }
 
+/**
+ * Onboarding, part 1 (story 3): where Captures come from. Shown until the first Capture is in;
+ * the Invite step goes away once staff were invited (story 4).
+ */
+function EmptyInbox() {
+  const { report } = useEditor()
+  return (
+    <div className="enter rounded-xl px-5 pt-5 pb-2 shadow-[inset_0_0_0_1px_var(--line)]">
+      <p className="text-[13px] font-medium">Tonight&apos;s Captures land here</p>
+      <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
+        Photos, voice notes and lines of text from you and your staff, kept word for word with who and when. Nothing
+        goes into the report until you say so.
+      </p>
+      <ol className="mt-4 flex flex-col">
+        {!report.invited && (
+          <Step icon={UserPlus} title="Invite your staff" action={<InvitePop />}>
+            They scan a QR and log from their phones. No account.
+          </Step>
+        )}
+        <Step icon={Smartphone} title="Capture from your phone">
+          Same link, pick Closing Manager. Photo, voice or text in seconds.
+        </Step>
+        <Step icon={CornerLeftDown} title="Or type it here" last>
+          Paste the staff group chat at the end of the Night. One send, one Capture.
+        </Step>
+      </ol>
+    </div>
+  )
+}
+
+function Step({
+  icon: Icon,
+  title,
+  action,
+  last,
+  children,
+}: {
+  icon: typeof UserPlus
+  title: string
+  action?: React.ReactNode
+  last?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <li className={cn("flex gap-3 py-3", !last && "border-b border-line")}>
+      <Icon className="mt-px size-4 shrink-0 text-ink-3" strokeWidth={1.75} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] leading-5 font-medium">{title}</p>
+        <p className="mt-0.5 text-xs leading-[1.5] text-pretty text-ink-3">{children}</p>
+      </div>
+      {action}
+    </li>
+  )
+}
+
+/** Opens Invite staff where it lives, in the top bar, with a halo on it: teaches the place, not just the QR. */
+function InvitePop() {
+  const { setInvite } = useEditor()
+  return (
+    <Btn size="sm" variant="secondary" className="shrink-0" onClick={() => setInvite({ open: true, halo: true })}>
+      Show QR
+      <ArrowUpRight strokeWidth={1.75} />
+    </Btn>
+  )
+}
+
+/** Captures are coming in but staff haven't been invited yet: one quiet row above the list. */
+function InviteNudge() {
+  return (
+    <div className="enter mb-2.5 flex items-center gap-3 rounded-xl px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+      <UserPlus className="size-4 shrink-0 text-ink-3" strokeWidth={1.75} aria-hidden />
+      <p className="min-w-0 flex-1 text-xs leading-[1.5] text-ink-2">Invite door, bar and security to add theirs.</p>
+      <InvitePop />
+    </div>
+  )
+}
+
 function GroupLabel({ children, count }: { children: React.ReactNode; count: number }) {
   return (
     <h3 className="mt-7 mb-2 flex items-center gap-1.5 px-2 text-xs font-medium text-ink-3">
@@ -122,6 +215,7 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
           <span className="truncate">{c.author.role}</span>
           <span aria-hidden>·</span>
           <KindLabel kind={c.kind} />
+
         </div>
       </div>
     </div>
@@ -131,6 +225,7 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
 function NewTile({ capture: c }: { capture: InboxCapture }) {
   const { report, dispatch, draft } = useEditor()
   const drafting = statusOf(report, c) === "drafting"
+  const targets = targetsOf(report, c)
 
   return (
     <li className="enter rounded-xl bg-raise p-4 shadow-[inset_0_0_0_1px_var(--line)]">
@@ -140,11 +235,19 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
         {c.kind === "chat" && c.chatLines ? (
           <ChatPreview capture={c} lines={3} />
         ) : (
-          <p className="text-[13.5px] leading-[1.55] text-pretty">{c.text}</p>
+          c.text && <p className="text-[13.5px] leading-[1.55] text-pretty">{c.text}</p>
         )}
-        {c.photo && <PhotoThumb className="mt-3 h-[72px] w-[108px]" />}
+        {c.photo && <PhotoThumb className={cn("h-[72px] w-[108px]", c.text && "mt-3")} />}
         {c.kind === "voice" && <VoiceThumb className="mt-3 w-fit" />}
       </div>
+
+      {targets.length > 0 && (
+        // Part of it is in the report already (e.g. its Incident was deleted): drafting adds only the rest.
+        <p className="mt-3 flex items-center gap-1 text-xs text-ink-3">
+          <CornerDownRight className="size-3.5 shrink-0" aria-hidden />
+          Already in {targets.map((t) => t.label).join(", ")}
+        </p>
+      )}
 
       <div className="mt-4 flex h-8 items-center gap-0.5">
         {drafting ? (
@@ -177,10 +280,9 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
 }
 
 function QuietTile({ capture: c }: { capture: InboxCapture }) {
-  const { report, dispatch, draft, hot, setHot, reveal } = useEditor()
+  const { report, dispatch, hot, setHot, reveal } = useEditor()
   const status = statusOf(report, c)
   const targets = targetsOf(report, c)
-  const pending = pendingSectionsOf(c)
   const lit = hot?.from === "doc" && hot.captures.includes(c.id)
 
   return (
@@ -200,7 +302,7 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
       </div>
 
       <p className="mt-1.5 line-clamp-2 pl-7 text-[13px] leading-[1.5] text-ink-3">
-        {c.kind === "chat" && c.chatLines ? `${c.text} · ${c.chatLines.length} messages` : c.text}
+        {c.kind === "chat" && c.chatLines ? `${c.text} · ${c.chatLines.length} messages` : c.text || "Photo, no caption"}
       </p>
 
       <div className="mt-2 flex min-h-6 flex-wrap items-center gap-x-1 gap-y-0.5 pl-7 text-xs">
@@ -234,11 +336,6 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
               ))
             )}
             {status === "drafted" && <span className="text-ai">· to review</span>}
-            {pending.length > 0 && !c.handled && (
-              <Btn size="sm" variant="ai" className="-my-1 ml-auto" onClick={() => draft([c.id])}>
-                Draft the rest
-              </Btn>
-            )}
           </>
         )}
       </div>

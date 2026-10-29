@@ -4,12 +4,12 @@
 // Sections. Jump to, see status, show or hide. Hidden ones sit under "More sections".
 
 import { useEffect, useState } from "react"
-import { Check, ChevronRight, Eye, EyeOff, Plus } from "lucide-react"
+import { Check, ChevronRight, Eye, EyeOff, Lock, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { IconBtn } from "@/components/btn"
 import { Tip } from "@/components/tip"
 import { useEditor } from "./report-editor"
-import { SECTIONS, blockers, hasContent, orderedIncidents, sectionState, type IncidentField, type SectionId, type SectionState } from "./data"
+import { SECTIONS, blockers, hasContent, isEmpty, openDrafts, orderedIncidents, sectionState, type IncidentField, type SectionId, type SectionState } from "./data"
 
 export function Rail() {
   const { report, dispatch, docRef, reveal } = useEditor()
@@ -125,7 +125,7 @@ function ToDo() {
   const b = blockers(report)
   const incidents = orderedIncidents(report)
   const open = incidents.map((i, n) => ({ i, n: n + 1 })).filter(({ i }) => !i.confirmedAt)
-  const drafts = report.blocks.filter((x) => x.status === "draft")
+  const drafts = openDrafts(report)
 
   return (
     <section aria-labelledby="todo-h">
@@ -133,21 +133,35 @@ function ToDo() {
         <h2 id="todo-h" className="text-[13px] font-semibold">
           Before you submit
         </h2>
-        {!b.ready && <span className="ml-auto text-xs text-ink-3 tabular-nums">{open.length} left</span>}
+        {!b.ready && !isEmpty(report) && (
+          <span className="ml-auto text-xs text-ink-3 tabular-nums">{open.length + (drafts.length ? 1 : 0)} left</span>
+        )}
       </header>
 
-      {b.ready ? (
+      {isEmpty(report) ? (
+        // Onboarding, part 3 (story 3): what Submit means. Goes away with the report's first content.
+        <div className="mt-1 flex items-start gap-2.5 rounded-xl px-3 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+          <Lock className="mt-px size-4 shrink-0 text-ink-3" strokeWidth={1.75} aria-hidden />
+          <div>
+            <p className="text-[13px] leading-tight font-medium">Nothing to check yet</p>
+            <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
+              Incidents to confirm and their Gaps collect here. Submit locks the report; after that, only a dated
+              Addendum.
+            </p>
+          </div>
+        </div>
+      ) : b.ready ? (
         <div className="mt-1 flex items-start gap-2.5 rounded-xl bg-raise px-3 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
           <Check className="mt-px size-4 shrink-0 text-ok" strokeWidth={2.25} aria-hidden />
           <div className="leading-tight">
             <p className="text-[13px] font-medium">Ready to submit</p>
-            <p className="mt-1 text-xs text-ink-3">Every Incident is confirmed.</p>
+            <p className="mt-1 text-xs text-ink-3">Every Incident confirmed, every AI draft checked.</p>
           </div>
         </div>
       ) : (
         <ul className="mt-1 flex flex-col gap-px">
           {open.map(({ i, n }) => {
-            const missing = (Object.keys(i.fields) as IncidentField[]).filter((f) => i.fields[f].status === "gap")
+            const missing = (Object.keys(i.fields) as IncidentField[]).filter((f) => ["gap", "empty"].includes(i.fields[f].status))
             return (
               <li key={i.id}>
                 <button
@@ -178,14 +192,16 @@ function ToDo() {
       {drafts.length > 0 && (
         <button
           type="button"
-          onClick={() => reveal(drafts[0].id)}
-          className="mt-px flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-ink-2 transition-colors duration-150 hover:bg-raise hover:text-ink"
+          onClick={() => reveal(drafts[0])}
+          className="mt-px flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-150 hover:bg-raise"
         >
-          <span aria-hidden className="mx-[3px] size-1.5 shrink-0 rounded-full border border-ink-3" />
-          <span className="flex-1">
-            {drafts.length === 1 ? "1 Section draft" : `${drafts.length} Section drafts`} to keep
+          <span aria-hidden className="mx-[3px] mt-[5px] size-1.5 shrink-0 rounded-full border border-ai" />
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block text-[13px] text-ink-2">
+              {drafts.length === 1 ? "1 AI draft" : `${drafts.length} AI drafts`}
+            </span>
+            <span className="mt-1 block text-xs text-ink-3">Keep or discard</span>
           </span>
-          <span className="text-xs text-ink-3">Optional</span>
         </button>
       )}
     </section>

@@ -183,6 +183,13 @@
   }
   html {
     @apply font-sans;
+    /* Mobile capture page: no grey flash on tap; controls give their own press feedback. */
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
   }
 }
 

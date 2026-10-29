@@ -7,7 +7,8 @@ import { Tip } from "./tip"
 type BtnProps = Omit<ButtonProps, "className"> & {
   className?: string
   variant?: "primary" | "secondary" | "ghost" | "ai"
-  size?: "sm" | "md"
+  /** lg is the 44px touch size for the mobile capture page. */
+  size?: "sm" | "md" | "lg"
 }
 
 export function Btn({ variant = "secondary", size = "md", className, ...props }: BtnProps) {
@@ -16,7 +17,9 @@ export function Btn({ variant = "secondary", size = "md", className, ...props }:
       type="button"
       className={cn(
         "press inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap select-none disabled:cursor-not-allowed disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
-        size === "md" ? "h-8 px-3 text-[13px]" : "h-7 px-2.5 text-xs",
+        size === "md" && "h-8 px-3 text-[13px]",
+        size === "sm" && "h-7 px-2.5 text-xs",
+        size === "lg" && "h-11 px-4 text-[15px]",
         variant === "primary" && "bg-cta text-cta-ink hover:opacity-90",
         variant === "secondary" && "bg-raise text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-press",
         variant === "ghost" && "text-ink-2 hover:bg-raise hover:text-ink",

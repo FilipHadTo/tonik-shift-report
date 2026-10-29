@@ -4,7 +4,7 @@
 // text, Incidents are structured blocks. Tinted wash = Draft.
 
 import { useState } from "react"
-import { Check, EyeOff, Lock, Plus, Sparkles } from "lucide-react"
+import { Check, EyeOff, Lock, PenLine, Plus, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
@@ -12,12 +12,13 @@ import { DraftLabel } from "@/components/draft-label"
 import { useEditor } from "./report-editor"
 import { SECTIONS, hasContent, newCapturesFor, orderedIncidents, type Block, type SectionId } from "./data"
 import { IncidentBlock } from "./incident"
+import { EnhanceBar, Enhancing } from "./enhance"
 
 export function Document() {
   const { report, docRef } = useEditor()
   const visible = SECTIONS.filter((s) => report.visible.includes(s.id))
   const captures = report.captures.filter((c) => !c.dismissed).length
-  const staff = new Set(report.captures.filter((c) => c.author.role !== "Closing Manager").map((c) => c.author.name)).size
+  const people = new Set(report.captures.filter((c) => !c.dismissed).map((c) => c.author.name)).size
 
   return (
     <main
@@ -36,10 +37,12 @@ export function Document() {
             {report.manager.name}
           </span>
           <span aria-hidden>·</span>
-          <span>Opened {report.openedAt} by Alex&apos;s photo</span>
+          <span>Started {report.startedAt}</span>
           <span aria-hidden>·</span>
           <span className="tabular-nums">
-            {captures} Captures from {staff + 1} people
+            {captures === 0
+              ? "No Captures yet"
+              : `${captures} ${captures === 1 ? "Capture" : "Captures"} from ${people} ${people === 1 ? "person" : "people"}`}
           </span>
         </p>
 
@@ -50,13 +53,52 @@ export function Document() {
           </p>
         )}
 
+        {!report.drafted && !report.submittedAt && <HowItWorks />}
+
         <div className="mt-12 flex flex-col gap-16">
           {visible.map((s) => (
             <Section key={s.id} id={s.id} name={s.name} />
           ))}
         </div>
       </div>
+      <EnhanceBar />
     </main>
+  )
+}
+
+/**
+ * Onboarding, part 2 (story 3): how text gets into the report and what a Draft looks like.
+ * Goes away once the first Draft is made in this report (story 4).
+ */
+function HowItWorks() {
+  return (
+    <section
+      aria-label="How this report gets written"
+      className="enter mt-10 rounded-xl px-5 pt-4 pb-5 shadow-[inset_0_0_0_1px_var(--line)]"
+    >
+      <h2 className="text-[13px] font-medium">How this report gets written</h2>
+      <ul className="mt-3 flex flex-col gap-2.5 text-[13px] leading-[1.5] text-ink-2">
+        <li className="flex gap-2.5">
+          <PenLine className="mt-0.5 size-4 shrink-0 text-ink-3" strokeWidth={1.75} aria-hidden />
+          <span>Write into any Section yourself, or leave it empty. Every Section is optional.</span>
+        </li>
+        <li className="flex gap-2.5">
+          <Sparkles className="mt-0.5 size-4 shrink-0 text-ai" strokeWidth={1.75} aria-hidden />
+          <span>
+            The AI drafts only when you ask: one Capture, one Section, or everything new in the Inbox. Select text
+            you wrote to Enhance it.
+          </span>
+        </li>
+      </ul>
+      {/* A real sample of the Draft look, so the wash means something before the first one arrives. */}
+      <div aria-hidden className="mt-4 rounded-lg bg-(image:--ai-wash) px-3.5 pt-2.5 pb-3">
+        <DraftLabel sources={[]} />
+        <p className="mt-1.5 text-[13px] leading-[1.5] text-ink-2">
+          AI text looks like this until you check it. Keep or discard Section Drafts; confirm each Incident on its
+          own.
+        </p>
+      </div>
+    </section>
   )
 }
 
@@ -119,8 +161,11 @@ function Incidents() {
   const incidents = orderedIncidents(report)
   return (
     <div className="flex flex-col gap-4">
-      {incidents.length === 0 && (
-        <p className="text-[15px] text-ink-3">No Incidents tonight.</p>
+      {/* Submitted with none: say nothing, like any other empty Section ("Not covered tonight" covers it). */}
+      {incidents.length === 0 && !report.submittedAt && (
+        <p className="text-[15px] leading-[1.65] text-pretty text-ink-3">
+          No Incidents yet. Draft them from the Inbox or add one by hand; each one needs your Confirm.
+        </p>
       )}
       {incidents.map((i, n) => (
         <IncidentBlock
@@ -141,10 +186,12 @@ function Incidents() {
 }
 
 function TextBlock({ block: b }: { block: Block }) {
-  const { report, dispatch, hot, setHot, flash } = useEditor()
+  const { report, dispatch, enhancing, hot, setHot, flash } = useEditor()
   const isDraft = b.status === "draft"
   const lit = (hot?.from === "inbox" && b.sources.some((s) => hot.captures.includes(s))) || flash === b.id
   const sources = report.captures.filter((c) => b.sources.includes(c.id))
+  const locked = !!report.submittedAt
+  const busy = enhancing === b.id
 
   return (
     <div
@@ -153,13 +200,14 @@ function TextBlock({ block: b }: { block: Block }) {
       onMouseLeave={() => setHot(null)}
       className={cn(
         "enter -mx-4 scroll-mt-24 rounded-xl px-4 transition-[box-shadow,background-color] duration-200",
-        isDraft ? "bg-(image:--ai-wash) pt-2.5 pb-3.5" : "py-1",
+        isDraft ? "bg-(image:--ai-wash) pt-2.5 pb-3.5" : busy ? "pt-2.5 pb-1" : "py-1",
         lit && "linked",
       )}
     >
+      {busy && <Enhancing />}
       {isDraft && (
         <div className="flex h-8 items-center gap-1">
-          <DraftLabel sources={sources} className="mr-auto" />
+          <DraftLabel sources={sources} note={b.original ? "from your text" : undefined} className="mr-auto" />
           <Btn size="sm" variant="ghost" onClick={() => dispatch({ type: "discard", block: b.id })}>
             Discard
           </Btn>
@@ -170,8 +218,12 @@ function TextBlock({ block: b }: { block: Block }) {
         </div>
       )}
       <p
-        contentEditable={!report.submittedAt}
+        // Remount on every text change: the DOM may hold typed text React doesn't know about.
+        key={b.text}
+        contentEditable={!locked && !busy}
         suppressContentEditableWarning
+        // Only text the manager wrote can be enhanced, never AI text, kept or not.
+        data-enhance={!locked && b.status === "manual" && !busy ? `block:${b.id}` : undefined}
         onBlur={(e) => {
           const text = e.currentTarget.textContent ?? ""
           if (text !== b.text) dispatch({ type: "editBlock", block: b.id, text })
