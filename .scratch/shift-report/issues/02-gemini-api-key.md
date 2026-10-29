@@ -13,6 +13,6 @@ Steps:
 
 **Agent:** none, Filip does this
 
-- [ ] `GEMINI_API_KEY` is set in Vercel and in `.env.local`
-- [ ] The project has a spend cap
-- [ ] The key is not committed anywhere (`git grep` finds nothing)
+- [x] `GEMINI_API_KEY` is set in Vercel and in `.env.local`
+- [x] ~~The project has a spend cap~~ — skipped, Filip's call: the Google Cloud billing project was topped up with a small amount instead, which caps exposure the same way
+- [x] The key is not committed anywhere (`git grep` finds nothing)

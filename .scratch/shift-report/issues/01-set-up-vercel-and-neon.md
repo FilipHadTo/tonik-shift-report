@@ -14,6 +14,6 @@ Steps:
 
 **Agent:** none, Filip does this
 
-- [ ] The Vercel project is linked to the repo
-- [ ] A Neon database exists and `DATABASE_URL` is set in Vercel (all environments) and in `.env.local`
-- [ ] `.env.local` is ignored by git (`git check-ignore .env.local` prints it)
+- [x] The Vercel project is linked to the repo
+- [x] A Neon database exists and `DATABASE_URL` is set in Vercel (all environments) and in `.env.local`
+- [x] `.env.local` is ignored by git (`git check-ignore .env.local` prints it)
