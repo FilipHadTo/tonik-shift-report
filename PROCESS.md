@@ -55,14 +55,14 @@ Steps, in order:
 
 ## Status
 
-Update after every step. If the chat is lost: read this, then `deslog.md` (story so far), `CLAUDE.md`, `GLOSSARY.md`, `docs/adr/`, `.scratch/shift-report/`.
+Update after every step. Work happens on `main` (`AI-Exploration` was fast-forwarded into it after 2a.2). If the chat is lost: read this, then `deslog.md` (story so far), `CLAUDE.md`, `GLOSSARY.md`, `docs/adr/`, `.scratch/shift-report/`.
 
 - [x] 0. Setup — repo `FilipHadTo/tonik-shift-report` (private), `CLAUDE.md` + `docs/agents/` (local tracker, default labels, single-context)
 - [x] 1a. `/grill-with-docs` — `GLOSSARY.md`, ADR 0001–0002, `.scratch/shift-report/open-questions.md`
 - [x] 1b. `/to-questionnaire` — Dorota: email sent 2026-10-28, answered 2026-10-29 (minimum Incident criteria: time, date, place, type, description). Closing manager: skipped, nobody available → assumptions. `to-questionnaire-dorota-shift-report.md` is the internal detailed version, not what was sent.
 - [x] 1c. `/to-spec` → `.scratch/shift-report/spec.md` (ready-for-agent), ADR 0003–0004. Test seam: one pure report-domain module with a fake LLM.
 - [ ] 2a. Shape (see Phase 2a plan)
-  - [x] `/prototype`: structure variants (`/prototype/report` A–D, `/prototype/tonight` A–C, `/prototype/night`); the Report screen then designed by hand as prototype E (`/prototype/report-editor`, branch `AI-Exploration`, commit 00fd36f), with diffs logged in `.scratch/shift-report/design-changelog.md`
+  - [x] `/prototype`: structure variants (`/prototype/report` A–D, `/prototype/tonight` A–C, `/prototype/night`); the Report screen then designed by hand as prototype E (`/prototype/report-editor`, built on branch `AI-Exploration`, commit 00fd36f, since merged into `main`), with diffs logged in `.scratch/shift-report/design-changelog.md`
   - [x] 2a.1 Fold back: `/grill-with-docs`, giving GLOSSARY, ADR 0005–0007, `spec.md`, `report-structure.md`, screenshots in `docs/design/`
   - [x] 2a.2 Design system: tokens and motion in `app/globals.css` (dark default), E's primitives in `components/`, `docs/design-system.md`; E verified unchanged in Chrome (computed styles + pixel diff, dark and light)
   - [ ] 2a.3 Remaining UI in E: demo switch, empty state/onboarding, Enhance, mobile capture page, from the prompt in Phase 2a plan  ← **next**

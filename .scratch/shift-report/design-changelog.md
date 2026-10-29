@@ -1,6 +1,6 @@
 # Design changelog
 
-Design decisions from the design phase (Report screen) that differ from the written docs. Input for `/grill-with-docs` when the design is folded back into the spec. Decisions are Filip's; anything inferred is marked "(inferred)". Since 2026-10-29 the design is built as a localhost prototype, not in Paper (see Process). Final state: `/prototype/report-editor` at commit 00fd36f (branch `AI-Exploration`); where this log and the code disagree, the code wins. Screenshots in `docs/design/`.
+Design decisions from the design phase (Report screen) that differ from the written docs. Input for `/grill-with-docs` when the design is folded back into the spec. Decisions are Filip's; anything inferred is marked "(inferred)". Since 2026-10-29 the design is built as a localhost prototype, not in Paper (see Process). Final state: `/prototype/report-editor` at commit 00fd36f (built on branch `AI-Exploration`, now merged into `main`); where this log and the code disagree, the code wins. Screenshots in `docs/design/`.
 
 ## Folded back (2026-10-29)
 
