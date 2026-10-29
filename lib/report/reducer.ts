@@ -2,7 +2,7 @@
 
 import { applyEnhance } from "./enhance"
 import { applyExtract } from "./extract"
-import { clockLabel, gapsIn } from "./derived"
+import { clockLabel, freeId, gapsIn } from "./derived"
 import { readiness } from "./readiness"
 import { seedReport } from "./seed"
 import { nightMinutes } from "./catalog"
@@ -33,7 +33,7 @@ export function reducer(r: Report, a: Action): Report {
     case "handled":
       return { ...r, captures: r.captures.map((c) => (c.id === a.id ? { ...c, handled: true } : c)) }
     case "addCapture": {
-      const id = `m${r.captures.length + 1}`
+      const id = freeId(`m${r.captures.length + 1}`, r.captures)
       const capture: InboxCapture = { id, kind: "text", capturedAt: clockLabel(r), author: r.manager, text: a.text, applied: [] }
       return tick({ ...r, captures: [...r.captures, capture] })
     }
@@ -81,7 +81,7 @@ export function reducer(r: Report, a: Action): Report {
     }
     case "addIncident": {
       const incident: Incident = {
-        id: `i-m${r.incidents.length + 1}`,
+        id: freeId(`i-m${r.incidents.length + 1}`, r.incidents),
         title: "",
         capturedAt: clockLabel(r),
         fields: { occurredAt: { status: "empty" }, location: { status: "empty" }, type: { status: "empty" } },
@@ -151,7 +151,7 @@ export function reducer(r: Report, a: Action): Report {
     case "write":
       return {
         ...r,
-        blocks: [...r.blocks, { id: `b-w${r.blocks.length + 1}`, section: a.section, text: a.text, status: "manual", sources: [] }],
+        blocks: [...r.blocks, { id: freeId(`b-w${r.blocks.length + 1}`, r.blocks), section: a.section, text: a.text, status: "manual", sources: [] }],
       }
     case "toggleSection":
       return {

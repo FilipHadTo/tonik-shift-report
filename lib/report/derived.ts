@@ -94,3 +94,10 @@ export function clockLabel(r: Report) {
 export function isEmpty(r: Report) {
   return r.blocks.length === 0 && r.incidents.length === 0
 }
+
+/** `base`, or `base-2`, `base-3`… if that id is taken: ids are never reused, even after a Delete. */
+export function freeId(base: string, taken: { id: string }[]) {
+  let id = base
+  for (let n = 2; taken.some((t) => t.id === id); n++) id = `${base}-${n}`
+  return id
+}

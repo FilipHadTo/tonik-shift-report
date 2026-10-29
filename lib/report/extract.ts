@@ -2,7 +2,7 @@
 // for one Capture, one Section or everything New. The model proposes; these rules decide.
 
 import { INCIDENT_TYPES, LOCATIONS, SECTIONS, nightMinutes } from "./catalog"
-import { isNew, pendingSectionsOf } from "./derived"
+import { freeId, isNew, pendingSectionsOf } from "./derived"
 import type { ExtractRequest, ModelCapture, ReportModel } from "./model"
 import type { Block, Field, InboxCapture, Incident, Report, SectionId } from "./types"
 
@@ -236,12 +236,6 @@ function alreadyIn(r: Report, captureId: string, section: SectionId) {
   return section === "incidents"
     ? r.incidents.some((i) => i.sources.includes(captureId))
     : r.blocks.some((b) => b.section === section && b.sources.includes(captureId))
-}
-
-function freeId(base: string, taken: { id: string }[]) {
-  let id = base
-  for (let n = 2; taken.some((t) => t.id === id); n++) id = `${base}-${n}`
-  return id
 }
 
 function firstSentence(t: string) {

@@ -3,7 +3,7 @@
 import "server-only"
 import { neon } from "@neondatabase/serverless"
 import { drizzle } from "drizzle-orm/neon-http"
-import { asc, eq } from "drizzle-orm"
+import { and, asc, eq } from "drizzle-orm"
 import type { BatchItem } from "drizzle-orm/batch"
 import { seedReport, type Report, type Scene } from "../report"
 import { fromRecords, toRecords } from "./records"
@@ -59,4 +59,35 @@ export async function seedScene(demoId: string, scene: Scene): Promise<Report> {
 export async function openReport(demoId: string, scene: Scene): Promise<Report> {
   const saved = await loadReport(demoId)
   return saved && saved.scene === scene ? saved : seedScene(demoId, scene)
+}
+
+/**
+ * Saves a manager action's result over `before` (the report it was applied to), in one transaction.
+ * Captures are only ever added or have their dismissed / written-by-hand flags changed (ADR 0003);
+ * the report row, Incidents and blocks are written as they now are.
+ */
+export async function saveReport(demoId: string, before: Report, after: Report) {
+  const rec = toRecords(after, demoId)
+  const old = new Map(before.captures.map((c) => [c.id, c]))
+  const d = db()
+  const queries: BatchItem<"pg">[] = [
+    d.update(reports).set({ ...rec.report, updatedAt: new Date() }).where(eq(reports.demoId, demoId)),
+    d.delete(incidents).where(eq(incidents.demoId, demoId)),
+    d.delete(blocks).where(eq(blocks.demoId, demoId)),
+  ]
+  const added = rec.captures.filter((c) => !old.has(c.id))
+  if (added.length) queries.push(d.insert(captures).values(added))
+  for (const c of rec.captures) {
+    const was = old.get(c.id)
+    if (was && (!!was.dismissed !== c.dismissed || !!was.handled !== c.handled))
+      queries.push(
+        d
+          .update(captures)
+          .set({ dismissed: c.dismissed, handled: c.handled })
+          .where(and(eq(captures.demoId, demoId), eq(captures.id, c.id))),
+      )
+  }
+  if (rec.incidents.length) queries.push(d.insert(incidents).values(rec.incidents))
+  if (rec.blocks.length) queries.push(d.insert(blocks).values(rec.blocks))
+  await d.batch(queries as [BatchItem<"pg">, ...BatchItem<"pg">[]])
 }
