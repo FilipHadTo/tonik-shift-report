@@ -11,7 +11,7 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
-import { SECTIONS, blockers, demoSession, gapsIn, hasContent, openDrafts, orderedIncidents, statusOf } from "./data"
+import { SECTIONS, demoSession, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
 import { Qr } from "./ui"
 
 export function TopBar() {
@@ -60,7 +60,11 @@ function SubmitSheet() {
   const [open, setOpen] = useState(false)
   const [reviewed, setReviewed] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
-  const b = blockers(report)
+  const check = readiness(report, { statement: reviewed })
+  const blocking = check.ready ? [] : check.blockers
+  const unconfirmed = blocking.filter((b): b is Extract<Blocker, { kind: "incident" }> => b.kind === "incident")
+  const gaps = unconfirmed.reduce((n, b) => n + b.missing.length, 0)
+  const drafts = blocking.find((b) => b.kind === "drafts")?.ids ?? []
   const incidents = orderedIncidents(report)
   const confirmed = incidents.filter((i) => i.confirmedAt).length
   const written = SECTIONS.filter((s) => s.id !== "incidents" && hasContent(report, s.id))
@@ -100,25 +104,25 @@ function SubmitSheet() {
             <h3 className="mb-2 text-xs font-medium text-ink-3">Needed to submit</h3>
             <ul className="flex flex-col gap-1">
               <ChecklistItem
-                done={b.unconfirmed === 0}
+                done={unconfirmed.length === 0}
                 label={`Every Incident confirmed`}
                 meta={`${confirmed} of ${incidents.length}`}
-                action={b.unconfirmed ? "Show" : undefined}
-                onAction={() => go(incidents.find((i) => !i.confirmedAt)?.id)}
+                action={unconfirmed.length ? "Show" : undefined}
+                onAction={() => go(unconfirmed[0]?.id)}
               />
               <ChecklistItem
-                done={b.gaps === 0}
+                done={gaps === 0}
                 label="No Gaps left"
-                meta={b.gaps ? `${b.gaps} left` : undefined}
-                action={b.gaps ? "Show" : undefined}
-                onAction={() => go(incidents.find((i) => gapsIn(i) > 0)?.id)}
+                meta={gaps ? `${gaps} left` : undefined}
+                action={gaps ? "Show" : undefined}
+                onAction={() => go(unconfirmed.find((b) => b.missing.length)?.id)}
               />
               <ChecklistItem
-                done={b.drafts === 0}
+                done={drafts.length === 0}
                 label="Every AI draft kept or discarded"
-                meta={b.drafts ? `${b.drafts} left` : undefined}
-                action={b.drafts ? "Show" : undefined}
-                onAction={() => go(openDrafts(report)[0])}
+                meta={drafts.length ? `${drafts.length} left` : undefined}
+                action={drafts.length ? "Show" : undefined}
+                onAction={() => go(drafts[0])}
               />
             </ul>
 
@@ -153,7 +157,7 @@ function SubmitSheet() {
             <Dialog.Close render={<Btn variant="ghost" />}>Back to report</Dialog.Close>
             <Btn
               variant="primary"
-              disabled={!b.ready || !reviewed}
+              disabled={!check.ready}
               onClick={() => {
                 dispatch({ type: "submit" })
                 setOpen(false)

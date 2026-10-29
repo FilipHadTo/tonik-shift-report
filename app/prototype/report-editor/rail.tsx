@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { IconBtn } from "@/components/btn"
 import { Tip } from "@/components/tip"
 import { useEditor } from "./report-editor"
-import { SECTIONS, blockers, hasContent, isEmpty, openDrafts, orderedIncidents, sectionState, type IncidentField, type SectionId, type SectionState } from "./data"
+import { SECTIONS, hasContent, isEmpty, orderedIncidents, readiness, sectionState, type IncidentField, type SectionId, type SectionState } from "./data"
 
 export function Rail() {
   const { report, dispatch, docRef, reveal } = useEditor()
@@ -122,10 +122,13 @@ const MISSING: Record<IncidentField, string> = { occurredAt: "time", location: "
 /** Everything that blocks Submit, one row per Incident, plus the Drafts nobody kept yet. */
 function ToDo() {
   const { report, reveal } = useEditor()
-  const b = blockers(report)
+  const check = readiness(report, { statement: true })
+  const blocking = check.ready ? [] : check.blockers
   const incidents = orderedIncidents(report)
-  const open = incidents.map((i, n) => ({ i, n: n + 1 })).filter(({ i }) => !i.confirmedAt)
-  const drafts = openDrafts(report)
+  const open = blocking.flatMap((b) =>
+    b.kind === "incident" ? [{ i: incidents.find((i) => i.id === b.id)!, n: incidents.findIndex((i) => i.id === b.id) + 1, missing: b.missing }] : [],
+  )
+  const drafts = blocking.find((b) => b.kind === "drafts")?.ids ?? []
 
   return (
     <section aria-labelledby="todo-h">
@@ -133,7 +136,7 @@ function ToDo() {
         <h2 id="todo-h" className="text-[13px] font-semibold">
           Before you submit
         </h2>
-        {!b.ready && !isEmpty(report) && (
+        {!check.ready && !isEmpty(report) && (
           <span className="ml-auto text-xs text-ink-3 tabular-nums">{open.length + (drafts.length ? 1 : 0)} left</span>
         )}
       </header>
@@ -150,7 +153,7 @@ function ToDo() {
             </p>
           </div>
         </div>
-      ) : b.ready ? (
+      ) : check.ready ? (
         <div className="mt-1 flex items-start gap-2.5 rounded-xl bg-raise px-3 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
           <Check className="mt-px size-4 shrink-0 text-ok" strokeWidth={2.25} aria-hidden />
           <div className="leading-tight">
@@ -160,8 +163,7 @@ function ToDo() {
         </div>
       ) : (
         <ul className="mt-1 flex flex-col gap-px">
-          {open.map(({ i, n }) => {
-            const missing = (Object.keys(i.fields) as IncidentField[]).filter((f) => ["gap", "empty"].includes(i.fields[f].status))
+          {open.map(({ i, n, missing }) => {
             return (
               <li key={i.id}>
                 <button

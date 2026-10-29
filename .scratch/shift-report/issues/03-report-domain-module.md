@@ -14,8 +14,12 @@ See spec, "Report domain module" and "Testing Decisions". This is a prefactor: n
 
 **Agent:** Opus 5.5, medium effort (cross-cutting or rule-heavy)
 
-- [ ] The module imports nothing from React, Next, the DB or the network; E imports its rules from it
-- [ ] E looks and works exactly as before in both scenes (compare Chrome screenshots before and after, dark first)
-- [ ] Tests: readiness lists the exact blockers, and a pending Section Draft or Enhance Draft blocks; ready when nothing blocks
-- [ ] Tests: a Capture at 02:00 belongs to the previous Night; 08:00 starts a new one
-- [ ] `pnpm test` passes, deterministic, no network
+- [x] The module imports nothing from React, Next, the DB or the network; E imports its rules from it
+- [x] E looks and works exactly as before in both scenes (compare Chrome screenshots before and after, dark first)
+- [x] Tests: readiness lists the exact blockers, and a pending Section Draft or Enhance Draft blocks; ready when nothing blocks
+- [x] Tests: a Capture at 02:00 belongs to the previous Night; 08:00 starts a new one
+- [x] `pnpm test` passes, deterministic, no network
+
+## Comments
+
+Done. The module is `lib/report/` (`index.ts` is the public surface); E's `data.ts` re-exports it and keeps only the browser demo bits (`demoSession`, the captures endpoint). Readiness: `readiness(report, { statement })` returns `{ ready: true }` or the blockers (per unconfirmed Incident with its missing fields and pending Enhance, the open Draft ids, the statement); the rail's "Before you submit", the Submit sheet and the reducer's `submit` use it. Night assignment: `nightOf(date, timeZone)`, Night ends at 08:00 local. E verified unchanged: the rendered DOM of both scenes hashes the same before and after.
