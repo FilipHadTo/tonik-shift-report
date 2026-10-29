@@ -63,3 +63,10 @@ Not blocking (built with A; easy to flip). Ticket says a partly dismissed Captur
 ### 2026-10-30 — Ticket 07: Submit sheet checklist row layout (review)
 
 Not blocking. To fit "Keep all" next to "Show", the checklist meta now sits inline with the label (no wrap) and the row is `min-h-9` instead of `h-9`. Other rows look the same. Filip to eyeball the Submit sheet in E (02:15 scene) and keep or revert.
+
+### 2026-10-30 — Ticket 08: loading and fallback behaviour (review)
+
+Not blocking, built with A in each case.
+1. While the report loads from the DB: A. (built) empty background only; B. skeleton of the Report screen.
+2. DB unreachable: A. (built) fall back to the local seed, demo opens but nothing saves; B. show a calm "Can't reach the server" state instead.
+3. Stored scene differs from `?scene=` in the URL: A. (built) URL wins and that scene is reseeded; B. stored report wins.
