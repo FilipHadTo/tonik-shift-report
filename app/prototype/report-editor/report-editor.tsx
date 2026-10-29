@@ -1,12 +1,12 @@
 "use client"
 
 // PROTOTYPE — Report screen, variant E: Inbox | Document | Sections.
-// Holds the in-memory report, the AI "drafting" delay and the
-// Capture ↔ report cross-highlight shared by all three columns.
+// Loads the reviewer's report from the server, then holds it in memory with the
+// AI "drafting" delay and the Capture ↔ report cross-highlight shared by all three columns.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, capturesInScope, demoSession, enhance as enhanceWith, extract, fakeModel, reducer, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type Scene } from "./data"
+import { CAPTURES_API, REPORT_API, capturesInScope, demoSession, enhance as enhanceWith, extract, fakeModel, reducer, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -47,12 +47,39 @@ export function useEditor() {
 const DRAFTING_MS = 1100
 const POLL_MS = 2000
 
+/**
+ * Opening the Report screen loads this browser's demo report from the server (ticket 08).
+ * The URL's scene only matters on the way in; later switches go through setScene.
+ */
 export function ReportEditor() {
+  const params = useSearchParams()
+  const [initial, setInitial] = useState<Report | null>(null)
+
+  useEffect(() => {
+    let stop = false
+    const scene: Scene = params.get("scene") === "start" ? "start" : "end"
+    fetch(`${REPORT_API}?d=${demoSession()}&scene=${scene}`, { cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<Report>) : Promise.reject(res.status)))
+      // The demo must never die: without the database the scene still opens, just not saved.
+      .catch(() => seedReport(scene))
+      .then((r) => !stop && setInitial(r))
+    return () => {
+      stop = true
+    }
+    // Loaded once per visit, so a scene switch (which rewrites the URL) doesn't reload it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Until the report arrives, only the app background: no stale scene flashes in first.
+  if (!initial) return <div className="h-dvh min-h-[640px] min-w-[1180px] bg-canvas" />
+  return <Editor initial={initial} />
+}
+
+function Editor({ initial }: { initial: Report }) {
   const params = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const scene: Scene = params.get("scene") === "start" ? "start" : "end"
-  const [report, dispatch] = useReducer(reducer, scene, seedReport)
+  const [report, dispatch] = useReducer(reducer, initial)
   const [hot, setHot] = useState<Hot>(null)
   const [flash, setFlash] = useState<string | null>(null)
   const [enhancing, setEnhancing] = useState<string | null>(null)
@@ -101,7 +128,10 @@ export function ReportEditor() {
   const setScene = useCallback(
     (s: Scene) => {
       dispatch({ type: "reset", scene: s })
-      fetch(CAPTURES_API, { method: "PUT", body: JSON.stringify({ d: demoSession(), scene: s, reset: true }) }).catch(
+      const d = demoSession()
+      // Reseeds this demo id only; the seed is deterministic, so the screen doesn't wait for it.
+      fetch(REPORT_API, { method: "PUT", body: JSON.stringify({ d, scene: s }) }).catch(() => {})
+      fetch(CAPTURES_API, { method: "PUT", body: JSON.stringify({ d, scene: s, reset: true }) }).catch(
         () => {},
       )
       const sp = new URLSearchParams(params.toString())
