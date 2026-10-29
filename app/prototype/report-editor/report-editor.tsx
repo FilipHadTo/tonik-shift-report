@@ -79,8 +79,8 @@ export function ReportEditor() {
         current={{ key: "E", name: "Inbox + editor" }}
         onReset={() => dispatch({ type: "reset" })}
         links={[
-          { href: "/prototype/report", label: "Report A–D" },
-          { href: "/prototype/tonight", label: "Tonight" },
+          { href: "/prototype/report", label: "Archive: Report A–D" },
+          { href: "/prototype/tonight", label: "Archive: Tonight" },
         ]}
       />
     </EditorCtx.Provider>

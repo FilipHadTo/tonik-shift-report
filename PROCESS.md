@@ -24,7 +24,7 @@ Workflow: Matt Pocock's skills (`mattpocock-skills` plugin v1.3.1), plus `better
 
 ## Phase 2a plan
 
-**Deliberate deviation from Pocock.** `/prototype` answered the structure questions (variants A–D in `/prototype/report`, `/prototype/tonight`, `/prototype/night`), but its visual output was generic. From there the Report screen was shaped by hand as prototype E (`/prototype/report-editor`), and E now *is* the front end (ADR 0006). The Shape phase stays, but the tool changes: the remaining UI is iterated in E, not generated as new `/prototype` variants. Phase 2b then wires E to the backend; it doesn't rebuild the UI.
+**Deliberate deviation from Pocock.** `/prototype` answered the structure questions (variants A–D in `/prototype/report`, `/prototype/tonight`, `/prototype/night`, now archived and marked as such), but its visual output was generic. From there the Report screen was shaped by hand as prototype E (`/prototype/report-editor`), and E now *is* the front end (ADR 0006). The Shape phase stays, but the tool changes: the remaining UI is iterated in E, not generated as new `/prototype` variants. Phase 2b then wires E to the backend; it doesn't rebuild the UI.
 
 Steps, in order:
 
@@ -45,7 +45,7 @@ Steps, in order:
 
 ### Prompt for 2a.3: remaining UI in E
 
-> Phase 2a.3 (see `PROCESS.md`). Build in prototype E (`/prototype/report-editor`), using only `docs/design-system.md` and the existing components, so it looks like the rest of E. No `/prototype` skill and no A–D variants: one version, and we iterate the way we did on E. Stories are in `spec.md`.
+> Phase 2a.3 (see `PROCESS.md`). Build in prototype E (`/prototype/report-editor`), using only `docs/design-system.md` and the existing components, so it looks like the rest of E. No `/prototype` skill and no A–D variants: one version, and we iterate the way we did on E. Only `/prototype/report-editor` is live; `/prototype/report`, `/prototype/tonight` and `/prototype/night` are archived, don't open, copy from or edit them. New screens go under `app/prototype/report-editor/` (the mobile capture page as its own route there, not in `/prototype/tonight`). Stories are in `spec.md`.
 > 1. Demo switch between 20:00 (report started, empty) and 02:15 (the current seed), each resettable (stories 60, 62). The header says "Started 20:00", not "Opened … by Alex's photo" (ADR 0005).
 > 2. Empty report = onboarding (stories 3, 4): each column (Inbox, document, outline) has its own empty state, and together they explain the four points in story 3. Each hint goes away once its step has happened in this report. No tooltip tour.
 > 3. Enhance (story 27): select your own text in a Section or in "What happened", then Enhance. The result is a Draft with Keep / Discard; Discard restores the original.

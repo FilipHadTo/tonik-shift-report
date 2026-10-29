@@ -1,6 +1,6 @@
 # Design system
 
-Read this before building or changing any UI. The look comes from prototype E (`/prototype/report-editor`, ADR 0006): when this file and E disagree, E wins and this file gets fixed. Reference frames are in `docs/design/`.
+Read this before building or changing any UI. The look comes from prototype E (`/prototype/report-editor`, ADR 0006): when this file and E disagree, E wins and this file gets fixed. Reference frames are in `docs/design/`. The other `/prototype/*` routes (`report`, `tonight`, `night`) are archived and use none of this; ignore them.
 
 ## Rules of the system
 
