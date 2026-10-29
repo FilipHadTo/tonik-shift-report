@@ -4,7 +4,7 @@
 // Sections. Jump to, see status, show or hide. Hidden ones sit under "More sections".
 
 import { useEffect, useState } from "react"
-import { Check, Eye, EyeOff, Plus } from "lucide-react"
+import { Check, ChevronRight, Eye, EyeOff, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEditor } from "./report-editor"
 import { SECTIONS, blockers, hasContent, orderedIncidents, sectionState, type IncidentField, type SectionId, type SectionState } from "./data"
@@ -15,6 +15,7 @@ export function Rail() {
   const active = useScrollSpy(docRef, report.visible)
   const shown = SECTIONS.filter((s) => report.visible.includes(s.id))
   const hidden = SECTIONS.filter((s) => !report.visible.includes(s.id))
+  const [more, setMore] = useState(false)
 
   return (
     <aside aria-label="Report outline" className="flex min-h-0 flex-col overflow-y-auto rounded-2xl bg-(--panel) px-2 pt-3 pb-3 shadow-(--shadow-panel)">
@@ -70,7 +71,24 @@ export function Rail() {
 
         {hidden.length > 0 && (
           <>
-            <h3 className="mt-6 mb-1 px-2.5 text-xs font-medium text-(--ink-3)">More sections</h3>
+            <h3 className="mt-4">
+              <button
+                type="button"
+                aria-expanded={more}
+                aria-controls="more-sections"
+                onClick={() => setMore((m) => !m)}
+                className="flex h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-xs font-medium text-(--ink-3) transition-colors duration-150 hover:bg-(--raise) hover:text-(--ink-2)"
+              >
+                <ChevronRight
+                  className={cn("size-3.5 shrink-0 transition-transform duration-200 ease-(--ease-out)", more && "rotate-90")}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+                More sections
+                <span className="ml-auto tabular-nums">{hidden.length}</span>
+              </button>
+            </h3>
+            <div id="more-sections" className="disclose" data-open={more || undefined} inert={!more}>
             <ul className="flex flex-col gap-px">
               {hidden.map((s) => (
                 <li key={s.id}>
@@ -90,6 +108,7 @@ export function Rail() {
                 </li>
               ))}
             </ul>
+            </div>
           </>
         )}
       </nav>
@@ -137,15 +156,15 @@ function ToDo() {
                 >
                   <span
                     aria-hidden
-                    className={cn("mx-[3px] mt-[5px] size-2 shrink-0 rounded-full", missing.length ? "bg-(--gap)" : "bg-(--ai)")}
+                    className={cn("mx-[3px] mt-[5px] size-1.5 shrink-0 rounded-full", missing.length ? "bg-(--gap)" : "bg-(--ink-3)")}
                   />
                   <span className="min-w-0 flex-1 leading-tight">
                     <span className="flex gap-1.5 text-[13px]">
                       <span className="text-(--ink-3) tabular-nums">{n}</span>
-                      <span className="truncate">{i.title || "Untitled Incident"}</span>
+                      <span className="truncate text-(--ink-2)">{i.title || "Untitled Incident"}</span>
                     </span>
-                    <span className={cn("mt-1 block text-xs", missing.length ? "text-(--gap)" : "text-(--ai)")}>
-                      {missing.length ? `Gap: add ${missing.map((f) => MISSING[f]).join(", ")}` : "Ready to confirm"}
+                    <span className="mt-1 block text-xs text-(--ink-3)">
+                      {missing.length ? `Add ${missing.map((f) => MISSING[f]).join(", ")}` : "Ready to confirm"}
                     </span>
                   </span>
                 </button>
@@ -161,7 +180,7 @@ function ToDo() {
           onClick={() => reveal(drafts[0].id)}
           className="mt-px flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-(--ink-2) transition-colors duration-150 hover:bg-(--raise) hover:text-(--ink)"
         >
-          <span aria-hidden className="mx-[3px] size-2 shrink-0 rounded-full border-[1.5px] border-(--ai)" />
+          <span aria-hidden className="mx-[3px] size-1.5 shrink-0 rounded-full border border-(--ink-3)" />
           <span className="flex-1">
             {drafts.length === 1 ? "1 Section draft" : `${drafts.length} Section drafts`} to keep
           </span>

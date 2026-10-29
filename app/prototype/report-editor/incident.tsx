@@ -8,7 +8,7 @@ import { useState } from "react"
 import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEditor } from "./report-editor"
-import { INCIDENT_TYPES, LOCATIONS, gapsIn, type Field, type Incident, type IncidentField } from "./data"
+import { INCIDENT_TYPES, LOCATIONS, type Field, type Incident, type IncidentField } from "./data"
 import { Avatar, Btn, DraftLabel, IconBtn, PhotoThumb, Pop, VoiceThumb } from "./ui"
 
 const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: string }[] = [
@@ -30,7 +30,7 @@ export function IncidentBlock({
   const { report, dispatch, hot, setHot, flash } = useEditor()
   const confirmed = !!i.confirmedAt
   const locked = !!report.submittedAt
-  const gaps = gapsIn(i)
+  const gap = ROWS.find((r) => i.fields[r.field].status === "gap")
   const lit = (hot?.from === "inbox" && i.sources.some((s) => hot.captures.includes(s))) || flash === i.id
   const sources = report.captures.filter((c) => i.sources.includes(c.id))
   const editable = !confirmed && !locked
@@ -112,23 +112,25 @@ export function IncidentBlock({
 
             {editable && (
               <span className="ml-auto flex items-center gap-1.5">
-                {gaps > 0 && (
-                  <span className="mr-1.5 text-(--gap)">
-                    Fill {gaps === 1 ? "the Gap" : `${gaps} Gaps`} to confirm
-                  </span>
-                )}
                 <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
                   <Trash2 strokeWidth={1.75} />
                 </IconBtn>
-                <Btn
-                  variant="primary"
-                  size="sm"
-                  disabled={gaps > 0}
-                  onClick={() => dispatch({ type: "confirm", incident: i.id })}
-                >
-                  <Check strokeWidth={2.25} />
-                  Confirm
-                </Btn>
+                {gap ? (
+                  // Confirm can't happen yet, so the button offers the next step instead: it opens the first Gap's picker.
+                  <Btn
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => document.querySelector<HTMLButtonElement>(`#${i.id} [data-field="${gap.field}"]`)?.click()}
+                  >
+                    <gap.icon strokeWidth={1.75} />
+                    {gap.add} to confirm
+                  </Btn>
+                ) : (
+                  <Btn variant="primary" size="sm" onClick={() => dispatch({ type: "confirm", incident: i.id })}>
+                    <Check strokeWidth={2.25} />
+                    Confirm
+                  </Btn>
+                )}
               </span>
             )}
           </footer>
@@ -241,7 +243,7 @@ function FieldChip({
       onOpenChange={setOpen}
       className={row.field === "occurredAt" ? "w-[328px] p-3" : "w-[232px]"}
       trigger={
-        <button type="button" aria-label={title} title={title} className={cn(chip, look.cls)}>
+        <button type="button" data-field={row.field} aria-label={title} title={title} className={cn(chip, look.cls)}>
           {lead}
           {look.text}
         </button>

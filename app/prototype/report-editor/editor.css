@@ -16,8 +16,9 @@
   --ai-soft: oklch(0.55 0.16 258 / 0.055);
   --ai-line: oklch(0.55 0.16 258 / 0.38);
   --ai-ring: oklch(0.55 0.16 258 / 0.22);
-  /* Light falls in from the top-left corner and fades on a diagonal, not a flat top-to-bottom band. */
-  --ai-wash: radial-gradient(130% 170% at 0% 0%, oklch(0.55 0.16 258 / 0.06), oklch(0.55 0.16 258 / 0.02) 55%, oklch(0.55 0.16 258 / 0.006));
+  /* A long, stretched glow from the top-left over a faint flat base, so the edge holds all round without a ring. */
+  --ai-wash: radial-gradient(180% 140% at 0% 0%, oklch(0.55 0.16 258 / 0.055), transparent 72%),
+    linear-gradient(oklch(0.55 0.16 258 / 0.022), oklch(0.55 0.16 258 / 0.022));
   --gap: oklch(0.55 0.13 62);
   --gap-soft: oklch(0.75 0.14 70 / 0.14);
   --gap-line: oklch(0.65 0.14 62 / 0.6);
@@ -50,7 +51,8 @@
   --ai-soft: oklch(0.76 0.11 252 / 0.06);
   --ai-line: oklch(0.76 0.11 252 / 0.4);
   --ai-ring: oklch(0.76 0.11 252 / 0.26);
-  --ai-wash: radial-gradient(130% 170% at 0% 0%, oklch(0.76 0.11 252 / 0.09), oklch(0.76 0.11 252 / 0.03) 55%, oklch(0.76 0.11 252 / 0.01));
+  --ai-wash: radial-gradient(180% 140% at 0% 0%, oklch(0.76 0.11 252 / 0.075), transparent 72%),
+    linear-gradient(oklch(0.76 0.11 252 / 0.03), oklch(0.76 0.11 252 / 0.03));
   --gap: oklch(0.84 0.13 78);
   --gap-soft: oklch(0.84 0.13 78 / 0.1);
   --gap-line: oklch(0.84 0.13 78 / 0.55);
@@ -142,6 +144,27 @@
 .rx .fold > :first-child {
   min-height: 0;
   overflow: hidden;
+}
+
+/* Rail disclosure ("More sections"): collapsed by default, opens in place. */
+.rx .disclose {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition-property: grid-template-rows, opacity;
+  transition-duration: 200ms, 160ms;
+  transition-timing-function: var(--ease-out);
+}
+.rx .disclose[data-open] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.rx .disclose > :first-child {
+  min-height: 0;
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rx .disclose { transition-property: opacity; }
 }
 
 /* Seam above a confirmed Incident whose neighbour is confirmed too: a hairline
