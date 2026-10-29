@@ -9,14 +9,13 @@ import { useEffect, useState } from "react"
 import { Sparkles } from "lucide-react"
 import { Btn } from "@/components/btn"
 import { useEditor } from "./report-editor"
-import { enhanceText } from "./data"
 
 type Sel = { el: HTMLElement; top: number; x: number; start: number; end: number }
 
 const BAR_H = 36
 
 export function EnhanceBar() {
-  const { dispatch, enhance, enhancing, docRef } = useEditor()
+  const { enhance, enhancing, docRef } = useEditor()
   const [sel, setSel] = useState<Sel | null>(null)
   const [note, setNote] = useState<string | null>(null)
 
@@ -51,31 +50,15 @@ export function EnhanceBar() {
 
   if (!sel || enhancing) return null
 
-  function run() {
+  async function run() {
     if (!sel) return
-    const [kind, id] = (sel.el.dataset.enhance ?? "").split(":")
-    const full = sel.el.textContent ?? ""
-    const before = full.slice(0, sel.start)
-    const span = full.slice(sel.start, sel.end)
-    const after = full.slice(sel.end)
-    const rewritten = enhanceText(span, {
-      start: !before.trim() || /[.!?]\s*$/.test(before),
-      end: !after.trim(),
-    })
-    const next = before + (span.match(/^\s*/)?.[0] ?? "") + rewritten + (span.match(/\s*$/)?.[0] ?? "") + after
-    if (next.trim() === full.trim()) {
-      setNote("Already reads clean. Nothing to change.")
-      return
-    }
-    // Commit what's typed first, so Discard restores exactly what was on screen.
-    dispatch(
-      kind === "block"
-        ? { type: "editBlock", block: id, text: full }
-        : { type: "editIncident", incident: id, patch: { description: full } },
-    )
+    const { el, start, end } = sel
+    const [kind, id] = (el.dataset.enhance ?? "").split(":")
+    const status = await enhance(kind === "block" ? { block: id } : { incident: id }, el.textContent ?? "", { start, end })
+    if (status === "unchanged") return setNote("Already reads clean. Nothing to change.")
+    if (status !== "drafted") return
     window.getSelection()?.removeAllRanges()
-    sel.el.blur()
-    enhance(kind === "block" ? { block: id } : { incident: id }, next.trim())
+    el.blur()
   }
 
   return (

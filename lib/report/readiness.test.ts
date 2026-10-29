@@ -34,7 +34,10 @@ describe("Submission readiness", () => {
       { type: "setField", incident: "i-c1", field: "location", value: "Front door" },
       { type: "confirm", incident: "i-c1" },
       { type: "keep", block: "b-c1-maintenance" },
-      { type: "enhance", block: "b-sec-1", text: "Two security staff short until 22:00." },
+      {
+        type: "enhanced",
+        result: { target: { block: "b-sec-1" }, original: "2 security short till 22:00, kuba covered side door", text: "Two security staff short until 22:00." },
+      },
     )
     expect(readiness(r, { statement: true })).toEqual({ ready: false, blockers: [{ kind: "drafts", ids: ["b-sec-1"] }] })
 
@@ -45,7 +48,7 @@ describe("Submission readiness", () => {
       { type: "setField", incident: "i-m3", field: "occurredAt", value: "01:00" },
       { type: "setField", incident: "i-m3", field: "location", value: "Toilets" },
       { type: "setField", incident: "i-m3", field: "type", value: "Drugs" },
-      { type: "enhanceIncident", incident: "i-m3", text: "Clean text." },
+      { type: "enhanced", result: { target: { incident: "i-m3" }, original: "", text: "Clean text." } },
     )
     expect(readiness(r, { statement: true })).toEqual({
       ready: false,

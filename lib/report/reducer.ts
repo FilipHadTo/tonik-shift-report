@@ -1,5 +1,6 @@
 // The report reducer: every change the Closing Manager makes is one Action.
 
+import { applyEnhance } from "./enhance"
 import { applyExtract } from "./extract"
 import { clockLabel, gapsIn } from "./derived"
 import { readiness } from "./readiness"
@@ -90,22 +91,8 @@ export function reducer(r: Report, a: Action): Report {
           b.id !== a.block ? [b] : b.original ? [{ ...b, ...b.original, original: undefined }] : [],
         ),
       }
-    case "enhance":
-      return {
-        ...r,
-        drafted: true,
-        blocks: r.blocks.map((b) =>
-          b.id !== a.block || b.status === "draft"
-            ? b
-            : { ...b, text: a.text, status: "draft", original: { text: b.text, status: b.status } },
-        ),
-      }
-    case "enhanceIncident":
-      return {
-        ...r,
-        drafted: true,
-        incidents: r.incidents.map((i) => (i.id === a.incident ? { ...i, descriptionDraft: a.text } : i)),
-      }
+    case "enhanced":
+      return applyEnhance(r, a.result)
     case "keepIncidentDraft":
       return {
         ...r,

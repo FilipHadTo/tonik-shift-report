@@ -6,7 +6,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, capturesInScope, demoSession, extract, fakeModel, reducer, seedReport, type Action, type ExtractScope, type PhoneCapture, type Report, type Scene } from "./data"
+import { CAPTURES_API, capturesInScope, demoSession, enhance as enhanceWith, extract, fakeModel, reducer, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -16,15 +16,13 @@ import "./editor.css"
 
 type Hot = { captures: string[]; from: "inbox" | "doc" } | null
 
-/** What Enhance rewrites: a Section block or an Incident's "What happened". */
-export type EnhanceTarget = { block: string } | { incident: string }
-
 type Ctx = {
   report: Report
   dispatch: React.Dispatch<Action>
   /** Extract with the fake model: one Capture, one Section or everything New (ADR 0007). */
   draft: (scope: ExtractScope) => void
-  enhance: (target: EnhanceTarget, text: string) => void
+  /** Enhance with the fake model: `text` is what's on screen, `span` the selection in it (story 27). */
+  enhance: (target: EnhanceTarget, text: string, span: EnhanceSpan) => Promise<EnhanceOutcome["status"]>
   /** Id of the block or Incident being enhanced right now. */
   enhancing: string | null
   hot: Hot
@@ -76,17 +74,17 @@ export function ReportEditor() {
     dispatch(result ? { type: "extracted", result } : { type: "draftFailed", ids })
   }, [])
 
-  const enhance = useCallback((target: EnhanceTarget, text: string) => {
-    const id = "block" in target ? target.block : target.incident
-    setEnhancing(id)
+  const enhance = useCallback(async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
+    // The fake answers at once, so "Already reads clean" shows without a wait, as in E.
+    // A real model (ticket 15) will want the Enhancing state in front of this call.
+    const outcome = await enhanceWith(latest.current, target, fakeModel, { text, span })
+    if (outcome.status !== "drafted") return outcome.status
+    setEnhancing("block" in target ? target.block : target.incident)
     setTimeout(() => {
-      dispatch(
-        "block" in target
-          ? { type: "enhance", block: target.block, text }
-          : { type: "enhanceIncident", incident: target.incident, text },
-      )
+      dispatch({ type: "enhanced", result: outcome.result })
       setEnhancing(null)
     }, DRAFTING_MS)
+    return outcome.status
   }, [])
 
   const reveal = useCallback((anchor: string) => {

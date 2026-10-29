@@ -2,6 +2,7 @@
 
 import type { Author, Capture, IncidentField } from "./catalog"
 import type { Extracted } from "./extract"
+import type { Enhanced } from "./enhance"
 
 export type { Author, Capture, IncidentField }
 
@@ -108,8 +109,7 @@ export type Action =
   | { type: "editBlock"; block: string; text: string }
   | { type: "write"; section: SectionId; text: string }
   | { type: "toggleSection"; section: SectionId }
-  | { type: "enhance"; block: string; text: string }
-  | { type: "enhanceIncident"; incident: string; text: string }
+  | { type: "enhanced"; result: Enhanced }
   | { type: "keepIncidentDraft"; incident: string }
   | { type: "discardIncidentDraft"; incident: string }
   | { type: "receive"; captures: PhoneCapture[] }

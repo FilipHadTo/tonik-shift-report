@@ -10,6 +10,10 @@ E's Enhance bar (`app/prototype/report-editor/enhance.tsx`, today's `enhanceText
 
 **Agent:** Sonnet 5.5, high effort (contained change)
 
-- [ ] Tests: span rewrite, Discard restores exactly the original, no-change gives no Draft, ineligible text is refused, model failure leaves the state unchanged and flagged degraded
-- [ ] E's Enhance looks and works like before, per `docs/design-system.md`
-- [ ] `pnpm test` passes, deterministic, no network
+- [x] Tests: span rewrite, Discard restores exactly the original, no-change gives no Draft, ineligible text is refused, model failure leaves the state unchanged and flagged degraded
+- [x] E's Enhance looks and works like before, per `docs/design-system.md`
+- [x] `pnpm test` passes, deterministic, no network
+
+## Comments
+
+Done. `lib/report/enhance.ts`: `canEnhance`, `enhance` / `applyEnhance` / `runEnhance` behind the same `ReportModel` as Extract (20s timeout). Target is `{ block } | { incident }`, with an optional `span` (offsets in the text) and `text` (what's on screen, if not yet saved); that text becomes the original Discard restores. Outcome is `drafted`, `unchanged` (no Draft), `refused` (not a manual block or an open manual Incident without a pending Draft, or the report is submitted) or `degraded` (report untouched). The span splicing and sentence-start/end flags moved from E into the domain. The reducer's `enhance` / `enhanceIncident` actions became one `enhanced` action that re-checks eligibility on apply. E's Enhance bar goes through it with the fake model; with the fake answering at once, "Already reads clean" still shows instantly and the Enhancing state only runs for a real rewrite (ticket 15 should move it in front of the model call, and add the calm degraded message). Verified in Chrome: span rewrite, Discard, whole-block rewrite, Keep (kept text no longer enhanceable), clean text note, manual Incident rewrite of unsaved text and Discard.
