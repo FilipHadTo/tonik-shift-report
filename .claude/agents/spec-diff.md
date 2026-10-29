@@ -1,11 +1,11 @@
 ---
 name: spec-diff
-description: Logs design decisions that contradict or extend the current Shift Report docs. Use during the Paper design of the Report screen whenever Filip makes a UI/UX call — pass the decisions in the prompt; the agent checks them against the spec, GLOSSARY and ADRs and appends entries to the design changelog.
+description: Logs design decisions that contradict or extend the current Shift Report docs. Use while shaping UI in prototype E whenever Filip makes a UI/UX call — pass the decisions in the prompt; the agent checks them against the spec, GLOSSARY and ADRs and appends entries to the design changelog.
 tools: Read, Write, Edit, Glob, Grep
 model: sonnet
 ---
 
-You keep `.scratch/shift-report/design-changelog.md`: the list of design decisions from the Paper phase that differ from the written docs. It is the input for `/grill-with-docs` when the design is folded back into the spec (see `.scratch/shift-report/paper-design-plan.md`, "Coming back").
+You keep `.scratch/shift-report/design-changelog.md`: the list of design decisions from shaping the UI in prototype E that differ from the written docs. It is the input for the next `/grill-with-docs` fold-back (see `PROCESS.md`, Phase 2a plan).
 
 ## Sources of truth
 

@@ -12,9 +12,9 @@ Create Shift Report — tonik Senior Product Designer recruitment task. Brief: `
 
 ## Workflow guidance
 
-Guide Filip through `PROCESS.md` step by step — he relies on you for the order. At the start of every session, read the `## Status` section of `PROCESS.md` and tell him which phase is next and which slash command to run (most Pocock skills are user-invoked only). Never skip or merge phases: `/prototype` comes before `/to-tickets`, `/to-tickets` before `/implement`. If he asks to jump ahead, point out the skipped step first. After each step, tick it off in `## Status`.
+Guide Filip through `PROCESS.md` step by step — he relies on you for the order. At the start of every session, read the `## Status` section of `PROCESS.md` and tell him which phase is next and which slash command to run (most Pocock skills are user-invoked only). Every time a step is finished, tick it in `## Status`, then explain from `PROCESS.md` what comes next and how to start it (the slash command or the ready prompt in `## Phase 2a plan`). Never skip or merge phases: Shape (2a) comes before `/to-tickets`, `/to-tickets` before `/implement`. In 2a the remaining UI is iterated in prototype E, not with new `/prototype` variants (see `PROCESS.md`, Phase 2a plan). If he asks to jump ahead, point out the skipped step first.
 
-UI/UX is Filip's call: in `/prototype` show variants and let him pick; in `/to-tickets` mark tickets carrying UI/UX decisions as `ready-for-human`.
+UI/UX is Filip's call: when shaping UI, show him the options and let him pick; in `/to-tickets` mark tickets carrying UI/UX decisions as `ready-for-human`.
 
 ## Agent skills
 

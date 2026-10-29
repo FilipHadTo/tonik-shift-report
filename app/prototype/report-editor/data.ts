@@ -120,7 +120,7 @@ const EFFECTS: Record<string, Effect[]> = {
         capturedAt: "23:40",
         fields: {
           occurredAt: { status: "draft", value: "23:40" },
-          location: { status: "gap", hint: "The photo shows a window. No Capture says which one." },
+          location: { status: "gap", hint: "No Capture says where." },
           type: { status: "draft", value: "Property damage" },
         },
         description: "Window found smashed with glass on the floor. Area taped off.",
@@ -174,7 +174,8 @@ const EFFECTS: Record<string, Effect[]> = {
         title: "Phone stolen from cloakroom",
         capturedAt: "02:10",
         fields: {
-          occurredAt: { status: "gap", hint: "The chat says “sometime before midnight she thinks?” That isn't a time." },
+          // "Before midnight" isn't a time, so Occurred-at falls back to when the line was logged.
+          occurredAt: { status: "draft", value: "01:42" },
           location: { status: "draft", value: "Cloakroom" },
           type: { status: "draft", value: "Theft" },
         },
