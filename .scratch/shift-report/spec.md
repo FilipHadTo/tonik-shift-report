@@ -2,7 +2,7 @@
 
 Status: ready-for-agent
 
-Revised 2026-10-29 after the Report screen design (prototype E, `/prototype/report-editor`, commit 00fd36f). Where this spec and prototype E disagree on look or interaction, E wins. The decisions behind the revision are in `design-changelog.md` and ADR 0005–0007. Stories are renumbered.
+Revised 2026-10-29 after the Report screen design (prototype E, `/prototype/report-editor`, commit 00fd36f). Where this spec and prototype E disagree on look or interaction, E wins. The decisions behind the revision are in `design-changelog.md` and ADR 0005–0007. Stories are renumbered. Revised again after 2a.3 (commit 05811ec: demo switch, onboarding, Enhance, mobile capture page), per the "Phase 2a.3" section of `design-changelog.md`.
 
 ## Problem Statement
 
@@ -14,7 +14,7 @@ The Closing Manager starts tonight's Shift Report at the start of the shift and 
 
 The Report screen is a document with the Inbox on its left and an outline on its right. The Closing Manager can write into any Section directly, or ask the AI to turn Captures into Drafts: one Capture, one Section, or everything new at once. The AI can also enhance text the manager typed. The visual rule: a soft blue wash with an "AI draft" label means Draft, written by the AI and not yet checked. Hovering a Draft highlights the Captures it came from.
 
-When no Capture supports a required Incident field, the AI leaves it empty (a Gap, an amber chip) rather than guessing. The Closing Manager fills it from a picker in one tap or marks it Unknown. Each Incident is confirmed on its own, and Section Drafts are kept or discarded. The outline shows what's left before Submit. Submission takes a short statement, locks the report and turns it into a clean document marked "AI-assisted, reviewed and submitted by…". After that it can only change through an Addendum.
+When no Capture supports a required Incident field, the AI leaves it empty (a Gap, an amber chip) rather than guessing. The Closing Manager fills it from a picker in one tap or marks it Unknown. Each Incident is confirmed on its own, and every other Draft is kept or discarded. The outline shows what's left before Submit; nothing the AI wrote reaches the record unchecked. Submission takes a short statement, locks the report and turns it into a clean document marked "AI-assisted, reviewed and submitted by…". After that it can only change through an Addendum.
 
 ## User Stories
 
@@ -22,30 +22,30 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 
 1. As a Closing Manager, I want to start tonight's Shift Report at the start of the shift, so that my team has somewhere to send what they see.
 2. As a Closing Manager, I want the report to say which Night it belongs to and when it was started, so that I never mix up two nights.
-3. As a Closing Manager opening an empty report, I want its empty states to explain how the app works, so that I understand it without a tour. Together they say: Captures come from me and my staff (Invite staff, the composer, the phone page); the AI drafts only when I ask (per Capture, per Section, all at once, Enhance); I confirm Incidents one by one and keep or discard Section Drafts; Submit locks the report. The same empty states appear every Night; there is no separate first-time tour.
-4. As a Closing Manager, I want each onboarding hint in the empty report to go away once its step has happened in this report (staff invited, first Capture in, first Draft made), so that the screen gets out of my way.
+3. As a Closing Manager opening an empty report, I want its empty states to explain how the app works, so that I understand it without a tour. Together they say: Captures come from me and my staff (Invite staff, the composer, the phone page); the AI drafts only when I ask (per Capture, per Section, all at once, Enhance); I confirm Incidents one by one and keep or discard Section Drafts; Submit locks the report. The hints are split by column: the Inbox (invite staff, capture from your phone, or type it here), the document (how the report gets written, with a live sample of a Draft) and the outline (what will collect in "Before you submit"). The Invite step opens the real Invite staff popover in the top bar and marks its button with a halo, so I learn where it lives. The same empty states appear every Night; there is no separate first-time tour.
+4. As a Closing Manager, I want each onboarding hint in the empty report to go away once its step has happened in this report, so that the screen gets out of my way. Staff invited = the Invite staff popover was opened and closed; the Inbox hint goes with the first Capture; the document hint with the first Draft (from drafting or Enhance); the outline hint once the report has any block or Incident. If Captures arrive before staff are invited, a one-line invite nudge stays above the Inbox list. Hints never come back in that report, even if the first Draft is discarded.
 5. As a Closing Manager, I want to show my team a QR code and a copyable link from "Invite staff", so that they can add what they see from their phones.
 6. As a Closing Manager, I want Captures made after midnight to count toward the Night that started the previous evening, so that one shift is one report.
 
 ### During the Night — anyone with the link (mobile capture page)
 
 7. As a Staff Member or Closing Manager, I want to open the report's capture link without creating an account, so that contributing costs me nothing.
-8. As a Staff Member, I want to enter my name and role once, so that my Captures are attributed without a login. The Closing Manager uses the same page and picks the Closing Manager role.
-9. As anyone on the capture page, I want to add a photo, a voice note or a short text, so that what I saw is recorded while it's fresh.
+8. As a Staff Member, I want to enter my name and role (Door, Bar, Security or Closing Manager) once, with a way to change them, so that my Captures are attributed without a login. The Closing Manager uses the same page and picks the Closing Manager role.
+9. As anyone on the capture page, I want to add a photo (with an optional caption), a voice note or a short text from one composer, the way I'd send a message, so that what I saw is recorded while it's fresh. The page is laid out like a messaging app: my identity on top, my Captures as sent messages (newest at the bottom), and a composer on the keyboard with a camera button, a growing text field and a mic button that turns into Send once there is text.
 10. As anyone on the capture page, I want each Capture's Captured-at set automatically, so that I never have to remember when I logged it.
 11. As anyone on the capture page, I want to see my own Captures listed as received, so that I don't need to tell the manager separately.
-12. As a Staff Member, I don't want to see the report or its Drafts, so that my part stays simple and the Closing Manager stays the author.
+12. As a Staff Member, I don't want to see the report or its Drafts, so that my part stays simple and the Closing Manager stays the author. The capture page never promises a report entry: its heading is "Send to the manager". (Prototype E still says "Add to tonight's report"; fix in the build.)
 13. As a Closing Manager at my desk, I want a Capture sent from a phone to appear in my Inbox within seconds, without reloading, so that the report feels live.
 
 ### End of the Night — Inbox
 
 14. As a Closing Manager, I want every Capture of the Night in the Inbox verbatim, with author, role, kind, Captured-at and a photo thumbnail, so that I start from what exists and know who to ask about each one.
-15. As a Closing Manager, I want New Captures (not in the report yet) apart from processed ones, so that I see at once what still needs my attention.
-16. As a Closing Manager, I want to draft a single Capture into the report, so that I can go one by one when I want control.
+15. As a Closing Manager, I want New Captures (something of them not in the report yet) apart from processed ones, so that I see at once what still needs my attention. A partly used Capture says where the rest already is ("Already in Maintenance").
+16. As a Closing Manager, I want to draft a single Capture into the report, so that I can go one by one when I want control. On a partly used Capture, "Draft into report" drafts only the missing part.
 17. As a Closing Manager, I want to draft a Section from the New Captures that concern it, so that I can fill one area at a time.
 18. As a Closing Manager, I want to draft all New Captures at once, so that I can start reviewing straight away when I'm tired.
 19. As a Closing Manager, I want to mark a Capture as written into the report by hand, so that the Inbox reflects what I already dealt with.
-20. As a Closing Manager, I want to dismiss a New Capture that doesn't belong in the report and restore it from the archive, so that the Inbox stays clean and nothing is ever lost.
+20. As a Closing Manager, I want to dismiss a New Capture that doesn't belong in the report and restore it from the archive, so that the Inbox stays clean and nothing is ever lost. On a partly used Capture, Dismiss covers only the missing part: the Capture goes to In report, the part already in the report stays cited, and the record does not list it as dismissed. (Prototype E still dismisses the whole Capture here; fix in the build.)
 21. As a Closing Manager, I want a composer at the bottom of the Inbox where I can type, paste the staff group chat, attach files or dictate (the OS dictation), so that I can brain-dump the rest of the Night. One send is one Capture; sending never triggers the AI.
 22. As a Closing Manager, I want the AI to use the timestamps in a pasted group chat, so that Incidents from the chat get the right times.
 23. As a Closing Manager, I want Drafts to appear only when I ask for them, so that the report never shifts while I read it.
@@ -55,10 +55,10 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 
 25. As a Closing Manager, I want the report as one document, Sections as free text and Incidents as structured blocks, so that reviewing it feels like reading, not filling a form.
 26. As a Closing Manager, I want to write directly into any Section, so that I can lean on structure when I prefer it, without ever choosing between a "guided" and a "freeform" mode.
-27. As a Closing Manager, I want to select text I wrote (or a whole block) and have the AI enhance it, so that a rough brain-dump becomes clean prose. The result is a Draft I keep or discard; discarding restores my text. Captures can't be enhanced.
-28. As a Closing Manager, I want every AI-written item to carry a blue wash and an "AI draft from <author> <time>" label, so that I always know what I haven't checked yet, even without relying on colour.
+27. As a Closing Manager, I want to select text I typed (or a whole block) and have the AI enhance it from a small bar that appears on the selection, so that a rough brain-dump becomes clean prose. Text I typed means manual Section blocks and "What happened" on an Incident I added by hand; kept AI text, Drafts, confirmed Incidents and Captures can't be enhanced. A partial selection rewrites only that span, and the whole block becomes a Draft I keep or discard; discarding restores exactly the text that was on screen. If nothing would change, I see "Already reads clean. Nothing to change." and no Draft is made.
+28. As a Closing Manager, I want every AI-written item to carry a blue wash and an "AI draft from <author> <time>" label (for an Enhance result: "AI draft from your text"), so that I always know what I haven't checked yet, even without relying on colour.
 29. As a Closing Manager, I want hovering a Draft to highlight its source Captures in the Inbox, and hovering a Capture to highlight the Drafts that use it, so that I can verify against the source at a glance.
-30. As a Closing Manager, I want to keep or discard each Section Draft right on its label line, so that low-risk content doesn't slow me down. Editing a Section Draft keeps it; a Section Draft I never kept is submitted as it is.
+30. As a Closing Manager, I want to keep or discard each Section Draft right on its label line, so that checking low-risk content takes one click, with no Gaps to fill first. Editing a Section Draft keeps it. Every Draft has to be kept or discarded before Submit (story 53). In the document I go one by one; the Submit sheet also offers "Keep all" for the remaining Section and Enhance Drafts (story 53). Incidents never have a bulk action (story 44).
 31. As a Closing Manager, I want a Section to hold several blocks (one per drafted Capture, plus what I typed), each traceable to its source, so that I can keep one part and discard another.
 
 ### Review — Incidents
@@ -71,7 +71,7 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 37. As a Closing Manager, I want Captured-at visible on demand while reviewing (on the time chip and in the time picker) and always in the submitted report, so that the record shows when it happened and when it was written down.
 38. As a Closing Manager, I want photos linked to an Incident as Evidence, shown as thumbnails I can enlarge, and to move or detach them, so that evidence sits with the Incident and a wrong link can be fixed.
 39. As a Closing Manager, I want to edit an Incident's title and "What happened" without confirming it, so that fixing the wording and signing it off stay separate steps.
-40. As a Closing Manager, I want to delete an Incident the AI got wrong (before confirming it); its Capture goes back to New, so that false Incidents never reach the record.
+40. As a Closing Manager, I want to delete an Incident the AI got wrong (before confirming it); its Capture goes back to New even if another part of it stays in a Section, so that false Incidents never reach the record and nothing of the Capture is silently lost.
 41. As a Closing Manager, I want to add an Incident by hand; its empty fields count as Gaps, so that I'm not dependent on the AI catching it.
 42. As a Closing Manager, I want to see "by <Staff Member>" on Incidents that came from a Staff Member's Capture, so that I can ask a follow-up in person.
 43. As a Closing Manager, I want Incidents numbered in the order they were captured, so that numbers stay stable while I review.
@@ -79,13 +79,13 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 ### Review — Confirmation
 
 44. As a Closing Manager, I want to confirm each Incident on its own, with no "approve all", so that skimming can't sneak something unchecked into a legal record.
-45. As a Closing Manager, I want an Incident with a Gap to offer the next step instead of a disabled Confirm ("Add location to confirm" opens the location picker), so that I always know what to do.
+45. As a Closing Manager, I want an Incident that can't be confirmed yet to offer the next step instead of a disabled Confirm ("Add time / location / type to confirm" opens that picker; "Keep or discard the AI draft to confirm" when an Enhance Draft is pending in "What happened"), so that I always know what to do. Confirm, Delete and the next step sit right-aligned on the Incident's label line above its title, the same place as Keep / Discard on a Section Draft; the line folds away on Confirm.
 46. As a Closing Manager, I want a confirmed Incident to settle into the document as plain content with "Confirmed HH:MM", so that I can see my progress.
 47. As a Closing Manager, I want to reopen a confirmed Incident until I submit, so that a late correction is still possible.
 
 ### Outline (right column)
 
-48. As a Closing Manager, I want a "Before you submit" list at the top of the outline: one row per unconfirmed Incident saying what's missing or "Ready to confirm", plus an optional row for Section Drafts not yet kept, and "Ready to submit" when nothing blocks, so that I know how far I am from done. Each row jumps to its item.
+48. As a Closing Manager, I want a "Before you submit" list at the top of the outline: one row per unconfirmed Incident saying what's missing or "Ready to confirm", plus a required row "N AI drafts · Keep or discard" for Section and Enhance Drafts not yet checked, and "Ready to submit. Every Incident confirmed, every AI draft checked." when nothing blocks, so that I know how far I am from done. Each row jumps to its item.
 49. As a Closing Manager, I want the outline to list the visible Sections with their status (Gap, to confirm, Draft, empty) and highlight where I am, so that I can move around a long report.
 50. As a Closing Manager, I want General overview, Incidents, Security and Maintenance / equipment shown by default, and the other Sections under a collapsed "More sections" I can add from, so that the report starts short but reminds me of areas I may have forgotten.
 51. As a Closing Manager, I want to hide a Section only when it's empty (Incidents only when every Incident is confirmed or deleted), so that hiding never loses content.
@@ -93,45 +93,46 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 
 ### Submission
 
-53. As a Closing Manager, I want Submit to always open the Submit sheet, with a checklist of what's left and the final Submit disabled until every Incident is confirmed, so that I can't file an incomplete Incident and always know why.
+53. As a Closing Manager, I want Submit to always open the Submit sheet, with a checklist of what's left and the final Submit disabled until every Incident is confirmed and every AI draft is kept or discarded, so that nothing unchecked reaches the record and I always know why. Each checklist row has "Show"; the AI drafts row also has "Keep all", which keeps every remaining Section and Enhance Draft in one step, as an explicit decision at Submission (a tired manager isn't forced through N clicks; Incidents still need their own Confirm). "Back to report" closes the sheet. (Prototype E has no "Keep all" yet; add in the build.)
 54. As a Closing Manager, I want to tick a statement that I reviewed the report and it matches my recollection, so that authorship is explicit.
 55. As a Closing Manager, I want the submitted report to say "AI-assisted, reviewed and submitted by [me] at [time]", so that the record is transparent about how it was made.
 56. As a Closing Manager, I want the report locked after Submission, with only dated, attributed Addenda after that, so that it can't be quietly changed.
-57. As a Closing Manager or the next team, I want the submitted report to read like a clean document, not an app screen: header, the Sections with content, Incidents (with Logged time, "Reported by" and "Confirmed by"), a "Not covered tonight" line, attachments at the end as larger photos labelled by Incident, the Captures verbatim, then the statement and footer, so that it can be read, printed or forwarded as is.
+57. As a Closing Manager or the next team, I want the submitted report to read like a clean document, not an app screen: header, the Sections with content, Incidents (with Logged time, "Reported by" and "Confirmed by"), a "Not covered tonight" line (naming Incidents too when there are none, never a "No Incidents" claim), attachments at the end as larger photos labelled by Incident, the Captures verbatim, then the statement and footer, so that it can be read, printed or forwarded as is.
 58. As a Closing Manager, I want to share the submitted report with the next team, so that they're briefed (stubbed in the prototype).
 
 ### Demo / reviewer
 
 59. As a reviewer, I want to open a public link with a pre-seeded Night, so that I can try the flow immediately.
-60. As a reviewer, I want to switch between "20:00, start of shift" (an empty report) and "02:15, end of Night" (Captures in, some drafted, one Incident confirmed), and reset either, so that I can see both onboarding and review.
-61. As a reviewer, I want to scan the Invite staff QR with my own phone, add a Capture as a Staff Member, and see it arrive on the desktop, so that I experience the staff side for real.
-62. As a reviewer, I want the 02:15 state to include a Gap, a Staff Member Capture, a photo, a voice note, a pasted group chat and Section Drafts, so that every mechanism is visible in one run.
+60. As a reviewer, I want to switch between "20:00, start of shift" (an empty report) and "02:15, end of Night" (Captures in, some drafted, one Incident confirmed), and reset either, so that I can see both onboarding and review. The switch is a floating "Demo" pill outside the product UI, with the two scenes, Reset and a theme toggle. The scene is in the URL and switching always loads it fresh. My Reset or scene switch never touches another reviewer's demo.
+61. As a reviewer, I want to scan the Invite staff QR with my own phone, add a Capture as a Staff Member, and see it arrive on the desktop, so that I experience the staff side for real. The QR carries my demo session, so any number of phones write into my Inbox and nobody else's.
+62. As a reviewer, I want the 02:15 state to include a Gap, a Staff Member Capture, a photo, a voice note, a pasted group chat, Section Drafts and a rough block I typed myself (for Enhance), so that every mechanism is visible in one run.
 
 ## Implementation Decisions
 
 - **Platform (ADR 0001, 0006).** One Next.js app on Vercel, Neon Postgres via Drizzle, Gemini Flash on a paid key with a spend cap. The front end is prototype E: its tokens move into the shared theme and its primitives into `components/`, on Base UI (behaviour, accessibility). shadcn stays available as primitives, never as the look. All styling goes through theme tokens. Dark is the primary theme; light is supported by the same tokens and polished last. Agents read `docs/design-system.md` before building UI.
-- **Two surfaces.** Desktop: the Report screen (top bar; Inbox | document | outline), the Submit sheet, and the submitted document. Mobile: only the capture page (identify once, add photo / voice / text, see my Captures). No Report screen on mobile.
+- **Two surfaces.** Desktop: the Report screen (top bar; Inbox | document | outline), the Submit sheet, and the submitted document. Mobile: only the capture page, laid out like a messaging app because that's what staff already use mid-shift (identify once, my Captures as sent messages, one composer for photo / text / voice). No Report screen on mobile.
 - **Report lifecycle (ADR 0005).** The Closing Manager starts the report; one per venue per Night. The Night is the date the shift started; Captures before 08:00 belong to the previous date. States: open → submitted. Submission blocks edits to Captures, Drafts and Incidents; only Addenda can be appended. No report list or "New report" screen in the demo.
-- **Evidence model (ADR 0003).** No step ever modifies a Capture. A Capture has a visibility flag (dismissed) and a "written by hand" flag; its Inbox state (New, Drafted, In report, Dismissed) is derived from which Drafts cite it. Every Incident field and Section block stores a value, a provenance (ai-drafted / confirmed / kept / manager-entered) and its source Captures. Every Incident stores Occurred-at (may be Unknown), Captured-at (system-set, from its earliest source Capture, or the moment a manager added it by hand) and confirmed-at.
-- **Staff Members (ADR 0004).** Access through the report's link or QR without login. The client stores name and role, and every Capture carries them. The capture page shows only the person's own Captures.
-- **Live Inbox.** The desktop polls for new Captures every few seconds. No websockets.
+- **Evidence model (ADR 0003).** No step ever modifies a Capture. A Capture has a visibility flag (dismissed) and a "written by hand" flag; its Inbox state (New, Drafted, In report, Dismissed) is derived from which Drafts cite it: New whenever any part of it is not in the report yet, whatever else cites it. Every Incident field and Section block stores a value, a provenance (ai-drafted / confirmed / kept / manager-entered) and its source Captures. Every Incident stores Occurred-at (may be Unknown), Captured-at (system-set, from its earliest source Capture, or the moment a manager added it by hand) and confirmed-at.
+- **Staff Members (ADR 0004).** Access through the report's link or QR without login. The client stores name and role, and every Capture carries them. The capture page shows only the person's own Captures, scoped per device (one person on two phones sees two lists).
+- **Live Inbox.** The desktop polls for new Captures every few seconds. No websockets. Captured-at is set by the server.
 - **Report domain module: the single deep module and the only test seam.** Pure, with no UI, DB or network; the LLM client is injected. Interface:
-  - **Extract (scoped, ADR 0007):** given the report state, a scope (one Capture, one Section, or all New Captures) and the model, it returns new Drafts and leaves everything else untouched. It only reads New Captures and only adds Drafts, so confirmed, kept or manager-written content is never changed. Rules enforced whatever the model returns: a required Incident field with no supporting Capture reference becomes a Gap; references to missing Captures are dropped; Location comes only from Capture text; Occurred-at is the time a Capture states, else its Captured-at (for a pasted chat, the line's timestamp); type must come from the fixed list, otherwise "Other" with the model's text; a Section is matched by the model, falling back to General overview; Incident-looking content becomes an Incident, not Section text. Drafting into a hidden Section shows it. Invalid or unavailable model output returns the previous state, flagged degraded.
-  - **Enhance:** given manager-written text, it returns a rewritten Draft that keeps the original for Discard. Same degraded behaviour.
-  - **Submission readiness:** given a report, it returns ready or the blockers (unconfirmed Incidents, which already include any with a Gap; missing reviewer statement). Section Drafts not kept never block.
+  - **Extract (scoped, ADR 0007):** given the report state, a scope (one Capture, one Section, or all New Captures) and the model, it returns new Drafts and leaves everything else untouched. It only reads New Captures and only adds Drafts, so confirmed, kept or manager-written content is never changed. For a partly used Capture it drafts only the missing parts and never duplicates a Draft that already cites it (this holds for every scope, including "Draft all"). Rules enforced whatever the model returns: a required Incident field with no supporting Capture reference becomes a Gap; references to missing Captures are dropped; Location comes only from Capture text; Occurred-at is the time a Capture states, else its Captured-at (for a pasted chat, the line's timestamp); type must come from the fixed list, otherwise "Other" with the model's text; a Section is matched by the model, falling back to General overview; Incident-looking content becomes an Incident, not Section text. Drafting into a hidden Section shows it. Invalid or unavailable model output returns the previous state, flagged degraded.
+  - **Enhance:** given manager-typed text (a manual Section block, or "What happened" on a manual Incident) and an optional span, it returns a rewritten Draft that keeps the original for Discard. If the rewrite would change nothing, it returns the text unchanged and no Draft. Same degraded behaviour.
+  - **Submission readiness:** given a report, it returns ready or the blockers: unconfirmed Incidents (which already include any with a Gap or a pending Enhance Draft), unchecked AI Drafts (Section Drafts and Enhance results), missing reviewer statement.
   - **Night assignment:** given a timestamp, it returns the Night it belongs to.
 - **AI routes.** One route per action (Extract with its scope, Enhance). Each loads the report, runs the module with the real Gemini client and persists the result. A per-IP rate limit protects the paid key. On failure: previous state plus the degraded flag, shown as a calm message on the button that triggered it.
 - **Voice on mobile.** The audio goes to Gemini, which returns a transcript. The transcript becomes the Capture's text and the audio is kept with the Capture. On desktop we rely on the OS's built-in dictation.
 - **Incident types (fixed list).** Fight/assault, Injury/medical, Ejection/refused entry, Theft, Property damage, Drugs, Intoxication, Harassment, Police called, Other (Other requires a description).
 - **Sections.** Order: General overview, Incidents, Audience, Security, Artist & crew, Door staff, Production / run of show, Bar staff, Kitchen, Third-party vendors, Private events, Maintenance / equipment, Inventory. Visible by default: General overview, Incidents, Security, Maintenance / equipment. Only Incidents get structured fields; other Sections hold free-text blocks. Incidents are ordered by Captured-at.
-- **Visual language.** As in prototype E and `docs/design-system.md`: Draft = soft blue wash plus an "AI draft from <author> <time>" label, no outline. Gap = amber chip with a dot that opens a picker with "Mark as Unknown". Confirmed Incident = flat in the document, no card, "Confirmed HH:MM", Reopen on hover. Amber is used only for Gaps and blue only for AI. The "Before you submit" list is neutral; the amber signal lives on the chip.
+- **Visual language.** As in prototype E and `docs/design-system.md`: Draft = soft blue wash plus an "AI draft from <author> <time>" label, no outline. Gap = amber chip with a dot that opens a picker with "Mark as Unknown". Confirmed Incident = flat in the document, no card, "Confirmed HH:MM", Reopen on hover. Section Drafts and unconfirmed Incidents share one label-line pattern: the label on the left, the actions (Keep / Discard, or Delete and Confirm) on the right. A manual Incident has no wash, but an Enhance Draft inside its "What happened" does. "Keep" means a Draft decision and nothing else; empty-field chips all start with "Add". Amber is used only for Gaps and blue only for AI. The "Before you submit" list is neutral; the amber signal lives on the chip.
 - **Files.** Upload is fake: chips, a short fake progress state, stock thumbnails. The AI never inspects image contents. Photos become Evidence of the Incident drafted from their Capture.
-- **Demo.** One seeded venue, one Closing Manager, no auth. Two seeded states behind a switch: 20:00 (report started, empty) and 02:15 (the Night below, partly reviewed). Reset restores the chosen state. The 02:15 seed:
+- **Demo.** One seeded venue, one Closing Manager, no auth. State is per reviewer: a demo id, kept by the desktop browser and carried in the capture link (`?d=…`), keys that reviewer's report and Captures, so a public link never mixes reviewers. Two seeded states behind the Demo pill: 20:00 (report started, empty) and 02:15 (the Night below, partly reviewed). The scene is in the URL; switching loads it fresh, Reset restores it, both only for that demo id. The pill also holds a theme toggle. Invite staff shows a real, scannable QR of the capture link. In the real build the store is Neon (an in-memory store doesn't hold across Vercel instances). The 02:15 seed:
   - a 23:40 photo of a broken window (location not stated, so a Gap),
   - a 00:52 door Staff Member Capture about a guest refused re-entry,
   - a 01:05 bar Staff Member Capture about stock,
   - a 01:15 voice note about a fight at the bar, already drafted and confirmed,
-  - a 02:10 pasted group chat covering several Sections and one Incident.
+  - a 02:10 pasted group chat covering several Sections and one Incident,
+  - a rough Security block the manager typed ("2 security short till 22:00, kuba covered side door"), to show Enhance.
   Demo Capture texts avoid explicit times unless the time is the point.
 
 ## Testing Decisions
@@ -144,8 +145,9 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
   - invalid references are dropped,
   - an off-list type becomes Other,
   - Extract only adds Drafts from the Captures in scope and never changes existing content,
+  - Extract on a partly used Capture drafts only the missing part,
   - a model failure leaves the state unchanged and flagged degraded,
-  - readiness lists the exact blockers and ignores Section Drafts,
+  - readiness lists the exact blockers, and a pending Section or Enhance Draft blocks,
   - a Capture at 02:00 belongs to the previous Night.
 - Not tested: UI, the DB layer, the real model's quality, styling and animation. This is the MVP choice from PROCESS.md: only the AI rules are protected.
 - Prior art: none (greenfield). Pocock's `/tdd` drives this module test-first.

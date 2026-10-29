@@ -46,6 +46,7 @@ Guest reported her phone stolen from her coat in the cloakroom. Manager took her
 Confirmed by Alex Morgan, 02:25.
 
 ### Security
+<!-- The manager's rough line from the 02:15 seed, after Enhance, kept. -->
 Two security short until 22:00. Kuba covered the side door. Second barrier opened at 00:12 for the crowd at the front of stage. Building clear by 02:05.
 
 ### Production / run of show
@@ -89,10 +90,10 @@ None.
 
 | Part | Contents | Required? |
 |---|---|---|
-| Header | Venue, Night (business date), Closing Manager, started at, submitted at, counts | System-filled |
+| Header | Venue, Night (business date), Closing Manager, started at, submitted at, counts. The live editor byline is shorter: "Started 20:00" and "N Captures from N people" (dismissed ones not counted) | System-filled |
 | Sections | General overview, Incidents, then the other 11 in the brief's order. Each non-Incident Section is free-text blocks (AI Draft, kept, or written by the manager). | All optional. Only Sections with content are printed. |
 | Incidents | 0..n Incidents, each with the fields below, ordered by Captured-at | Optional as a Section. Every Incident in it must be confirmed. |
-| Not covered tonight | One line naming every Section without content (hidden or empty) | System-filled |
+| Not covered tonight | One line naming every Section without content (hidden or empty), Incidents included when there are none. The report never prints "No Incidents tonight" | System-filled |
 | Attachments | Evidence photos, larger, labelled by Incident | Only if there is Evidence |
 | Captures | Every raw input, verbatim, attributed, timed; dismissed ones marked | System-kept, never edited |
 | Submission | Reviewer statement + AI disclosure footer + lock | Required to submit |
@@ -134,7 +135,7 @@ Fixed Incident types: Fight/assault, Injury/medical, Ejection/refused entry, The
 | Gap = never guess, leave blank | Glossary, Spec 32–33 | Our decision (brief: "forgiving", "smart") |
 | Unknown = honest "can't know", doesn't block | Glossary, Spec 34 | Our decision ("without requiring perfection", brief) |
 | Confirmation per Incident, no approve-all | Glossary, Spec 44 | Our decision (skimming risk on a legal record) |
-| Section Drafts kept or discarded, not confirmed | Glossary (Keep / Discard), Spec 30 | Our decision (low risk, saves time) |
+| Section Drafts kept or discarded, not confirmed; no unchecked AI text at Submit | Glossary (Keep / Discard), Spec 30, 48, 53 | Our decision (Keep is one click with no Gap check, and "Keep all" in the Submit sheet; nothing unchecked reaches a legal record) |
 | AI drafts only on request | ADR 0007, Spec 23 | Our decision (AI where it helps, not everywhere) |
 | Fixed Incident type list | Spec (Implementation: Incident types) | Assumption (open question 3 for Dorota, unanswered) |
 | Reviewer statement checkbox + "AI-assisted…" footer | Spec 54–55 | Assumption (open question 2 for Dorota, unanswered) |

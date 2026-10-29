@@ -61,13 +61,13 @@ Update after every step. Work happens on `main` (`AI-Exploration` was fast-forwa
 - [x] 1a. `/grill-with-docs` — `GLOSSARY.md`, ADR 0001–0002, `.scratch/shift-report/open-questions.md`
 - [x] 1b. `/to-questionnaire` — Dorota: email sent 2026-10-28, answered 2026-10-29 (minimum Incident criteria: time, date, place, type, description). Closing manager: skipped, nobody available → assumptions. `to-questionnaire-dorota-shift-report.md` is the internal detailed version, not what was sent.
 - [x] 1c. `/to-spec` → `.scratch/shift-report/spec.md` (ready-for-agent), ADR 0003–0004. Test seam: one pure report-domain module with a fake LLM.
-- [ ] 2a. Shape (see Phase 2a plan)
+- [x] 2a. Shape (see Phase 2a plan)
   - [x] `/prototype`: structure variants (`/prototype/report` A–D, `/prototype/tonight` A–C, `/prototype/night`); the Report screen then designed by hand as prototype E (`/prototype/report-editor`, built on branch `AI-Exploration`, commit 00fd36f, since merged into `main`), with diffs logged in `.scratch/shift-report/design-changelog.md`
   - [x] 2a.1 Fold back: `/grill-with-docs`, giving GLOSSARY, ADR 0005–0007, `spec.md`, `report-structure.md`, screenshots in `docs/design/`
   - [x] 2a.2 Design system: tokens and motion in `app/globals.css` (dark default), E's primitives in `components/`, `docs/design-system.md`; E verified unchanged in Chrome (computed styles + pixel diff, dark and light)
   - [x] 2a.3 Remaining UI in E: demo switch (20:00 / 02:15), empty-state onboarding, Enhance, mobile capture page (`/prototype/report-editor/capture`, live Inbox mock scoped by demo session), Delete Incident → Capture back to New; two passes with Filip, decisions in `design-changelog.md` (Phase 2a.3)
-  - [ ] 2a.4 Snapshot on branch `prototype/report-editor`, tick 2a  ← **next**
-- [ ] 2b. `/to-tickets` → `/implement` per ticket. Tickets wire E to the backend (domain module, Neon, Gemini, polling); each UI ticket points at E's files and has the AC "looks and works like prototype E, per `docs/design-system.md`". Tickets with UI/UX decisions → `ready-for-human`.
+  - [x] 2a.4 Fold back 2a.3 into `spec.md`, `GLOSSARY.md`, `report-structure.md` (Submit blocked by unchecked AI drafts, Capture states, Enhance on manager-typed text only, messaging-style capture page, per-session demo); Filip decided: bulk "Keep all" for AI drafts only in the Submit sheet (never for Incidents), Dismiss on a partly used Capture covers only the missing part, "Not covered tonight" names Incidents, mobile heading "Send to the manager". Snapshot on branch `prototype/report-editor`
+- [ ] 2b. `/to-tickets` → `/implement` per ticket. Tickets wire E to the backend (domain module, Neon, Gemini, polling); each UI ticket points at E's files and has the AC "looks and works like prototype E, per `docs/design-system.md`". Tickets with UI/UX decisions → `ready-for-human`. Three fixes from the 2a.4 fold-back are spec'd but not yet in E (mobile heading, partial Dismiss, "Keep all" in the Submit sheet).  ← **next**
 - [ ] 2c. Polish — Report screen first (incident confirmation), then the empty report, then everything; light mode last
 - [ ] 2d. `/code-review`, deploy (Vercel + Neon)
 - [ ] 3. `/retro`, Loom

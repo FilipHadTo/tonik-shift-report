@@ -9,7 +9,7 @@ The person running the venue at close who authors and submits the Shift Report.
 _Avoid_: user, staff, operator
 
 **Staff Member**:
-Anyone else working the night (door, bar, security) who can add Captures to tonight's Shift Report via a shared link. Cannot see Drafts, confirm, or submit.
+Anyone else working the night (door, bar, security) who can add Captures to tonight's Shift Report via a shared link. Cannot see Drafts, confirm, or submit. In UI copy, "staff" means the Staff Members as a group ("Invite staff").
 _Avoid_: employee, worker, contributor
 
 **Owner**:
@@ -27,11 +27,11 @@ A raw input the Closing Manager or a Staff Member adds to a Shift Report, attrib
 _Avoid_: note, entry, upload, dump
 
 **Inbox**:
-The list of a Shift Report's Captures waiting for the Closing Manager. Each Capture in it is New (not in the report yet), Drafted (the AI used it and the result is not yet confirmed or kept), In report, or Dismissed.
+The list of a Shift Report's Captures waiting for the Closing Manager. Each Capture in it is New (something of it is not in the report yet, even if another part already is), Drafted (the AI used it and the result is not yet confirmed or kept), In report, or Dismissed.
 _Avoid_: feed, queue, quick notes
 
 **Dismiss**:
-Hiding a New Capture from the Inbox. The Capture stays in the record unchanged and can be restored.
+Hiding a New Capture from the Inbox. The Capture stays in the record unchanged and can be restored. If part of it is already in the report, Dismiss covers only the rest, and the Capture counts as In report.
 _Avoid_: delete, remove
 
 **Section**:
@@ -49,15 +49,15 @@ _Avoid_: attachment, file, media
 ## Lifecycle
 
 **Draft**:
-Content the AI wrote that the Closing Manager has not yet confirmed (Incident) or kept (Section). The AI writes only when the Closing Manager asks it to.
+Content the AI wrote that the Closing Manager has not yet confirmed (Incident) or kept (Section Draft, Enhance result). The AI writes only when the Closing Manager asks it to. No Draft can be left unchecked at Submission.
 _Avoid_: suggestion, prediction
 
 **Confirmation**:
-The Closing Manager's explicit approval of an Incident, making them its author. Every Incident needs its own before the Shift Report can be submitted, and an Incident with a Gap can't be confirmed. Can be undone (reopened) until Submission. Applies to Incidents only; Section Drafts are kept, not confirmed.
+The Closing Manager's explicit approval of an Incident, making them its author. Every Incident needs its own before the Shift Report can be submitted. An Incident with a Gap, or with an Enhance Draft still pending inside it, can't be confirmed. Can be undone (reopened) until Submission. Applies to Incidents only; Section Drafts are kept, not confirmed.
 _Avoid_: approval, accept, validate
 
 **Keep / Discard**:
-The Closing Manager's decision on a Section Draft: keep it as part of the report, or throw it away. Editing a Section Draft keeps it. A Section Draft nobody kept is submitted as it is.
+The Closing Manager's decision on a Draft that isn't an Incident (a Section Draft, or an Enhance result, including one inside an Incident's description): keep it as part of the report, or throw it away. Discarding an Enhance result restores the text it replaced. Editing a Section Draft keeps it. Every such Draft must be kept or discarded before Submission; at Submission the remaining ones can be kept all at once. Unlike Confirmation, Keep has no Gap check and can be done in bulk. "Keep" means this decision and nothing else.
 _Avoid_: accept, approve, confirm (for Sections)
 
 **Gap**:
