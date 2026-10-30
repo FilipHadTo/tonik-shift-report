@@ -68,7 +68,11 @@ export function Inbox() {
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
         {!report.invited && !locked && report.captures.length > 0 && <InviteNudge />}
         {report.captures.length === 0 ? (
-          !locked && <EmptyInbox />
+          locked ? (
+            <p className="px-2 pt-2 text-[13px] text-ink-3">No Captures came in for this Night.</p>
+          ) : (
+            <EmptyInbox />
+          )
         ) : fresh.length > 0 ? (
           <ul className="flex flex-col gap-2.5">
             {fresh.map((c) => (
@@ -354,15 +358,17 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
               <span className="text-ink-2">Written into the report by hand</span>
             ) : (
               targets.map((t, i) => (
-                <button
-                  key={t.anchor}
-                  type="button"
-                  onClick={() => reveal(t.anchor)}
-                  className="rounded-sm font-medium text-ink-2 hover:text-ink hover:underline hover:underline-offset-2"
-                >
-                  {t.label}
-                  {i < targets.length - 1 ? "," : ""}
-                </button>
+                <span key={t.anchor} className="text-ink-2">
+                  <button
+                    type="button"
+                    onClick={() => reveal(t.anchor)}
+                    // Text-sized link: the pseudo-element stretches the hit area to the row's height.
+                    className="relative rounded-sm font-medium hover:text-ink hover:underline hover:underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-1.5 after:content-['']"
+                  >
+                    {t.label}
+                  </button>
+                  {i < targets.length - 1 && ","}
+                </span>
               ))
             )}
             {status === "drafted" && <span className="text-ai">· to review</span>}

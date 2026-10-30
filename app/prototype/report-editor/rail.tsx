@@ -14,8 +14,10 @@ import { SECTIONS, hasContent, isEmpty, orderedIncidents, readiness, sectionStat
 export function Rail() {
   const { report, dispatch, docRef, reveal } = useEditor()
   const active = useScrollSpy(docRef, report.visible)
-  const shown = SECTIONS.filter((s) => report.visible.includes(s.id))
-  const hidden = SECTIONS.filter((s) => !report.visible.includes(s.id))
+  const locked = !!report.submittedAt
+  // Once sent, the outline lists only what the report says, and nothing can be shown or hidden.
+  const shown = SECTIONS.filter((s) => report.visible.includes(s.id) && (!locked || hasContent(report, s.id)))
+  const hidden = locked ? [] : SECTIONS.filter((s) => !report.visible.includes(s.id))
   const [more, setMore] = useState(false)
 
   return (
@@ -25,7 +27,7 @@ export function Rail() {
       <nav aria-label="Sections" className={cn(!report.submittedAt && "mt-6")}>
         <header className="flex h-9 items-center px-2.5">
           <h2 className="text-[13px] font-semibold">Sections</h2>
-          <span className="ml-auto text-xs text-ink-3 tabular-nums">{shown.length} of {SECTIONS.length}</span>
+          {!locked && <span className="ml-auto text-xs text-ink-3 tabular-nums">{shown.length} of {SECTIONS.length}</span>}
         </header>
 
         <ul className="mt-1 flex flex-col gap-px">
@@ -44,7 +46,8 @@ export function Rail() {
                   aria-current={active === s.id ? "location" : undefined}
                   onClick={() => reveal(`section-${s.id}`)}
                   className={cn(
-                    "flex h-9 w-full items-center gap-2.5 rounded-lg pr-9 pl-2.5 text-left text-[13px] transition-colors duration-150",
+                    "flex h-9 w-full items-center gap-2.5 rounded-lg pl-2.5 text-left text-[13px] transition-colors duration-150",
+                    locked ? "pr-2.5" : "pr-9",
                     active === s.id ? "bg-raise text-ink" : "text-ink-2 hover:bg-raise hover:text-ink",
                   )}
                 >
@@ -52,19 +55,21 @@ export function Rail() {
                   <span className="min-w-0 flex-1 truncate" title={s.name}>{s.name}</span>
                   <StateLabel state={st.state} label={st.label} />
                 </button>
-                <span className="absolute top-1 right-1 opacity-0 transition-opacity duration-150 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
-                  {lockReason ? (
-                    <Tip label={lockReason}>
-                      <span tabIndex={0} aria-label={`Can't hide: ${lockReason}`} className="grid size-7 place-items-center text-ink-3 opacity-40">
-                        <EyeOff className="size-4" strokeWidth={1.75} />
-                      </span>
-                    </Tip>
-                  ) : (
-                    <IconBtn label={`Hide ${s.name}`} onClick={() => dispatch({ type: "toggleSection", section: s.id })}>
-                      <EyeOff strokeWidth={1.75} />
-                    </IconBtn>
-                  )}
-                </span>
+                {!locked && (
+                  <span className="absolute top-1 right-1 opacity-0 transition-opacity duration-150 group-focus-within/row:opacity-100 group-hover/row:opacity-100">
+                    {lockReason ? (
+                      <Tip label={lockReason}>
+                        <span tabIndex={0} aria-label={`Can't hide: ${lockReason}`} className="grid size-7 place-items-center text-ink-3 opacity-40">
+                          <EyeOff className="size-4" strokeWidth={1.75} />
+                        </span>
+                      </Tip>
+                    ) : (
+                      <IconBtn label={`Hide ${s.name}`} onClick={() => dispatch({ type: "toggleSection", section: s.id })}>
+                        <EyeOff strokeWidth={1.75} />
+                      </IconBtn>
+                    )}
+                  </span>
+                )}
               </li>
             )
           })}

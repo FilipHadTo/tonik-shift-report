@@ -3,7 +3,7 @@
 // PROTOTYPE — center column: the Shift Report as a document. Sections are free
 // text, Incidents are structured blocks. Tinted wash = Draft.
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, EyeOff, FileText, PenLine, Plus, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -18,7 +18,8 @@ import { EnhanceBar, Enhancing } from "./enhance"
 
 export function Document() {
   const { report, docRef } = useEditor()
-  const visible = SECTIONS.filter((s) => report.visible.includes(s.id))
+  // Once sent, the report reads as a record: a Section nobody wrote in isn't shown (as in the Preview).
+  const visible = SECTIONS.filter((s) => report.visible.includes(s.id) && (!report.submittedAt || hasContent(report, s.id)))
   const captures = report.captures.filter((c) => !c.dismissed).length
   const people = new Set(report.captures.filter((c) => !c.dismissed).map((c) => c.author.name)).size
 
@@ -43,7 +44,9 @@ export function Document() {
           <span aria-hidden>·</span>
           <span className="tabular-nums">
             {captures === 0
-              ? "No Captures yet"
+              ? report.submittedAt
+                ? "No Captures"
+                : "No Captures yet"
               : `${captures} ${captures === 1 ? "Capture" : "Captures"} from ${people} ${people === 1 ? "person" : "people"}`}
           </span>
         </p>
@@ -69,10 +72,18 @@ export function Document() {
  */
 function Sent() {
   const { id, report } = useEditor()
+  const ref = useRef<HTMLElement>(null)
+  // Submit closes the sheet and the button that opened it is gone: land focus on the outcome, where the next
+  // steps are. Also on opening a sent report, which starts here anyway.
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: true })
+  }, [])
   return (
     <section
+      ref={ref}
+      tabIndex={-1}
       aria-labelledby="sent-title"
-      className="enter mt-8 flex items-center gap-4 rounded-xl bg-raise py-3.5 pr-3.5 pl-4 shadow-[inset_0_0_0_1px_var(--line)]"
+      className="enter mt-8 flex items-center gap-4 rounded-xl bg-raise py-3.5 outline-none pr-3.5 pl-4 shadow-[inset_0_0_0_1px_var(--line)]"
     >
       <Check className="size-5 shrink-0 text-ok" strokeWidth={2.25} aria-hidden />
       <div className="min-w-0 flex-1">

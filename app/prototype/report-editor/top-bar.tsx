@@ -119,7 +119,7 @@ function SubmitSheet() {
               <ChecklistItem
                 done={unconfirmed.length === 0}
                 label={`Every Incident confirmed`}
-                meta={`${confirmed} of ${incidents.length}`}
+                meta={incidents.length ? `${confirmed} of ${incidents.length}` : undefined}
                 action={unconfirmed.length ? "Show" : undefined}
                 onAction={() => go(unconfirmed[0]?.id)}
               />
@@ -149,10 +149,13 @@ function SubmitSheet() {
             <h3 className="mt-6 mb-2 text-xs font-medium text-ink-3">Worth a look</h3>
             <ul className="flex flex-col gap-1 text-[13px] text-ink-2">
               <Info>
-                {fresh ? `${fresh} Captures in the inbox not in the report yet` : "Every Capture is handled"}
+                {fresh
+                  ? `${fresh} ${fresh === 1 ? "Capture" : "Captures"} in the inbox not in the report yet`
+                  : "Every Capture is handled"}
               </Info>
               <Info>
-                {written.length} Sections written. Not covered tonight: {notCovered.join(", ")}.
+                {written.length} {written.length === 1 ? "Section" : "Sections"} written.
+                {notCovered.length > 0 && ` Not covered tonight: ${notCovered.join(", ")}.`}
               </Info>
             </ul>
 

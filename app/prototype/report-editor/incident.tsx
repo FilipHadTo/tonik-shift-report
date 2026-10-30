@@ -47,12 +47,13 @@ export function IncidentBlock({
     <article
       id={i.id}
       aria-labelledby={`${i.id}-title`}
+      tabIndex={-1}
       data-wash={wash || undefined}
       onMouseEnter={() => i.sources.length && setHot({ captures: i.sources, from: "doc" })}
       onMouseLeave={() => setHot(null)}
       className={cn(
         // Hangs into the gutter like Draft blocks, so the text lines up with the rest of the document.
-        "group/incident incident enter -mx-5 scroll-mt-24 rounded-2xl px-5 pt-2.5 pb-4",
+        "group/incident incident enter -mx-5 scroll-mt-24 rounded-2xl px-5 pt-2.5 pb-4 outline-none",
         confirmed
           ? "shadow-[inset_0_0_0_1px_transparent]"
           : i.manual
@@ -83,7 +84,17 @@ export function IncidentBlock({
                 ) : i.descriptionDraft !== undefined ? (
                   <span className="ml-1">Keep or discard the AI draft to confirm</span>
                 ) : (
-                  <Btn variant="primary" size="sm" className="-mr-1.5" onClick={() => dispatch({ type: "confirm", incident: i.id })}>
+                  <Btn
+                    variant="primary"
+                    size="sm"
+                    className="-mr-1.5"
+                    onClick={(e) => {
+                      const card = e.currentTarget.closest("article")
+                      dispatch({ type: "confirm", incident: i.id })
+                      // Confirm folds away with its line (inert): keep focus on this Incident instead of dropping it to <body>.
+                      requestAnimationFrame(() => card?.focus({ preventScroll: true }))
+                    }}
+                  >
                     <Check strokeWidth={2.25} />
                     Confirm
                   </Btn>
@@ -124,7 +135,11 @@ export function IncidentBlock({
                 variant="ghost"
                 size="sm"
                 className="mr-1 opacity-0 transition-opacity duration-150 group-focus-within/incident:opacity-100 group-hover/incident:opacity-100"
-                onClick={() => dispatch({ type: "confirm", incident: i.id, undo: true })}
+                onClick={(e) => {
+                  const card = e.currentTarget.closest("article")
+                  dispatch({ type: "confirm", incident: i.id, undo: true })
+                  requestAnimationFrame(() => card?.focus({ preventScroll: true }))
+                }}
               >
                 <Undo2 strokeWidth={1.75} />
                 Reopen
