@@ -6,9 +6,9 @@ New screen, so Filip designs it first (in E, with `better-*` skills, from `docs/
 
 **Blocked by:** 16, the reports list shaping (PROCESS.md 2b.1)
 
-**Status:** ready-for-human
+**Status:** ready-for-agent
 
-**Agent:** none, Filip does this
+**Agent:** Opus, high effort; Filip delegated the design (2026-10-31), brainstorm autonomously
 
 - [ ] Filip has picked the layout
 - [ ] Opening a submitted report shows the document; it prints cleanly
@@ -18,3 +18,5 @@ New screen, so Filip designs it first (in E, with `better-*` skills, from `docs/
 ## Comments
 
 2026-10-31, Filip: same route (option A). After Submit the manager stays on the Report screen, sees it's sent and goes home; the clean document opens as a Preview of a closed report from the reports list (shaping in PROCESS.md 2b.1). Light mode is out of scope.
+
+2026-10-31, Filip (delegated to an agent, no hand design): a sent report has two ways in from the Reports list: (1) open the editor, locked (as today after Submit, Inbox read-only per ticket 21), and (2) open the final report as a clean document (Preview). The document has a placeholder "Download PDF" action (stub; may call `window.print()` with a print stylesheet, or just be a stub) instead of Share. On the Report screen, after Submit, the manager sees a clear "Sent" state and a way into the document. MVP, fits prototype E, no extras.
