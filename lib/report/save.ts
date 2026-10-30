@@ -1,21 +1,22 @@
 // Saving manager actions (ticket 09): the browser sends what the Closing Manager did, the server
 // checks it here and applies the same rules to the stored report, so nothing can bypass them.
 
-import { SECTIONS, type Capture, type IncidentField } from "./catalog"
+import { SECTIONS, type IncidentField } from "./catalog"
 import { gapsIn } from "./derived"
 import { canEnhance, runEnhance, type EnhanceSpan, type EnhanceTarget } from "./enhance"
 import { capturesInScope, runExtract, type ExtractScope } from "./extract"
 import type { ReportModel } from "./model"
 import { reducer } from "./reducer"
-import type { Action, PhoneCapture, Report, SectionId } from "./types"
+import type { Action, Report, SectionId } from "./types"
 
 /**
  * An action the browser may ask the server to save. AI results are never taken from the browser:
  * Draft and Enhance are sent as requests and the server runs the model itself. Reset goes through
- * the reseed route; the transient drafting flags are never saved.
+ * the reseed route; the transient drafting flags are never saved. Phone Captures come in only through the
+ * capture route, which stamps them itself (see phone.ts), so `receive` is never taken from the browser.
  */
 export type SaveAction =
-  | Exclude<Action, { type: "startDrafting" | "draftFailed" | "extracted" | "enhanced" | "reset" }>
+  | Exclude<Action, { type: "startDrafting" | "draftFailed" | "extracted" | "enhanced" | "receive" | "reset" }>
   | { type: "draft"; scope: ExtractScope }
   | { type: "enhance"; target: EnhanceTarget; text?: string; span?: EnhanceSpan }
 
@@ -23,9 +24,6 @@ export type Saved = { ok: true; report: Report } | { ok: false }
 
 const SECTION_IDS = new Set<string>(SECTIONS.map((s) => s.id))
 const FIELDS = new Set<string>(["occurredAt", "location", "type"] satisfies IncidentField[])
-const KINDS = new Set<string>(["photo", "voice", "text", "chat"] satisfies Capture["kind"][])
-const ROLES = new Set<string>(["Closing Manager", "Door", "Bar", "Security"])
-const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/
 
 type Obj = Record<string, unknown>
 const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v)
@@ -47,21 +45,6 @@ function targetOf(v: unknown): EnhanceTarget | null {
   if (isStr(v.block)) return { block: v.block }
   if (isStr(v.incident)) return { incident: v.incident }
   return null
-}
-
-function phoneCapture(v: unknown): PhoneCapture | null {
-  if (!isObj(v) || !isStr(v.id) || !isStr(v.kind) || !KINDS.has(v.kind) || !isStr(v.capturedAt) || !HHMM.test(v.capturedAt))
-    return null
-  if (!isStr(v.text) || !isObj(v.author) || !isText(v.author.name) || !isStr(v.author.role) || !ROLES.has(v.author.role))
-    return null
-  return {
-    id: v.id,
-    kind: v.kind as Capture["kind"],
-    capturedAt: v.capturedAt,
-    author: { name: v.author.name, role: v.author.role as PhoneCapture["author"]["role"] },
-    text: v.text,
-    ...(v.photo === true && { photo: true }),
-  }
 }
 
 /** The action as the browser sent it, checked field by field; null for anything else. */
@@ -106,11 +89,6 @@ export function parseSaveAction(raw: unknown): SaveAction | null {
     case "invited":
     case "submit":
       return { type: a.type }
-    case "receive": {
-      if (!Array.isArray(a.captures)) return null
-      const captures = a.captures.map(phoneCapture)
-      return captures.every((c) => c !== null) ? { type: "receive", captures } : null
-    }
     case "draft": {
       const scope = scopeOf(a.scope)
       return scope && { type: "draft", scope }

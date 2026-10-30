@@ -51,7 +51,6 @@ describe("parseSaveAction: what the browser may send", () => {
     { type: "draft", scope: { all: true } },
     { type: "draft", scope: { section: "bar" } },
     { type: "enhance", target: { incident: "i-m3" }, text: "abc", span: { start: 0, end: 3 } },
-    { type: "receive", captures: [{ id: "p1", kind: "text", capturedAt: "01:00", author: { name: "Ola", role: "Bar" }, text: "Ice out", photo: true }] },
     { type: "keepAll" },
     { type: "invited" },
     { type: "submit" },

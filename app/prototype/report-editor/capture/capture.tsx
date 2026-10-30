@@ -1,8 +1,9 @@
 "use client"
 
 // PROTOTYPE — the capture page a Staff Member (or the Closing Manager) opens from the QR.
-// No login: name and role are kept on the phone (ADR 0004). Captures go to the in-memory
-// store in ../captures/route.ts, which the desktop Inbox polls. Upload and voice are fake.
+// No login: name and role are kept on the phone (ADR 0004). Captures are saved in the database
+// through ../captures/route.ts, into the demo id's report, and the desktop Inbox polls for them.
+// Upload and voice are fake.
 // Laid out like a messaging app, since that's what staff already use mid-shift.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"

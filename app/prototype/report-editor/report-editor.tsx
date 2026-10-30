@@ -43,8 +43,8 @@ const EditorCtx = createContext<Ctx | null>(null)
 type ScreenAction = Action | { type: "saved"; report: Report }
 const screenReducer = (r: Report, a: ScreenAction) => (a.type === "saved" ? a.report : reducer(r, a))
 
-/** Actions that carry an AI result or a reset never go to the server as they are (see SaveAction). */
-const LOCAL_ONLY = new Set<Action["type"]>(["startDrafting", "draftFailed", "extracted", "enhanced", "reset"])
+/** Actions that carry an AI result or a reset never go to the server as they are (see SaveAction); phone Captures are already stored. */
+const LOCAL_ONLY = new Set<Action["type"]>(["startDrafting", "draftFailed", "extracted", "enhanced", "receive", "reset"])
 
 /**
  * Saves manager actions one at a time, in order, and settles the screen on the server's answer once
@@ -108,7 +108,10 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
     [queue],
   )
 
-  return { save, hold, release, reseed }
+  /** The save generation when nothing is in flight, else null: a poll answer is only safe to apply if it is unchanged. */
+  const quiet = useCallback(() => (s.current.busy === 0 ? s.current.gen : null), [])
+
+  return { save, hold, release, reseed, quiet }
 }
 
 export function useEditor() {
@@ -153,7 +156,7 @@ function Editor({ initial }: { initial: Report }) {
   const router = useRouter()
   const pathname = usePathname()
   const [report, apply] = useReducer(screenReducer, initial)
-  const { save, hold, release, reseed } = useSaving(apply)
+  const { save, hold, release, reseed, quiet } = useSaving(apply)
   /** What the components dispatch: shown at once, saved on the server. */
   const dispatch = useCallback(
     (a: Action) => {
@@ -213,16 +216,12 @@ function Editor({ initial }: { initial: Report }) {
     flashTimer.current = setTimeout(() => setFlash(null), 1400)
   }, [])
 
-  // Switching or resetting a scene starts it fresh, phone Captures included.
+  // Switching or resetting a scene starts it fresh, phone Captures included (the reseed deletes them).
   const setScene = useCallback(
     (s: Scene) => {
       apply({ type: "reset", scene: s })
-      const d = demoSession()
       // Reseeds this demo id only; the seed is deterministic, so the screen doesn't wait for it.
       reseed(s)
-      fetch(CAPTURES_API, { method: "PUT", body: JSON.stringify({ d, scene: s, reset: true }) }).catch(
-        () => {},
-      )
       const sp = new URLSearchParams(params.toString())
       if (s === "end") sp.delete("scene")
       else sp.set("scene", s)
@@ -231,19 +230,22 @@ function Editor({ initial }: { initial: Report }) {
     [params, pathname, router, reseed],
   )
 
-  // Live Inbox (story 13): point phones at this scene, then poll for the Captures they send.
-  // A reload keeps the scene's phone Captures; only Reset or a switch empties them.
+  // Live Inbox (story 13): phones write into this demo id's stored report; poll for what they sent.
+  // Polls wait while anything is in flight, and an answer that crossed a Reset or scene switch is dropped,
+  // so Captures the reseed just deleted never come back.
   useEffect(() => {
     let stop = false
     const d = demoSession()
-    fetch(CAPTURES_API, { method: "PUT", body: JSON.stringify({ d, scene: report.scene }) }).catch(() => {})
     async function poll() {
+      const gen = quiet()
+      if (gen === null) return
       try {
-        const res = await fetch(`${CAPTURES_API}?d=${d}&scene=${report.scene}`, { cache: "no-store" })
+        const res = await fetch(`${CAPTURES_API}?d=${d}`, { cache: "no-store" })
+        if (!res.ok) return
         const data: { captures: PhoneCapture[] } = await res.json()
-        // Only Captures the report doesn't have yet are applied and saved.
+        // Already stored on the server: shown here only, never saved again.
         const fresh = data.captures.filter((p) => !latest.current.captures.some((c) => c.id === p.id))
-        if (!stop && fresh.length) dispatch({ type: "receive", captures: fresh })
+        if (!stop && fresh.length && quiet() === gen) apply({ type: "receive", captures: fresh })
       } catch {}
     }
     poll()
@@ -252,7 +254,7 @@ function Editor({ initial }: { initial: Report }) {
       stop = true
       clearInterval(t)
     }
-  }, [report.scene, dispatch])
+  }, [quiet])
 
   const value = useMemo(
     () => ({ report, dispatch, draft, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite }),

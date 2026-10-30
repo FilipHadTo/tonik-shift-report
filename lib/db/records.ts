@@ -79,6 +79,7 @@ export function toRecords(r: Report, demoId = ""): Records {
       chatLines: c.chatLines ?? null,
       photo: c.photo ?? null,
       fromPhone: !!c.fromPhone,
+      device: null,
       dismissed: !!c.dismissed,
       handled: !!c.handled,
     })),

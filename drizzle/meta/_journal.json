@@ -8,6 +8,13 @@
       "when": 1793317558928,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793318380611,
+      "tag": "0001_closed_magik",
+      "breakpoints": true
     }
   ]
 }

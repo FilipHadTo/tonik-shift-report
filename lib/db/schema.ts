@@ -53,6 +53,8 @@ export const captures = pgTable(
     chatLines: jsonb("chat_lines").$type<NonNullable<Capture["chatLines"]>>(),
     photo: text("photo").$type<"window" | "upload">(),
     fromPhone: boolean("from_phone").notNull().default(false),
+    /** The phone that sent it: only scopes "your Captures" on the capture page, never shown. */
+    device: text("device"),
     dismissed: boolean("dismissed").notNull().default(false),
     handled: boolean("handled").notNull().default(false),
   },

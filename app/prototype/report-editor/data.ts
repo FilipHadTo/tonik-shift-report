@@ -6,7 +6,7 @@ export * from "@/lib/report"
 /** This browser's demo report, stored in Neon (./report/route.ts). */
 export const REPORT_API = "/prototype/report-editor/report"
 
-/** Live Inbox endpoint shared by the desktop and the capture page (./captures/route.ts). */
+/** Live Inbox endpoint shared by the desktop and the capture page, stored in Neon (./captures/route.ts). */
 export const CAPTURES_API = "/prototype/report-editor/captures"
 
 /**
