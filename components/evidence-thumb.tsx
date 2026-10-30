@@ -1,7 +1,7 @@
 import { Image as ImageIcon, Mic } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-/** Photo Evidence placeholder until real uploads exist. */
+/** Photo Evidence placeholder: seeded photos, or a phone photo whose image can't be loaded. */
 export function PhotoThumb({ className }: { className?: string }) {
   return (
     <span

@@ -1,7 +1,14 @@
 import { describe, expect, test } from "vitest"
-import { parsePhoneCapture, parseSaveAction, receivePhoneCapture, reducer, seedReport, statusOf } from "."
+import { MAX_PHOTO_BYTES, parsePhoneCapture, parsePhoto, parseSaveAction, receivePhoneCapture, reducer, seedReport, statusOf } from "."
 
 const valid = { device: "k3x9a0b1", name: "Ola", role: "Bar", kind: "text", text: "Ice machine is leaking" }
+
+const bytes = (...b: number[]) => btoa(String.fromCharCode(...b, ...Array(32).fill(0)))
+const JPEG = bytes(0xff, 0xd8, 0xff, 0xe0)
+const PNG = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+const WEBP = bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50)
+const jpegUrl = `data:image/jpeg;base64,${JPEG}`
+const photo = { ...valid, kind: "photo", text: "", photo: jpegUrl }
 
 describe("parsePhoneCapture: what a phone may send", () => {
   test.each([
@@ -34,8 +41,14 @@ describe("parsePhoneCapture: what a phone may send", () => {
     }
   })
 
-  test("a photo may come without a caption", () => {
-    expect(parsePhoneCapture({ ...valid, kind: "photo", text: "" })).toMatchObject({ kind: "photo", text: "" })
+  test("a photo may come without a caption, and carries its image", () => {
+    expect(parsePhoneCapture(photo)).toMatchObject({ kind: "photo", text: "", photo: { mime: "image/jpeg", data: JPEG } })
+  })
+
+  test("a photo Capture needs a valid image; nothing else may carry one", () => {
+    expect(parsePhoneCapture({ ...photo, photo: undefined })).toBeNull()
+    expect(parsePhoneCapture({ ...photo, photo: "data:text/html;base64,PGgxPg==" })).toBeNull()
+    expect(parsePhoneCapture({ ...valid, photo: jpegUrl })).toBeNull()
   })
 
   test("never takes Captured-at or an id from the phone", () => {
@@ -48,6 +61,36 @@ describe("parsePhoneCapture: what a phone may send", () => {
     const parsed = parsePhoneCapture({ ...valid, name: "x".repeat(100), text: "y".repeat(5000) })
     expect(parsed?.author.name).toHaveLength(40)
     expect(parsed?.text).toHaveLength(2000)
+  })
+})
+
+describe("parsePhoto: the image a phone may send", () => {
+  test.each([
+    ["JPEG", "image/jpeg", JPEG],
+    ["PNG", "image/png", PNG],
+    ["WebP", "image/webp", WEBP],
+  ])("takes a %s data URL as its type and base64 bytes", (_, mime, data) => {
+    expect(parsePhoto(`data:${mime};base64,${data}`)).toEqual({ mime, data })
+  })
+
+  test.each([
+    ["no image", undefined],
+    ["not a string", 42],
+    ["not a data URL", "https://example.com/a.jpg"],
+    ["not base64", "data:image/jpeg;base64,not base64!"],
+    ["an empty image", "data:image/jpeg;base64,"],
+    ["not an image", `data:text/html;base64,${JPEG}`],
+    ["an SVG", `data:image/svg+xml;base64,${btoa("<svg/>")}`],
+    ["bytes that are not what the type says", `data:image/jpeg;base64,${PNG}`],
+    ["text dressed as a JPEG", `data:image/jpeg;base64,${btoa("<script>alert(1)</script>")}`],
+  ])("refuses %s", (_, raw) => {
+    expect(parsePhoto(raw)).toBeNull()
+  })
+
+  test("refuses an image over the size limit, takes one at it", () => {
+    const sized = (n: number) => `data:image/jpeg;base64,${btoa("\xff\xd8\xff" + "\0".repeat(n - 3))}`
+    expect(parsePhoto(sized(MAX_PHOTO_BYTES))).not.toBeNull()
+    expect(parsePhoto(sized(MAX_PHOTO_BYTES + 1))).toBeNull()
   })
 })
 
@@ -70,9 +113,10 @@ describe("receivePhoneCapture: the server stamps and files a phone Capture", () 
     expect(statusOf(report, capture)).toBe("new")
   })
 
-  test("a photo is kept as an uploaded photo", () => {
-    const photo = parsePhoneCapture({ ...valid, kind: "photo", text: "" })!
-    expect(receivePhoneCapture(seedReport("start"), photo, "p-a1")!.capture.photo).toBe("upload")
+  test("a photo is kept as an uploaded photo; its bytes stay out of the report", () => {
+    const { capture } = receivePhoneCapture(seedReport("start"), parsePhoneCapture(photo)!, "p-a1")!
+    expect(capture.photo).toBe("upload")
+    expect(JSON.stringify(capture)).not.toContain(JPEG)
   })
 
   test("a submitted report takes no more Captures", () => {

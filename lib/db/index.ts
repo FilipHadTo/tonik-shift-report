@@ -6,11 +6,11 @@ import { neon } from "@neondatabase/serverless"
 import { drizzle } from "drizzle-orm/neon-http"
 import { and, asc, eq, sql } from "drizzle-orm"
 import type { BatchItem } from "drizzle-orm/batch"
-import { receivePhoneCapture, seedReport, type PhoneCapture, type PhoneCaptureInput, type Report, type Scene } from "../report"
+import { receivePhoneCapture, seedReport, type PhoneCapture, type PhoneCaptureInput, type Photo, type Report, type Scene } from "../report"
 import { fromRecords, toRecords } from "./records"
 import * as schema from "./schema"
 
-const { reports, captures, incidents, blocks, aiCalls } = schema
+const { reports, captures, capturePhotos, incidents, blocks, aiCalls } = schema
 
 let client: ReturnType<typeof drizzle<typeof schema>> | undefined
 
@@ -139,14 +139,28 @@ export async function addPhoneCapture(demoId: string, input: PhoneCaptureInput):
   if (!out) return null
   const row = { ...toRecords(out.report, demoId).captures.at(-1)!, device: input.device }
   const d = db()
-  await d.batch([
+  const queries: BatchItem<"pg">[] = [
     d.insert(captures).values(row),
     d
       .update(reports)
       .set({ clock: sql`greatest(${reports.clock}, ${out.report.clock})`, updatedAt: new Date() })
       .where(eq(reports.demoId, demoId)),
-  ])
+  ]
+  if (input.photo) queries.push(d.insert(capturePhotos).values({ demoId, captureId: id, ...input.photo }))
+  await d.batch(queries as [BatchItem<"pg">, ...BatchItem<"pg">[]])
   return asPhoneCapture(row)
+}
+
+/**
+ * A phone photo's image (ticket 18): its type and base64 bytes, for the desktop to show and for Extract
+ * to send to the AI. Only within this demo id; null for seeded photos, which have no stored image.
+ */
+export async function capturePhoto(demoId: string, captureId: string): Promise<Photo | null> {
+  const [row] = await db()
+    .select({ mime: capturePhotos.mime, data: capturePhotos.data })
+    .from(capturePhotos)
+    .where(and(eq(capturePhotos.demoId, demoId), eq(capturePhotos.captureId, captureId)))
+  return row ?? null
 }
 
 /** Paid AI calls allowed per IP and window (ticket 14). AI_RATE_LIMIT overrides the count. */

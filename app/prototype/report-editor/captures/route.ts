@@ -7,6 +7,8 @@ import { parsePhoneCapture } from "@/lib/report"
 
 const DEVICE = /^[a-z0-9]{1,40}$/
 const noStore = { "Cache-Control": "no-store" }
+/** A downsized photo (≤ 600 KB, about 800 KB as base64) plus the rest; anything bigger is refused unread. */
+const MAX_BODY = 1024 * 1024
 
 /**
  * Desktop: ?d=… returns every phone Capture in that demo's report.
@@ -21,12 +23,23 @@ export async function GET(request: Request) {
   return Response.json({ captures }, { headers: noStore })
 }
 
-/** A phone sends a Capture. Validated here; Captured-at is set by the server (story 10). */
+/**
+ * A phone sends a Capture, a photo with its downsized image (ticket 18). Validated here; Captured-at
+ * is set by the server (story 10).
+ */
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null)
+  if (Number(request.headers.get("content-length")) > MAX_BODY) return tooLarge()
+  const raw = await request.text().catch(() => "")
+  if (raw.length > MAX_BODY) return tooLarge()
+  let body: { d?: unknown } | null = null
+  try {
+    body = JSON.parse(raw)
+  } catch {}
   const input = parsePhoneCapture(body)
   if (!input) return Response.json({ error: "Invalid Capture" }, { status: 400 })
   const capture = await addPhoneCapture(demoIdOf(body?.d), input)
   if (!capture) return Response.json({ error: "This report is submitted" }, { status: 409 })
   return Response.json(capture, { status: 201 })
 }
+
+const tooLarge = () => Response.json({ error: "Photo too large" }, { status: 413 })

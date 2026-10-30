@@ -27,6 +27,9 @@ export function scopeKey(scope: ExtractScope) {
 /** Live Inbox endpoint shared by the desktop and the capture page, stored in Neon (./captures/route.ts). */
 export const CAPTURES_API = "/prototype/report-editor/captures"
 
+/** A phone photo's stored image (./captures/photo/route.ts), scoped by demo id. */
+export const photoSrc = (demo: string, capture: string) => `${CAPTURES_API}/photo?d=${demo}&id=${capture}`
+
 /**
  * One demo per browser: the desktop's id goes into the QR link (`?d=…`), so each reviewer's
  * phones write into their own Report screen and nobody's Reset wipes anyone else's Captures.

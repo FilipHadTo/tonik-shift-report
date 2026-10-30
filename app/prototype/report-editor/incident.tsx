@@ -11,10 +11,11 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { chip, type ChipTone } from "@/components/chip"
 import { DraftLabel } from "@/components/draft-label"
-import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
+import { VoiceThumb } from "@/components/evidence-thumb"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
 import { Enhancing } from "./enhance"
+import { CapturePhoto } from "./ui"
 import { INCIDENT_TYPES, LOCATIONS, type Field, type Incident, type IncidentField } from "./data"
 
 const ROWS: { field: IncidentField; label: string; icon: typeof Clock; add: string }[] = [
@@ -168,7 +169,8 @@ function ChipMeta({ incident: i, editable }: MetaProps) {
 
 /** What happened, then Evidence. Same in every layout. */
 function Body({ incident: i, editable }: MetaProps) {
-  const { dispatch, enhancing } = useEditor()
+  const { report, dispatch, enhancing } = useEditor()
+  const evidence = report.captures.filter((c) => i.evidence.includes(c.id))
   const busy = enhancing === i.id
   const pending = i.descriptionDraft !== undefined
   return (
@@ -214,8 +216,9 @@ function Body({ incident: i, editable }: MetaProps) {
 
       {i.evidence.length > 0 ? (
         <div className="mt-3 flex items-center gap-2">
-          {i.evidence.includes("c1") && <PhotoThumb className="h-16 w-24" />}
-          {i.evidence.includes("c3") && <VoiceThumb />}
+          {evidence.map((c) =>
+            c.kind === "photo" ? <CapturePhoto key={c.id} capture={c} className="h-16 w-24" /> : <VoiceThumb key={c.id} />,
+          )}
         </div>
       ) : (
         editable && (

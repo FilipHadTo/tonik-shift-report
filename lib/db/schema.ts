@@ -4,7 +4,7 @@
 // Section block keeps its value, provenance and source Captures.
 
 import { boolean, foreignKey, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core"
-import type { Author, Capture, Scene, SectionId } from "../report"
+import type { Author, Capture, PhotoMime, Scene, SectionId } from "../report"
 
 /** Who a value comes from. "confirmed" = AI-drafted, then confirmed by the Closing Manager. */
 export type Provenance = "ai-drafted" | "confirmed" | "kept" | "manager-entered"
@@ -63,6 +63,25 @@ export const captures = pgTable(
     handled: boolean("handled").notNull().default(false),
   },
   (t) => [primaryKey({ columns: [t.demoId, t.id] }), foreignKey({ columns: [t.demoId], foreignColumns: [reports.demoId] }).onDelete("cascade")],
+)
+
+/**
+ * A phone photo's image (ticket 18), one row per photo Capture, kept apart so polling the Inbox
+ * never pulls image bytes. Goes with its Capture (on delete cascade), so Reset removes it too.
+ */
+export const capturePhotos = pgTable(
+  "capture_photos",
+  {
+    demoId: text("demo_id").notNull(),
+    captureId: text("capture_id").notNull(),
+    mime: text("mime").$type<PhotoMime>().notNull(),
+    /** The image bytes in base64, as the phone sent them (downsized to about 150 KB). */
+    data: text("data").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.demoId, t.captureId] }),
+    foreignKey({ columns: [t.demoId, t.captureId], foreignColumns: [captures.demoId, captures.id] }).onDelete("cascade"),
+  ],
 )
 
 export const incidents = pgTable(

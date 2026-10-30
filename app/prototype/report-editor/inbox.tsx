@@ -23,10 +23,10 @@ import {
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
-import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
+import { VoiceThumb } from "@/components/evidence-thumb"
 import { useEditor } from "./report-editor"
 import { scopeKey, statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
-import { CalmNote, KindLabel } from "./ui"
+import { CalmNote, CapturePhoto, KindLabel } from "./ui"
 import { dictationMessage, joinDictation, useDictation } from "./dictation"
 
 export function Inbox() {
@@ -242,7 +242,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
         ) : (
           c.text && <p className="text-[13.5px] leading-[1.55] text-pretty">{c.text}</p>
         )}
-        {c.photo && <PhotoThumb className={cn("h-[72px] w-[108px]", c.text && "mt-3")} />}
+        {c.photo && <CapturePhoto capture={c} className={cn("h-[72px] w-[108px]", c.text && "mt-3")} />}
         {c.kind === "voice" && <VoiceThumb className="mt-3 w-fit" />}
       </div>
 

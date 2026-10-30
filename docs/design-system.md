@@ -71,7 +71,7 @@ Tailwind 4px scale. Inline gaps are `gap-1` to `gap-2.5` (`gap-1.5` is the defau
 | `chip({ tone })` | Property values that open a picker (time, place, type). `tone`: `set`, `unknown`, `gap`, `add` | A class helper (cva), apply to a `<button>`; a `Pop` trigger usually |
 | `Avatar` | Author of a Capture / Draft source | Decorative (`aria-hidden`): always render the name beside it |
 | `DraftLabel` | The "AI draft from …" line at the top of every AI Draft | Pass the source Captures |
-| `PhotoThumb`, `VoiceThumb` | Evidence and Capture previews | Placeholders until real uploads exist |
+| `PhotoThumb`, `VoiceThumb` | Evidence and Capture previews | Placeholders: seeded photos and voice notes. A phone photo shows its real image through `CapturePhoto` (`report-editor/ui.tsx`), falling back to `PhotoThumb` |
 | `Kbd` | Keyboard hint inside a `Tip` or menu row | |
 
 Sheets and dialogs use Base UI `Dialog` directly with `sheet-motion` / `backdrop-motion` (see the Submit sheet in `app/prototype/report-editor/top-bar.tsx`). Prototype-only bits (`KindLabel`, `Qr`) stay in E's `ui.tsx`.

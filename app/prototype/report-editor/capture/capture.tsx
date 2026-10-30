@@ -3,7 +3,7 @@
 // PROTOTYPE — the capture page a Staff Member (or the Closing Manager) opens from the QR.
 // No login: name and role are kept on the phone (ADR 0004). Captures are saved in the database
 // through ../captures/route.ts, into the demo id's report, and the desktop Inbox polls for them.
-// Upload is fake. There is no voice recording: people dictate with the phone keyboard's mic (story 9).
+// A photo is downsized on the phone and stored with its Capture (ticket 18). There is no voice recording: people dictate with the phone keyboard's mic (story 9).
 // Laid out like a messaging app, since that's what staff already use mid-shift.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
-import { CAPTURES_API, ROLES, type Author, type PhoneCapture } from "../data"
+import { CAPTURES_API, photoSrc, ROLES, type Author, type PhoneCapture } from "../data"
 
 type Identity = Pick<Author, "name" | "role">
 
@@ -20,6 +20,9 @@ const ID_KEY = "shift-report:identity"
 const DEVICE_KEY = "shift-report:device"
 const SESSION_KEY = "shift-report:capture-demo"
 const POLL_MS = 3000
+/** Ticket 18: photos go up downsized, longest side 1280 px, JPEG of roughly 150 KB. */
+const LONGEST_SIDE = 1280
+const TARGET_BYTES = 150 * 1024
 
 function read<T>(key: string): T | null {
   try {
@@ -52,6 +55,31 @@ function demoId() {
   const fromLink = new URLSearchParams(window.location.search).get("d")
   if (fromLink) write(SESSION_KEY, fromLink)
   return fromLink ?? read<string>(SESSION_KEY) ?? "public"
+}
+
+/** A phone photo as a JPEG data URL, longest side ≤ 1280 px, quality lowered until it's near the target size. */
+async function downsize(file: File): Promise<string> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    const scale = Math.min(1, LONGEST_SIDE / Math.max(img.naturalWidth, img.naturalHeight))
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.round(img.naturalWidth * scale)
+    canvas.height = Math.round(img.naturalHeight * scale)
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height)
+    let quality = 0.82
+    let out = canvas.toDataURL("image/jpeg", quality)
+    // base64 is 4/3 of the bytes
+    while (out.length * 0.75 > TARGET_BYTES && quality > 0.45) {
+      quality -= 0.12
+      out = canvas.toDataURL("image/jpeg", quality)
+    }
+    return out
+  } finally {
+    URL.revokeObjectURL(url)
+  }
 }
 
 export function CapturePage() {
@@ -178,7 +206,10 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
       const { device, demo } = ids.current
       const res = await fetch(`${CAPTURES_API}?d=${demo}&device=${device}`, { cache: "no-store" })
       const data: { captures: PhoneCapture[] } = await res.json()
-      setSent(data.captures.map((c) => ({ ...c, preview: previews.current.get(c.id) })))
+      // Sent from here this session: the local copy, at once. After a reload: the stored one.
+      setSent(
+        data.captures.map((c) => ({ ...c, preview: previews.current.get(c.id) ?? (c.photo ? photoSrc(demo, c.id) : undefined) })),
+      )
     } catch {}
   }, [])
 
@@ -198,7 +229,15 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
     const res = await fetch(CAPTURES_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ d: ids.current.demo, device: ids.current.device, name: me.name, role: me.role, kind, text }),
+      body: JSON.stringify({
+        d: ids.current.demo,
+        device: ids.current.device,
+        name: me.name,
+        role: me.role,
+        kind,
+        text,
+        ...(photo && { photo }),
+      }),
     })
     if (!res.ok) throw new Error("Not sent")
     const c: PhoneCapture = await res.json()
@@ -246,12 +285,14 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
 }
 
 function Bubble({ capture: c }: { capture: Sent }) {
+  const [failed, setFailed] = useState(false)
+  const src = failed ? undefined : c.preview
   return (
     <li className="enter flex flex-col items-end">
       <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-br-md bg-raise shadow-[inset_0_0_0_1px_var(--line)]">
-        {c.preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local object URL, never optimised
-          <img src={c.preview} alt="" className="max-h-64 w-full object-cover" />
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element -- downsized photo, never optimised
+          <img src={src} alt="" onError={() => setFailed(true)} className="max-h-64 w-full object-cover" />
         ) : (
           c.photo && <PhotoThumb className="m-1.5 h-28 w-44 rounded-xl" />
         )}
@@ -273,7 +314,7 @@ type Kind = "text" | "photo"
 function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: string) => Promise<void> }) {
   const [text, setText] = useState("")
   const [photo, setPhoto] = useState<string | null>(null)
-  const [state, setState] = useState<"idle" | "sending" | "failed">("idle")
+  const [state, setState] = useState<"idle" | "sending" | "failed" | "unreadable">("idle")
   const fileRef = useRef<HTMLInputElement>(null)
   const canSend = (!!text.trim() || !!photo) && state !== "sending"
 
@@ -305,9 +346,14 @@ function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: strin
             Didn&apos;t go through. It&apos;s still here, try again.
           </p>
         )}
+        {state === "unreadable" && (
+          <p role="alert" className="mb-2 px-1 text-xs text-ink-2">
+            Couldn&apos;t open that photo. Try taking it again.
+          </p>
+        )}
         {photo && (
           <div className="enter relative mb-2 ml-12 w-fit">
-            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL, never optimised */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- local downsized copy, never optimised */}
             <img src={photo} alt="Photo to send" className="h-24 rounded-xl object-cover outline outline-1 -outline-offset-1 outline-img-outline" />
             <IconBtn label="Remove photo" className="absolute -top-2 -right-2 rounded-full bg-panel shadow-pop" onClick={() => setPhoto(null)}>
               <X strokeWidth={2} />
@@ -351,10 +397,16 @@ function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: strin
         className="sr-only"
         tabIndex={-1}
         aria-hidden
-        onChange={(e) => {
+        onChange={async (e) => {
           const f = e.target.files?.[0]
           e.target.value = ""
-          if (f) setPhoto(URL.createObjectURL(f))
+          if (!f) return
+          try {
+            setPhoto(await downsize(f))
+            setState("idle")
+          } catch {
+            setState("unreadable")
+          }
         }}
       />
     </footer>
