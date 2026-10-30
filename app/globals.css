@@ -357,6 +357,28 @@
   opacity: 0;
 }
 
+/* Print (the Preview's "Download PDF", ticket 17): the app is dark only on screen, paper gets the light
+   values, so ink is dark on white. Only the tokens a printed document uses. */
+@media print {
+  .dark {
+    --canvas: oklch(1 0 0);
+    --panel: oklch(1 0 0);
+    --raise: oklch(0.972 0.003 260);
+    --press: oklch(0.945 0.004 260);
+    --line: oklch(0 0 0 / 0.1);
+    --line-2: oklch(0 0 0 / 0.16);
+    --ink: oklch(0.21 0.01 260);
+    --ink-2: oklch(0.42 0.01 260);
+    --ink-3: oklch(0.54 0.01 260);
+    --ok: oklch(0.55 0.13 155);
+    --img-outline: oklch(0 0 0 / 0.1);
+    color-scheme: light;
+  }
+  @page {
+    margin: 16mm 18mm;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .press:active:not(:disabled) {
     scale: 1;

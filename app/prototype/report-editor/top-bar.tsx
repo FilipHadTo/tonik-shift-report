@@ -12,7 +12,7 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
-import { REPORTS_PATH, REVIEW_STATEMENT, SECTIONS, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
+import { REPORTS_PATH, REVIEW_STATEMENT, SECTIONS, hasContent, notCoveredTonight, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
 import { Qr } from "./ui"
 
 export function TopBar() {
@@ -38,7 +38,7 @@ export function TopBar() {
         {report.submittedAt ? (
           <>
             <Lock className="size-3" aria-hidden />
-            Submitted {report.submittedAt}
+            Sent {report.submittedAt}
           </>
         ) : (
           <>
@@ -55,8 +55,13 @@ export function TopBar() {
       )}
 
       <div className="ml-auto flex items-center gap-2">
-        {!report.submittedAt && <InviteStaff />}
-        <SubmitSheet />
+        {/* Sent: the Sent note in the document takes over (Preview, Back to Reports). */}
+        {!report.submittedAt && (
+          <>
+            <InviteStaff />
+            <SubmitSheet />
+          </>
+        )}
         <span className="ml-2.5">
           <Avatar author={report.manager} size={30} />
         </span>
@@ -78,7 +83,7 @@ function SubmitSheet() {
   const incidents = orderedIncidents(report)
   const confirmed = incidents.filter((i) => i.confirmedAt).length
   const written = SECTIONS.filter((s) => s.id !== "incidents" && hasContent(report, s.id))
-  const notCovered = SECTIONS.filter((s) => s.id !== "incidents" && !hasContent(report, s.id))
+  const notCovered = notCoveredTonight(report)
   const fresh = report.captures.filter((c) => statusOf(report, c) === "new").length
   const go = (anchor?: string) => {
     if (!anchor) return
@@ -88,9 +93,7 @@ function SubmitSheet() {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<Btn variant="primary" disabled={!!report.submittedAt} />}>
-        {report.submittedAt ? "Submitted" : "Submit"}
-      </Dialog.Trigger>
+      <Dialog.Trigger render={<Btn variant="primary" />}>Submit</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Backdrop className="backdrop-motion fixed inset-0 z-40 bg-black/30 dark:bg-black/55" />
         <Dialog.Popup
@@ -149,7 +152,7 @@ function SubmitSheet() {
                 {fresh ? `${fresh} Captures in the inbox not in the report yet` : "Every Capture is handled"}
               </Info>
               <Info>
-                {written.length} Sections written. Not covered tonight: {notCovered.map((s) => s.name).join(", ")}.
+                {written.length} Sections written. Not covered tonight: {notCovered.join(", ")}.
               </Info>
             </ul>
 

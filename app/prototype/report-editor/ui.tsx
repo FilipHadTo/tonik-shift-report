@@ -32,14 +32,19 @@ export function KindLabel({ kind }: { kind: Capture["kind"] }) {
  * A photo Capture as Evidence or in the Inbox: the real image a phone sent (ticket 18), else the
  * placeholder (seeded photos, or an image that can't be loaded).
  */
-export function CapturePhoto({ capture: c, className }: { capture: InboxCapture; className?: string }) {
-  const [failed, setFailed] = useState(false)
+export function CapturePhoto({ capture, className }: { capture: InboxCapture; className?: string }) {
   const { id } = useEditor()
+  return <StoredPhoto report={id} capture={capture} className={className} />
+}
+
+/** CapturePhoto outside the Report screen (the Preview): the report's id comes in as a prop. */
+export function StoredPhoto({ report, capture: c, className }: { report: string; capture: InboxCapture; className?: string }) {
+  const [failed, setFailed] = useState(false)
   if (c.photo !== "upload" || failed) return <PhotoThumb className={className} />
   return (
     // eslint-disable-next-line @next/next/no-img-element -- stored demo photo, already downsized on the phone
     <img
-      src={photoSrc(id, c.id)}
+      src={photoSrc(report, c.id)}
       alt={c.text ? `Photo: ${c.text}` : `Photo from ${c.author.name}`}
       onError={() => setFailed(true)}
       className={cn("rounded-lg bg-press object-cover outline outline-1 -outline-offset-1 outline-img-outline", className)}

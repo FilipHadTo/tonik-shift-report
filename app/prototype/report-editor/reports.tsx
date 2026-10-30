@@ -8,17 +8,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Lock, Plus } from "lucide-react"
-import { Btn } from "@/components/btn"
+import { ChevronRight, Columns3, Lock, Plus } from "lucide-react"
+import { Btn, IconBtn } from "@/components/btn"
 import { cn } from "@/lib/utils"
-import { REPORTS_API, demoSession, reportPath, type ReportRow } from "./data"
+import { REPORTS_API, demoSession, previewPath, reportPath, type ReportRow } from "./data"
 import "./editor.css"
 
 type Row = ReportRow & { id: string }
 
-// A sent report opens as its Preview once ticket 17 lands (story 68: the same route in a document
-// mode). Until then every row opens the Report screen; change only this when Preview exists.
-const rowHref = (r: Row) => reportPath(r.id)
+// A sent report opens as its Preview (story 68: the same route in document mode); an open one opens
+// the Report screen. A sent row also offers its locked editor, with the Inbox (ticket 17).
+const rowHref = (r: Row) => (r.status === "sent" ? previewPath(r.id) : reportPath(r.id))
 
 export function Reports() {
   const router = useRouter()
@@ -111,7 +111,7 @@ export function Reports() {
             )}
             {!rows && !loadFailed && <RowsSkeleton />}
             {rows && (
-              <ul className="appear grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-x-8">
+              <ul className="appear grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-x-6">
                 {demo.map((r) => (
                   <ReportItem key={r.id} row={r} />
                 ))}
@@ -139,10 +139,11 @@ export function Reports() {
 function ReportItem({ row: r }: { row: Row }) {
   const sent = r.status === "sent"
   return (
-    <li className="col-span-full grid grid-cols-subgrid">
+    // The whole row is the link (stretched over it); a sent row's editor button sits above it.
+    <li className="group/row relative col-span-full -mx-3 grid h-12 grid-cols-subgrid items-center rounded-lg px-3 text-[13px] transition-colors duration-150 hover:bg-raise has-[>a:focus-visible]:outline-2 has-[>a:focus-visible]:outline-offset-2 has-[>a:focus-visible]:outline-ai">
       <Link
         href={rowHref(r)}
-        className="group/row col-span-full -mx-3 grid h-12 grid-cols-subgrid items-center rounded-lg px-3 text-[13px] transition-colors duration-150 hover:bg-raise"
+        className="col-span-3 grid grid-cols-subgrid items-center outline-none after:absolute after:inset-0 after:rounded-lg after:content-['']"
       >
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="truncate font-medium">Night of {r.night}</span>
@@ -170,12 +171,19 @@ function ReportItem({ row: r }: { row: Row }) {
         <span className={cn("whitespace-nowrap tabular-nums", r.incidents ? "text-ink-2" : "text-ink-3")}>
           {r.incidents === 0 ? "No Incidents" : r.incidents === 1 ? "1 Incident" : `${r.incidents} Incidents`}
         </span>
+      </Link>
+      <span className="relative flex items-center justify-end gap-1">
+        {sent && (
+          <IconBtn label="Open in editor" nativeButton={false} render={<Link href={reportPath(r.id)} />}>
+            <Columns3 strokeWidth={1.75} />
+          </IconBtn>
+        )}
         <ChevronRight
           className="size-4 text-ink-3 transition-colors duration-150 group-hover/row:text-ink-2"
           strokeWidth={1.75}
           aria-hidden
         />
-      </Link>
+      </span>
     </li>
   )
 }

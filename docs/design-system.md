@@ -8,6 +8,7 @@ Read this before building or changing any UI. The look comes from prototype E (`
 - Build from `components/` (E's primitives). `components/ui/` is stock shadcn, kept for behaviour only (e.g. a future mobile form); it follows the tokens through the shadcn names, but don't reach for it when an E primitive exists.
 - Base UI (`@base-ui/react`) supplies behaviour and accessibility: focus, dismissal, positioning, portals. Never restyle by fighting Base UI; style the parts with our classes.
 - Dark only (ticket 20): `ThemeProvider` forces `.dark` on `<html>` (next-themes `forcedTheme`), so a stored or system light preference can't apply. The `:root` light values stay in `globals.css` but aren't shipped or polished.
+- Print (the Preview's "Download PDF"): `@media print` in `globals.css` gives `.dark` the light ink-on-white values, and the Preview hides its top bar with `print:hidden`. Screen stays dark.
 - Desktop app shell: three columns `336px | 1fr | 280px`, `gap-3`, `px-3 pb-3`, min width 1180px. Mobile capture is a separate page.
 
 ## Tokens

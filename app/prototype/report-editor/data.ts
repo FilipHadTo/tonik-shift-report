@@ -10,6 +10,9 @@ export const REPORTS_PATH = "/prototype/report-editor"
 /** A report's own page (ADR 0009): the demo report's id is the demo id, a clean one's `r-…`. */
 export const reportPath = (id: string) => `${REPORTS_PATH}/r/${id}`
 
+/** A sent report's Preview (story 68): the same route in document mode. */
+export const previewPath = (id: string) => `${reportPath(id)}?view=document`
+
 /** This browser's Reports list and "New report", stored in Neon (./reports/route.ts). */
 export const REPORTS_API = "/prototype/report-editor/reports"
 

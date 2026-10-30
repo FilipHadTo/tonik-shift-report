@@ -4,13 +4,14 @@
 // text, Incidents are structured blocks. Tinted wash = Draft.
 
 import { useState } from "react"
-import { Check, EyeOff, Lock, PenLine, Plus, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { Check, EyeOff, FileText, PenLine, Plus, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { DraftLabel } from "@/components/draft-label"
 import { useEditor } from "./report-editor"
-import { SECTIONS, hasContent, newCapturesFor, orderedIncidents, scopeKey, type Block, type SectionId } from "./data"
+import { REPORTS_PATH, SECTIONS, hasContent, previewPath, newCapturesFor, orderedIncidents, scopeKey, type Block, type SectionId } from "./data"
 import { CalmNote } from "./ui"
 import { IncidentBlock } from "./incident"
 import { EnhanceBar, Enhancing } from "./enhance"
@@ -47,12 +48,7 @@ export function Document() {
           </span>
         </p>
 
-        {report.submittedAt && (
-          <p className="mt-6 flex items-center gap-2 rounded-lg bg-raise px-3 py-2.5 text-[13px] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
-            <Lock className="size-4 text-ink-3" aria-hidden />
-            Submitted {report.submittedAt} by {(report.submittedBy ?? report.manager).name}. Locked. Changes only as an Addendum.
-          </p>
-        )}
+        {report.submittedAt && <Sent />}
 
         {!report.drafted && !report.submittedAt && <HowItWorks />}
 
@@ -64,6 +60,38 @@ export function Document() {
       </div>
       <EnhanceBar />
     </main>
+  )
+}
+
+/**
+ * After Submit (stories 56, 67): the report is sent and locked, the manager can leave. The way into
+ * the final document (Preview) and back to Reports sit right here, where the eye lands after the sheet.
+ */
+function Sent() {
+  const { id, report } = useEditor()
+  return (
+    <section
+      aria-labelledby="sent-title"
+      className="enter mt-8 flex items-center gap-4 rounded-xl bg-raise py-3.5 pr-3.5 pl-4 shadow-[inset_0_0_0_1px_var(--line)]"
+    >
+      <Check className="size-5 shrink-0 text-ok" strokeWidth={2.25} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <h2 id="sent-title" className="text-[13px] font-medium tabular-nums">
+          Sent at {report.submittedAt}. You&apos;re done for tonight.
+        </h2>
+        <p className="mt-0.5 text-[13px] text-pretty text-ink-3">
+          Submitted by {(report.submittedBy ?? report.manager).name} and locked. Changes are only possible as a dated
+          Addendum.
+        </p>
+      </div>
+      <Btn variant="ghost" nativeButton={false} render={<Link href={REPORTS_PATH} />}>
+        Back to Reports
+      </Btn>
+      <Btn nativeButton={false} render={<Link href={previewPath(id)} />}>
+        <FileText strokeWidth={1.75} />
+        Preview
+      </Btn>
+    </section>
   )
 }
 
