@@ -8,8 +8,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronRight, Columns3, Lock, Plus } from "lucide-react"
-import { Btn, IconBtn } from "@/components/btn"
+import { ChevronRight, Lock, Plus } from "lucide-react"
+import { Btn } from "@/components/btn"
 import { cn } from "@/lib/utils"
 import { REPORTS_API, demoSession, previewPath, reportPath, type ReportRow } from "./data"
 import "./editor.css"
@@ -169,14 +169,15 @@ function ReportItem({ row: r }: { row: Row }) {
           )}
         </span>
         <span className={cn("whitespace-nowrap tabular-nums", r.incidents ? "text-ink-2" : "text-ink-3")}>
-          {r.incidents === 0 ? "No Incidents" : r.incidents === 1 ? "1 Incident" : `${r.incidents} Incidents`}
+          {r.incidents === 1 ? "1 Incident" : `${r.incidents} Incidents`}
         </span>
       </Link>
       <span className="relative flex items-center justify-end gap-1">
         {sent && (
-          <IconBtn label="Open in editor" nativeButton={false} render={<Link href={reportPath(r.id)} />}>
-            <Columns3 strokeWidth={1.75} />
-          </IconBtn>
+          // A visible label: an icon alone didn't say where it leads (the row itself opens the Preview).
+          <Btn size="sm" variant="ghost" nativeButton={false} render={<Link href={reportPath(r.id)} />}>
+            Open in editor
+          </Btn>
         )}
         <ChevronRight
           className="size-4 text-ink-3 transition-colors duration-150 group-hover/row:text-ink-2"
