@@ -89,3 +89,11 @@ Not blocking, built with A. Shown when Gemini fails, times out or the IP is over
 - A. (built) Replaces the pressed button for 5 s, E's existing in-place failure style; in the Inbox header it wraps to two right-aligned lines.
 - B. Inline note under the button, stays until the next action.
 - C. Toast.
+
+### 2026-10-30 — Ticket 15: calm message wording for Enhance
+
+Not blocking, built with A.
+- A. (built) "AI is catching up, your text is safe" (Enhance never touches Captures).
+- B. Reuse ticket 14's "AI is catching up, your Captures are safe" verbatim (one-line change to `AI_CALM_ENHANCE` in `data.ts`).
+
+Note: the ticket 15 agent cleared the stored demo id in the shared Chrome profile for localhost:3300, so that profile starts a fresh demo; the previous demo report is still in Neon.
