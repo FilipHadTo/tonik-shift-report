@@ -97,3 +97,10 @@ Not blocking, built with A.
 - B. Reuse ticket 14's "AI is catching up, your Captures are safe" verbatim (one-line change to `AI_CALM_ENHANCE` in `data.ts`).
 
 Note: the ticket 15 agent cleared the stored demo id in the shared Chrome profile for localhost:3300, so that profile starts a fresh demo; the previous demo report is still in Neon.
+
+### 2026-10-30 — Ticket 16: Inbox controls after Submit
+
+Not blocking. After Submit the Inbox still shows Draft into report, Dismiss and the composer (as E did before); the server refuses them (409) and nothing changes on screen.
+- A. Leave it, fold into ticket 17 / 2c Polish.
+- B. Hide those controls once submitted.
+- C. Keep the Inbox visible but read-only with a "Locked" note.
