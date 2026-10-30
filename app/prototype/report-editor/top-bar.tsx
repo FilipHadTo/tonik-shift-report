@@ -5,7 +5,7 @@
 
 import { useRef, useState } from "react"
 import { Dialog } from "@base-ui/react/dialog"
-import { Check, ChevronRight, Circle, Copy, ExternalLink, Link2, Lock, UserPlus, X } from "lucide-react"
+import { Check, ChevronRight, Circle, CloudOff, Copy, ExternalLink, Link2, Lock, UserPlus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
@@ -15,7 +15,7 @@ import { REVIEW_STATEMENT, SECTIONS, demoSession, hasContent, orderedIncidents, 
 import { Qr } from "./ui"
 
 export function TopBar() {
-  const { report } = useEditor()
+  const { report, offline } = useEditor()
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-3.5 px-5">
@@ -43,6 +43,12 @@ export function TopBar() {
           </>
         )}
       </span>
+      {offline && (
+        <span role="status" className="appear inline-flex items-center gap-1.5 text-xs text-ink-2">
+          <CloudOff className="size-3.5 text-ink-3" strokeWidth={1.75} aria-hidden />
+          Offline. Changes aren&apos;t saved.
+        </span>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
         {!report.submittedAt && <InviteStaff />}

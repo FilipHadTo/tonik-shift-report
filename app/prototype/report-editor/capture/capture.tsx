@@ -158,7 +158,7 @@ function Identify({ initial, onDone }: { initial: Identity | null; onDone: (id: 
             <label
               key={r}
               className={cn(
-                "press flex h-11 cursor-pointer items-center gap-2 rounded-lg px-3.5 text-[15px] select-none has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ai",
+                "press flex h-11 cursor-pointer odd:last:col-span-2 items-center gap-2 rounded-lg px-3.5 text-[15px] select-none has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ai",
                 role === r
                   ? "bg-press font-medium shadow-[inset_0_0_0_1px_var(--line-2)]"
                   : "bg-raise text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]",

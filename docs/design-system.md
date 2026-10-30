@@ -107,6 +107,7 @@ Motion explains state changes (Draft settling into the document, a footer foldin
 | `shimmer` | Pending AI label ("Drafting…") | 1.4s linear loop |
 | `pop-motion` | Base UI popover/tooltip popup: scale 0.96 + fade from `--transform-origin` | 160ms `ease-out` |
 | `sheet-motion`, `backdrop-motion` | Side sheet from the right / its backdrop | 320ms `ease-drawer` / 200ms |
+| `skeleton` (in E's `editor.css`) | Report screen skeleton while the report loads: static bars, no shimmer, fades in only after a noticeable wait | 200ms `ease-out` after 300ms; opacity only |
 | `halo` (in E's `editor.css`) | Points at a control the onboarding just opened (Invite staff): steady ring + three soft pulses. The one keyframe exception: it runs three times and stops | 1.4s `ease-out` × 3; pulses dropped under reduced motion, ring stays |
 
 Rules:

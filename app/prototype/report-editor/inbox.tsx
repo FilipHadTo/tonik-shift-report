@@ -138,7 +138,7 @@ function EmptyInbox() {
     <div className="enter rounded-xl px-5 pt-5 pb-2 shadow-[inset_0_0_0_1px_var(--line)]">
       <p className="text-[13px] font-medium">Tonight&apos;s Captures land here</p>
       <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
-        Photos, voice notes and lines of text from you and your staff, kept word for word with who and when. Nothing
+        Photos and lines of text from you and your staff, kept word for word with who and when. Nothing
         goes into the report until you say so.
       </p>
       <ol className="mt-4 flex flex-col">
@@ -148,7 +148,7 @@ function EmptyInbox() {
           </Step>
         )}
         <Step icon={Smartphone} title="Capture from your phone">
-          Same link, pick Closing Manager. Photo, voice or text in seconds.
+          Same link, pick Closing Manager. A photo or a line of text in seconds.
         </Step>
         <Step icon={CornerLeftDown} title="Or type it here" last>
           Paste the staff group chat at the end of the Night. One send, one Capture.

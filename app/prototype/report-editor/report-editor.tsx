@@ -6,7 +6,7 @@
 // "drafting" wait, the calm message when the AI is down, and the Capture ↔ report cross-highlight
 // shared by all three columns.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
+import { Suspense, createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, capturesInScope, demoSession, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
 import { Inbox } from "./inbox"
@@ -14,6 +14,7 @@ import { Document } from "./document"
 import { Rail } from "./rail"
 import { TopBar } from "./top-bar"
 import { DemoBar } from "./demo-bar"
+import { ReportSkeleton } from "./skeleton"
 import "./editor.css"
 
 type Hot = { captures: string[]; from: "inbox" | "doc" } | null
@@ -38,6 +39,8 @@ type Ctx = {
   /** Invite staff popover in the top bar. `halo` when the onboarding opened it, to show where it lives. */
   invite: { open: boolean; halo: boolean }
   setInvite: (v: { open: boolean; halo: boolean }) => void
+  /** The database couldn't be reached on open: the screen runs on the local seed and nothing is saved. */
+  offline: boolean
 }
 
 const EditorCtx = createContext<Ctx | null>(null)
@@ -173,30 +176,33 @@ const POLL_MS = 2000
  * The URL's scene only matters on the way in; later switches go through setScene.
  */
 export function ReportEditor() {
-  const params = useSearchParams()
-  const [initial, setInitial] = useState<Report | null>(null)
+  const [loaded, setLoaded] = useState<{ report: Report; offline: boolean } | null>(null)
 
   useEffect(() => {
     let stop = false
-    const scene: Scene = params.get("scene") === "start" ? "start" : "end"
+    // Read from the URL here rather than with useSearchParams, so the skeleton is part of the prerendered page.
+    const scene: Scene = new URLSearchParams(window.location.search).get("scene") === "start" ? "start" : "end"
     fetch(`${REPORT_API}?d=${demoSession()}&scene=${scene}`, { cache: "no-store" })
       .then((res) => (res.ok ? (res.json() as Promise<Report>) : Promise.reject(res.status)))
+      .then((report) => ({ report, offline: false }))
       // The demo must never die: without the database the scene still opens, just not saved.
-      .catch(() => seedReport(scene))
-      .then((r) => !stop && setInitial(r))
+      .catch(() => ({ report: seedReport(scene), offline: true }))
+      .then((r) => !stop && setLoaded(r))
     return () => {
       stop = true
     }
-    // Loaded once per visit, so a scene switch (which rewrites the URL) doesn't reload it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Until the report arrives, only the app background: no stale scene flashes in first.
-  if (!initial) return <div className="h-dvh min-h-[640px] min-w-[1180px] bg-canvas" />
-  return <Editor initial={initial} />
+  // Until the report arrives, the screen's shape: no stale scene flashes in first.
+  if (!loaded) return <ReportSkeleton />
+  return (
+    <Suspense fallback={<ReportSkeleton />}>
+      <Editor initial={loaded.report} offline={loaded.offline} />
+    </Suspense>
+  )
 }
 
-function Editor({ initial }: { initial: Report }) {
+function Editor({ initial, offline }: { initial: Report; offline: boolean }) {
   const params = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -307,8 +313,8 @@ function Editor({ initial }: { initial: Report }) {
   }, [quiet])
 
   const value = useMemo(
-    () => ({ report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite }),
-    [report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite],
+    () => ({ report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite, offline }),
+    [report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite, offline],
   )
 
   return (

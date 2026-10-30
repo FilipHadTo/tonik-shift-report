@@ -64,6 +64,15 @@
   }
 }
 
+/* Loading skeleton (ticket 22): fades in only after a noticeable wait, so a fast load never
+   flashes it. Opacity only, so it needs no reduced-motion fallback. */
+.rx.skeleton {
+  transition: opacity 200ms var(--ease-out) 300ms;
+  @starting-style {
+    opacity: 0;
+  }
+}
+
 /* Composer grows on focus */
 .rx .composer textarea {
   transition-property: height;
