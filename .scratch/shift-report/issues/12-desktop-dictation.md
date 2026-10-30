@@ -22,3 +22,5 @@ Built `useDictation` in `app/prototype/report-editor/dictation.ts` (browser `Spe
 - Typing while dictating stops dictation and keeps the words. Errors show in place in the hint line: "Mic blocked in site settings" (not-allowed), "No microphone found", or a generic retry line; no-speech just stops.
 - Support is read after hydration (`useSyncExternalStore`), so the button is absent on the server and in browsers without speech recognition.
 - Checked in Chrome with a stubbed recogniser (real mic input can't be driven headless): text flows into the field and Send creates a text Capture that persists in Neon; the denied path shows the message without errors; with the API removed the button is hidden.
+
+Hidden 2026-10-30: the browser's speech recognition didn't work reliably on production, so the mic button is no longer rendered in the Inbox composer. `dictation.ts` stays in the repo, unused; phone keyboard dictation on the capture page is unaffected.
