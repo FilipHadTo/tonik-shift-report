@@ -70,3 +70,9 @@ Not blocking, built with A in each case.
 1. While the report loads from the DB: A. (built) empty background only; B. skeleton of the Report screen.
 2. DB unreachable: A. (built) fall back to the local seed, demo opens but nothing saves; B. show a calm "Can't reach the server" state instead.
 3. Stored scene differs from `?scene=` in the URL: A. (built) URL wins and that scene is reseeded; B. stored report wins.
+
+### 2026-10-30 — Ticket 10: Night assignment for phone Captures
+
+Not blocking, built with A. Each demo id has one report and one Night (Sat 24 Oct, seeded).
+- A. (built) Captured-at comes from the report's demo clock, so phone Captures always land in the seeded Night; `nightOf` not called.
+- B. Real server clock + `nightOf`: Captures at today's real time; the demo would need a report per Night.
