@@ -222,6 +222,8 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
   const [night, setNight] = useState<string | null>(null)
   // Ticket 27: once the report is submitted the link is closed, so the composer goes.
   const [closed, setClosed] = useState(false)
+  // What was being sent when the report closed (409): shown read-only with the closed note, never dropped silently.
+  const [unsent, setUnsent] = useState<{ text: string; photo?: string } | null>(null)
   const previews = useRef(new Map<string, string>())
   const ids = useRef({ device: "", report: "public" })
   const listRef = useRef<HTMLDivElement>(null)
@@ -268,6 +270,7 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
       }),
     })
     if (res.status === 409) {
+      setUnsent({ text, ...(photo && { photo }) })
       setClosed(true)
       return
     }
@@ -311,21 +314,36 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
         </ol>
       </div>
 
-      {closed ? <ClosedNote /> : <Composer onSend={send} />}
+      {closed ? <ClosedNote unsent={unsent} /> : <Composer onSend={send} />}
     </>
   )
 }
 
-/** Sits where the composer was once the report is sent (ticket 27), like the Inbox's locked note. */
-function ClosedNote() {
+/**
+ * Sits where the composer was once the report is sent (ticket 27), like the Inbox's locked note. If the
+ * report closed while something was being sent, that stays here, read-only, marked as not sent (ticket 28).
+ */
+function ClosedNote({ unsent }: { unsent: { text: string; photo?: string } | null }) {
   return (
     <footer className="shrink-0 bg-canvas shadow-[inset_0_1px_0_var(--line)]">
+      {unsent && (
+        <div className="mx-auto max-w-[480px] px-4 pt-3">
+          <p className="text-xs font-medium text-ink-2">Not sent</p>
+          <div className="mt-1.5 flex items-start gap-3 rounded-xl bg-raise px-3.5 py-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
+            {unsent.photo && (
+              // eslint-disable-next-line @next/next/no-img-element -- local downsized copy, never optimised
+              <img src={unsent.photo} alt="Photo not sent" className="size-12 shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-img-outline" />
+            )}
+            {unsent.text && <p className="min-w-0 flex-1 text-[15px] leading-[1.5] text-pretty text-ink-2 select-text">{unsent.text}</p>}
+          </div>
+        </div>
+      )}
       <p
         role="status"
         className="mx-auto flex max-w-[480px] items-center gap-2 px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))] text-[13px] text-ink-3"
       >
         <Lock className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
-        This report was sent. The link is closed.
+        {unsent ? "This report was sent before this went through. The link is closed." : "This report was sent. The link is closed."}
       </p>
     </footer>
   )

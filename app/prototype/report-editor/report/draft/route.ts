@@ -4,7 +4,7 @@
 // recorded answers (ADR 0001) and anything else stays New, with `degraded` for the calm message.
 // Photos sent from the phone go to Gemini with their Capture (ADR 0008); seeded photos have no stored image.
 
-import { capturePhoto, demoIdOf, loadReport, reportIdOf, saveReport } from "@/lib/db"
+import { capturePhotosOf, demoIdOf, loadReport, reportIdOf, saveReport } from "@/lib/db"
 import { rateLimitedGemini } from "@/lib/ai/limited"
 import { applySaved, onClock, capturesInScope, fallbackModel, parseSaveAction, type CaptureImages, type ExtractScope, type Report } from "@/lib/report"
 
@@ -29,8 +29,7 @@ export async function POST(request: Request) {
 }
 
 /** The stored images of the uploaded photos this Draft covers, for Gemini to read. */
-async function photosInScope(reportId: string, r: Report, scope: ExtractScope): Promise<CaptureImages> {
-  const photos = capturesInScope(r, scope).filter((c) => c.kind === "photo" && c.photo === "upload")
-  const loaded = await Promise.all(photos.map(async (c) => ({ id: c.id, image: await capturePhoto(reportId, c.id) })))
-  return Object.fromEntries(loaded.flatMap(({ id, image }) => (image ? [[id, image]] : [])))
+function photosInScope(reportId: string, r: Report, scope: ExtractScope): Promise<CaptureImages> {
+  const ids = capturesInScope(r, scope).filter((c) => c.kind === "photo" && c.photo === "upload").map((c) => c.id)
+  return capturePhotosOf(reportId, ids)
 }

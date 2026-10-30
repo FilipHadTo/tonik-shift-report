@@ -29,6 +29,12 @@ export type Saved =
   | { ok: true; report: Report; degraded?: boolean; empty?: boolean; status?: EnhanceOutcome["status"] }
   | { ok: false; degraded?: boolean; status?: EnhanceOutcome["status"] }
 
+/**
+ * A typed Capture's id as the screen makes it (`m-` and random characters). The screen names the Capture
+ * itself, so its id matches the server's even when it hasn't polled every phone Capture yet (ticket 28).
+ */
+export const TYPED_CAPTURE_ID = /^m-[a-z0-9]{4,16}$/
+
 const SECTION_IDS = new Set<string>(SECTIONS.map((s) => s.id))
 const FIELDS = new Set<string>(["occurredAt", "location", "type"] satisfies IncidentField[])
 
@@ -64,7 +70,8 @@ export function parseSaveAction(raw: unknown): SaveAction | null {
     case "handled":
       return isStr(a.id) ? { type: "handled", id: a.id } : null
     case "addCapture":
-      return isText(a.text) ? { type: "addCapture", text: a.text } : null
+      if (!isText(a.text) || (a.id !== undefined && !(isStr(a.id) && TYPED_CAPTURE_ID.test(a.id)))) return null
+      return { type: "addCapture", text: a.text, ...(isStr(a.id) && { id: a.id }) }
     case "setField":
       return isStr(a.incident) && isStr(a.field) && FIELDS.has(a.field) && (a.value === null || isStr(a.value))
         ? { type: "setField", incident: a.incident, field: a.field as IncidentField, value: a.value }
@@ -134,6 +141,8 @@ function allowed(r: Report, a: SaveAction): boolean {
     case "dismiss":
     case "handled":
       return !!capture(a.id)
+    case "addCapture":
+      return a.id === undefined || !capture(a.id)
     case "setField":
     case "editIncident":
     case "deleteIncident":

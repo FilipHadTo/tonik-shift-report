@@ -38,7 +38,7 @@ export function reducer(r: Report, a: Action): Report {
     case "handled":
       return { ...r, captures: r.captures.map((c) => (c.id === a.id ? { ...c, handled: true } : c)) }
     case "addCapture": {
-      const id = freeId(`m${r.captures.length + 1}`, r.captures)
+      const id = a.id ?? freeId(`m${r.captures.length + 1}`, r.captures)
       const capture: InboxCapture = { id, kind: "text", capturedAt: clockLabel(r), author: r.manager, text: a.text, applied: [] }
       return tick({ ...r, captures: [...r.captures, capture] })
     }

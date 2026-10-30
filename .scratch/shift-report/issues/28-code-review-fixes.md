@@ -18,5 +18,23 @@
 
 **Agent:** Opus, high effort
 
-- [ ] 1–10 fixed, each with a test where it's a rule in lib/report or lib/db mapping
-- [ ] Demo on 20:00 survives Preview, list and breadcrumb navigation; a daytime clean report orders Captures correctly across 18:00
+- [x] 1–10 fixed, each with a test where it's a rule in lib/report or lib/db mapping
+- [x] Demo on 20:00 survives Preview, list and breadcrumb navigation; a daytime clean report orders Captures correctly across 18:00
+
+## Comments
+
+All ten were real; each fixed.
+
+1. `openReport` returns the saved demo report whatever its scene; the URL's scene only seeds it when there is none yet (old `?scene=` links on a first visit). Only the PUT reseeds.
+2. The Night now counts from 08:00 (`NIGHT_ENDS_AT`): `nightMinutes` / `timeOf` in `lib/report/catalog.ts`, so ordering, Occurred-at validation and the stored clock no longer wrap at 18:00. Demo times are unchanged. Test-first in `clock.test.ts` (daytime clean report across 18:00). Migration `drizzle/0006_clock_from_night_start.sql` (applied to Neon) moves every stored clock to the new count, `(clock + 600) % 1440`: same time of day for every row.
+3. First-visit seed is idempotent: `seedIfMissing` inserts the report and its rows with `on conflict do nothing`, used by `listReports` and `openReport`. Four concurrent first `reports` GETs and three concurrent first `report` GETs all answered 200, three runs.
+4. A 409 on Send keeps what was being sent, read-only under a "Not sent" label above the closed note ("This report was sent before this went through. The link is closed."), photo thumbnail included.
+5. The screen names a typed Capture (`m-` + random, `TYPED_CAPTURE_ID`) and sends the id with `addCapture`; the server validates the format and refuses a taken id. Test-first in `save.test.ts`, including a server that has an unpolled phone Capture.
+6. `addPhoneCapture` reads only the report row, and the Capture insert is one `insert … select … from reports where submitted_at is null` (photo and clock writes are conditional too); no row inserted answers 409.
+7. Typing in the composer cancels dictation (both the live and a closing session), so a late final result can't overwrite typed text.
+8. Offline (report opened on the local seed): actions, Draft, Enhance and scene switch stay on the screen; nothing is POSTed or adopted.
+9. `listReports` checks the demo report with a one-column select; Draft loads photos with one `inArray` query (`capturePhotosOf`).
+10. `captures/route.ts` uses `DEVICE_ID` from `lib/report/phone.ts`.
+
+Checked in Chrome (own isolated contexts; test rows removed from Neon): a `?scene=start` first visit seeds 20:00; a typed Capture (`m-…` id, same on the server) survives breadcrumb → Reports → row and the Preview link, still on 20:00. Phone at 390px: report submitted behind it, Send shows the unsent text with the closed note. tsc, eslint, `pnpm test` (219), `pnpm build` pass.
+

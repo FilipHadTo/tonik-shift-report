@@ -449,9 +449,10 @@ function Composer() {
           ref={ref}
           value={text}
           onChange={(e) => {
-            // Typing takes over from dictation; the words said so far stay.
-            if (dictation.listening) dictation.stop()
-            else if (message) dictation.reset()
+            // Typing takes over from dictation; the words said so far stay. Cancel, not stop: a session
+            // still closing would otherwise deliver its last result over what was just typed (ticket 28).
+            dictation.cancel()
+            if (message) dictation.reset()
             setText(e.target.value)
           }}
           onFocus={() => setFocused(true)}

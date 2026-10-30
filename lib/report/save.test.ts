@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { applySaved, extract, fakeModel, fallbackModel, parseSaveAction, reducer, seedReport, statusOf, type Action, type Report, type ReportModel, type SaveAction } from "."
+import { applySaved, extract, receivePhoneCapture, fakeModel, fallbackModel, parseSaveAction, reducer, seedReport, statusOf, type Action, type Report, type ReportModel, type SaveAction } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -30,6 +30,8 @@ describe("parseSaveAction: what the browser may send", () => {
     { type: "toggleSection", section: "kitchen sink" },
     { type: "editIncident", incident: "i-c1", patch: { confirmedAt: "01:00" } },
     { type: "addCapture", text: "   " },
+    { type: "addCapture", text: "Fridge 2 is warm", id: "c2; drop" },
+    { type: "addCapture", text: "Fridge 2 is warm", id: 7 },
     { type: "write", section: "security", text: "" },
     { type: "draft", scope: { capture: 2 } },
     { type: "enhance", target: { block: "b-sec-1" }, span: { start: "a", end: 2 } },
@@ -47,6 +49,7 @@ describe("parseSaveAction: what the browser may send", () => {
     { type: "editIncident", incident: "i-c1", patch: { title: "Window", description: "Broken." } },
     { type: "dismiss", id: "c6", undo: true },
     { type: "addCapture", text: "Fridge 2 is warm" },
+    { type: "addCapture", text: "Fridge 2 is warm", id: "m-k3x9q2" },
     { type: "toggleSection", section: "kitchen" },
     { type: "draft", scope: { all: true } },
     { type: "draft", scope: { section: "bar" } },
@@ -121,6 +124,22 @@ describe("applySaved: the server applies the same rules as the screen", () => {
 
   test("refuses Submit while blockers are left", async () => {
     expect((await applySaved(seedReport("end"), { type: "submit", statement: true }, fakeModel)).ok).toBe(false)
+  })
+
+  test("a typed Capture keeps the id the screen gave it, even when the screen hasn't seen every phone Capture (ticket 28)", async () => {
+    const r = seedReport("end")
+    const phone = receivePhoneCapture(r, { device: "phone1", kind: "text", text: "queue is huge", author: { name: "Marek", role: "Door" } }, "p-1")!.report
+    // The screen hasn't polled p-1 yet; the server has it. Both must name the typed Capture the same.
+    const screen = run(r, { type: "addCapture", text: "Fridge 2 is warm", id: "m-k3x9q2" })
+    const server = await save(phone, { type: "addCapture", text: "Fridge 2 is warm", id: "m-k3x9q2" })
+    expect(screen.captures.at(-1)?.id).toBe("m-k3x9q2")
+    expect(server.captures.at(-1)?.id).toBe("m-k3x9q2")
+  })
+
+  test("refuses a typed Capture whose id is already taken", async () => {
+    const r = await save(seedReport("end"), { type: "addCapture", text: "Fridge 2 is warm", id: "m-k3x9q2" })
+    expect((await applySaved(r, { type: "addCapture", text: "again", id: "m-k3x9q2" }, fakeModel)).ok).toBe(false)
+    expect((await applySaved(r, { type: "addCapture", text: "again", id: "c2" }, fakeModel)).ok).toBe(false)
   })
 
   test("a typed Capture gets its Captured-at from the stored report's clock", async () => {

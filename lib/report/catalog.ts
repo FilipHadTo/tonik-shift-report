@@ -1,5 +1,6 @@
 // Report domain: fixed lists and the demo Night's clock.
 
+import { NIGHT_ENDS_AT } from "./night"
 import type { Scene, SectionId } from "./types"
 
 /** Story 8: the fixed role list, in the order the capture page offers it. */
@@ -67,15 +68,18 @@ export const SCENES: Record<Scene, { at: string; label: string }> = {
   end: { at: "02:15", label: "End of Night" },
 }
 
-/** Minutes since 18:00, so times after midnight sort after the evening ones. */
+/**
+ * Minutes since the Night's start (08:00, see NIGHT_ENDS_AT), so a whole Night sorts in order: the day,
+ * the evening, then the small hours. The report's clock counts the same way.
+ */
 export function nightMinutes(hhmm: string) {
   const [h, m] = hhmm.split(":").map(Number)
-  return ((h + 24 - 18) % 24) * 60 + m
+  return ((h + 24 - NIGHT_ENDS_AT) % 24) * 60 + m
 }
 
 /** Inverse of nightMinutes. */
 export function timeOf(minutes: number) {
-  const h = (Math.floor(minutes / 60) + 18) % 24
+  const h = (Math.floor(minutes / 60) + NIGHT_ENDS_AT) % 24
   return `${String(h).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`
 }
 

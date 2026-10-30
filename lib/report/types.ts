@@ -108,7 +108,8 @@ export type Action =
   | { type: "draftFailed"; ids: string[] }
   | { type: "dismiss"; id: string; undo?: boolean }
   | { type: "handled"; id: string }
-  | { type: "addCapture"; text: string }
+  /** `id`: given by the screen, so the screen and the server name the Capture the same (see TYPED_CAPTURE_ID). */
+  | { type: "addCapture"; text: string; id?: string }
   | { type: "setField"; incident: string; field: IncidentField; value: string | null }
   | { type: "editIncident"; incident: string; patch: Partial<Pick<Incident, "title" | "description">> }
   | { type: "confirm"; incident: string; undo?: boolean }

@@ -4,9 +4,8 @@
 // Links from before ticket 24 carry `d`, the demo id, which is also the demo report's id.
 
 import { addPhoneCapture, deviceCaptures, phoneCaptures, reportIdOf } from "@/lib/db"
-import { parsePhoneCapture } from "@/lib/report"
+import { DEVICE_ID, parsePhoneCapture } from "@/lib/report"
 
-const DEVICE = /^[a-z0-9]{1,40}$/
 const noStore = { "Cache-Control": "no-store" }
 /** A downsized photo (≤ 600 KB, about 800 KB as base64) plus the rest; anything bigger is refused unread. */
 const MAX_BODY = 1024 * 1024
@@ -24,7 +23,7 @@ export async function GET(request: Request) {
   if (!reportId) return notFound()
   const device = params.get("device")
   if (device === null) return Response.json({ captures: await phoneCaptures(reportId) }, { headers: noStore })
-  if (!DEVICE.test(device)) return Response.json({ error: "Invalid device" }, { status: 400 })
+  if (!DEVICE_ID.test(device)) return Response.json({ error: "Invalid device" }, { status: 400 })
   const mine = await deviceCaptures(reportId, device)
   return mine ? Response.json(mine, { headers: noStore }) : notFound()
 }

@@ -53,14 +53,15 @@ export function parsePhoto(raw: unknown): Photo | null {
 
 const KINDS = new Set<string>(["photo", "voice", "text"] satisfies PhoneCaptureInput["kind"][])
 const ROLE_SET = new Set<string>(ROLES)
-const DEVICE = /^[a-z0-9]{1,40}$/
+/** A phone's device id (see the capture page): only scopes "your Captures". */
+export const DEVICE_ID = /^[a-z0-9]{1,40}$/
 const MAX_NAME = 40
 const MAX_TEXT = 2000
 
 export function parsePhoneCapture(raw: unknown): PhoneCaptureInput | null {
   if (typeof raw !== "object" || raw === null) return null
   const v = raw as Record<string, unknown>
-  if (typeof v.device !== "string" || !DEVICE.test(v.device)) return null
+  if (typeof v.device !== "string" || !DEVICE_ID.test(v.device)) return null
   if (typeof v.kind !== "string" || !KINDS.has(v.kind)) return null
   if (typeof v.role !== "string" || !ROLE_SET.has(v.role)) return null
   if (typeof v.name !== "string" || typeof v.text !== "string") return null

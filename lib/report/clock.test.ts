@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { cleanReport, nightLabel, onClock, receivePhoneCapture, reducer, reportRow, seedReport, type Report } from "."
+import { cleanReport, clockLabel, nightLabel, nightMinutes, onClock, orderedIncidents, receivePhoneCapture, reducer, reportRow, seedReport, timeOf, type Report } from "."
 
 const tz = "Europe/London"
 // Fri 30 Oct 2026, 21:40 in London (GMT, clocks went back on 25 Oct).
@@ -62,6 +62,33 @@ describe("clock per report kind (ADR 0009)", () => {
     expect(onClock(demo, smallHours, tz)).toBe(demo)
     const out = reducer(onClock(demo, smallHours, tz), { type: "addCapture", text: "lights on" })
     expect(out.captures.at(-1)?.capturedAt).toBe("02:15")
+  })
+})
+
+describe("a Night runs from 08:00 to 08:00 (ticket 28)", () => {
+  test("times sort from the Night's start, so the evening sits between the day and the small hours", () => {
+    const order = ["08:00", "12:30", "17:59", "18:00", "23:30", "00:10", "07:59"].map(nightMinutes)
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+    expect(nightMinutes("08:00")).toBe(0)
+    for (const t of ["08:00", "17:59", "18:00", "02:15", "07:59"]) expect(timeOf(nightMinutes(t))).toBe(t)
+  })
+
+  test("a daytime clean report orders its Captures and Incidents across 18:00", () => {
+    let r = cleanReport(new Date("2026-10-30T17:30:00Z"), tz)
+    r = reducer(onClock(r, new Date("2026-10-30T17:50:00Z"), tz), { type: "addIncident" })
+    r = reducer(onClock(r, new Date("2026-10-30T17:55:00Z"), tz), { type: "addCapture", text: "bar till short" })
+    const before = r.clock
+    r = reducer(onClock(r, new Date("2026-10-30T18:10:00Z"), tz), { type: "addIncident" })
+    r = reducer(onClock(r, new Date("2026-10-30T18:12:00Z"), tz), { type: "addCapture", text: "door staff in" })
+    expect(r.clock).toBeGreaterThan(before)
+    expect(orderedIncidents(r).map((i) => i.capturedAt)).toEqual(["17:50", "18:10"])
+    expect(r.captures.map((c) => c.capturedAt)).toEqual(["17:55", "18:12"])
+    expect(nightMinutes("18:12")).toBeGreaterThan(nightMinutes("17:55"))
+  })
+
+  test("the demo keeps its times", () => {
+    expect(clockLabel(seedReport("start"))).toBe("20:00")
+    expect(clockLabel(seedReport("end"))).toBe("02:15")
   })
 })
 

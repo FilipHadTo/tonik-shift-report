@@ -223,13 +223,15 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
   const pathname = usePathname()
   const [report, apply] = useReducer(screenReducer, initial)
   const { save, draftOnServer, enhanceOnServer, hold, release, reseed, quiet } = useSaving(apply, id)
-  /** What the components dispatch: shown at once, saved on the server. */
+  /** What the components dispatch: shown at once, saved on the server (not when offline: then it stays on this screen). */
   const dispatch = useCallback(
     (a: Action) => {
+      // A typed Capture is named here, so the screen and the server give it the same id (ticket 28).
+      if (a.type === "addCapture" && !a.id) a = { ...a, id: `m-${Math.random().toString(36).slice(2, 10).padEnd(8, "0")}` }
       apply(a)
-      if (!LOCAL_ONLY.has(a.type)) save(a as SaveAction)
+      if (!offline && !LOCAL_ONLY.has(a.type)) save(a as SaveAction)
     },
-    [save],
+    [save, offline],
   )
   const [hot, setHot] = useState<Hot>(null)
   const [flash, setFlash] = useState<string | null>(null)
@@ -255,8 +257,8 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
     // Held for at least the drafting beat, so a fast answer doesn't flash "Drafting…".
     hold()
     apply({ type: "startDrafting", ids })
-    // The server runs Extract on the stored report and the screen settles on its answer.
-    const [answer] = await Promise.all([draftOnServer(scope), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
+    // The server runs Extract on the stored report and the screen settles on its answer. Offline, nothing is sent.
+    const [answer] = await Promise.all([offline ? null : draftOnServer(scope), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
     // Unreachable server: nothing changed, the Captures go back to New.
     if (!answer) apply({ type: "draftFailed", ids })
     if (!answer || answer.degraded || answer.empty) {
@@ -266,18 +268,21 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
       calmTimer.current = setTimeout(() => setCalm(null), CALM_MS)
     }
     release()
-  }, [hold, release, draftOnServer])
+  }, [hold, release, draftOnServer, offline])
 
   const enhance = useCallback(async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
     // "Enhancing…" for the whole wait, at least the drafting beat so a fast answer doesn't flash it;
     // "Already reads clean" or the calm note come after it. The screen settles on the saved report.
     setEnhancing("block" in target ? target.block : target.incident)
     hold()
-    const [status] = await Promise.all([enhanceOnServer(target, text, span), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
+    const [status] = await Promise.all([
+      offline ? ("degraded" as const) : enhanceOnServer(target, text, span),
+      new Promise((ok) => setTimeout(ok, DRAFTING_MS)),
+    ])
     setEnhancing(null)
     release()
     return status
-  }, [hold, release, enhanceOnServer])
+  }, [hold, release, enhanceOnServer, offline])
 
   const reveal = useCallback((anchor: string) => {
     const el = document.getElementById(anchor)
@@ -293,14 +298,14 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
   const setScene = useCallback(
     (s: Scene) => {
       apply({ type: "reset", scene: s })
-      // Reseeds this demo id only; the seed is deterministic, so the screen doesn't wait for it.
-      reseed(s)
+      // Reseeds this demo id only; the seed is deterministic, so the screen doesn't wait for it. Offline: on this screen only.
+      if (!offline) reseed(s)
       const sp = new URLSearchParams(params.toString())
       if (s === "end") sp.delete("scene")
       else sp.set("scene", s)
       router.replace(sp.size ? `${pathname}?${sp}` : pathname, { scroll: false })
     },
-    [params, pathname, router, reseed],
+    [params, pathname, router, reseed, offline],
   )
 
   // Live Inbox (story 13): phones write into this stored report (its QR carries its id); poll for what they sent.
