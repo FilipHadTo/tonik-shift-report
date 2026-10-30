@@ -28,6 +28,14 @@ function recognitionCtor(): RecognitionCtor | null {
 
 const noSubscribe = () => () => {}
 
+/**
+ * The browser refuses the mic outright on a non-secure page (plain http on a LAN IP), with no
+ * prompt. That isn't a denial the manager can fix in site settings, so treat it as unsupported.
+ */
+function canDictate() {
+  return window.isSecureContext && recognitionCtor() !== null
+}
+
 export type DictationState = "idle" | "listening" | "blocked" | "no-mic" | "failed"
 
 /** Message shown in place when dictation can't run. Kept short: it sits in the composer's hint line. */
@@ -47,10 +55,11 @@ export function joinDictation(before: string, said: string) {
 
 /**
  * `onText` gets everything said in this session so far (final and interim), each time it changes.
- * `supported` is false on the server and in browsers without speech recognition: hide the control then.
+ * `supported` is false on the server, on a non-secure page and in browsers without speech
+ * recognition: hide the control then.
  */
 export function useDictation(onText: (said: string) => void) {
-  const supported = useSyncExternalStore(noSubscribe, () => recognitionCtor() !== null, () => false)
+  const supported = useSyncExternalStore(noSubscribe, canDictate, () => false)
   const [state, setState] = useState<DictationState>("idle")
   const rec = useRef<Recognition | null>(null)
   // A stopped session still delivers its last words; a newer session silences it.

@@ -8,5 +8,13 @@
 
 **Agent:** Sonnet, medium effort (contained change)
 
-- [ ] On http via a LAN IP the mic button is hidden; on localhost it shows and works as before
-- [ ] A real denial still shows "Mic blocked in site settings"
+- [x] On http via a LAN IP the mic button is hidden; on localhost it shows and works as before
+- [x] A real denial still shows "Mic blocked in site settings"
+
+## Comments
+
+`useDictation` now reports `supported` only when `window.isSecureContext` is true and speech recognition exists (`canDictate` in `app/prototype/report-editor/dictation.ts`), so the Inbox composer hides the mic button on plain http via a LAN IP, the same as in a browser without the API. No change to `inbox.tsx` was needed.
+
+- Checked in Chrome: on `http://<LAN IP>:3300` (not a secure context, native recogniser present) the Dictate button is absent; on `localhost:3300` it shows.
+- With a stubbed recogniser that fails with `not-allowed` on localhost, the hint line still reads "Mic blocked in site settings".
+- No Captures were sent, so nothing to clean up in Neon.
