@@ -71,7 +71,7 @@ Update after every step. Work happens on `main` (`AI-Exploration` was fast-forwa
   - [x] `/to-tickets`: 17 tickets in `.scratch/shift-report/issues/`. Filip's decisions folded into `spec.md`: Other role on the capture page, dictation instead of recorded voice (phone keyboard / browser speech recognition on desktop), Delete moved off the Confirm line; the captionless-photo Draft stays, no Enhance shortcut. 01–02 (Vercel + Neon, Gemini key) and 17 (submitted document design) need Filip.
   - [x] 01 Vercel + Neon: project linked (Framework preset fixed to Next.js; origin/main was 12 commits behind — pushed), Neon added via Marketplace (Free, Auth/Realtime off, `DATABASE_URL` prefix, all environments), `.env.local` pulled
   - [x] 02 Gemini API key: `GEMINI_API_KEY` set in Vercel (all environments) and `.env.local`; spend cap skipped, Filip's call (small top-up caps exposure instead)
-  - [ ] `/implement` per ticket  ← **next**: 03–08 done (report domain module, Extract and Enhance with the fake model, partial Dismiss, Keep all, Neon + demo sessions, manager actions saved through the server, live Inbox on Neon, capture page fixes, desktop dictation); 13 next. 17 waits on Filip (open-questions.md, Phase 2b)
+  - [ ] `/implement` per ticket  ← **next**: 03–08 done (report domain module, Extract and Enhance with the fake model, partial Dismiss, Keep all, Neon + demo sessions, manager actions saved through the server, live Inbox on Neon, capture page fixes, desktop dictation, Delete off the Confirm line); 14 next. 17 waits on Filip (open-questions.md, Phase 2b)
 - [ ] 2c. Polish — Report screen first (incident confirmation), then the empty report, then everything; light mode last
 - [ ] 2d. `/code-review`, deploy (Vercel + Neon)
 - [ ] 3. `/retro`, Loom
