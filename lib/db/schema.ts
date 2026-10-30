@@ -101,3 +101,18 @@ export const blocks = pgTable(
   },
   (t) => [primaryKey({ columns: [t.demoId, t.id] }), foreignKey({ columns: [t.demoId], foreignColumns: [reports.demoId] }).onDelete("cascade")],
 )
+
+/**
+ * Per-IP rate limit on paid AI calls (ticket 14), counted here so it holds across Vercel instances.
+ * One row per hashed IP and fixed time window; the raw IP is never stored.
+ */
+export const aiCalls = pgTable(
+  "ai_calls",
+  {
+    ipHash: text("ip_hash").notNull(),
+    /** Start of the window, as a window number (epoch ms / window length). */
+    window: integer("window").notNull(),
+    count: integer("count").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.ipHash, t.window] })],
+)

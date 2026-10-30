@@ -25,12 +25,12 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
 import { useEditor } from "./report-editor"
-import { statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
-import { KindLabel } from "./ui"
+import { scopeKey, statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
+import { CalmNote, KindLabel } from "./ui"
 import { dictationMessage, joinDictation, useDictation } from "./dictation"
 
 export function Inbox() {
-  const { report, draft } = useEditor()
+  const { report, draft, calm } = useEditor()
   const [showDismissed, setShowDismissed] = useState(false)
   const byTime = [...report.captures].sort((a, b) => nightMinutes(b.capturedAt) - nightMinutes(a.capturedAt))
   const fresh = byTime.filter((c) => ["new", "drafting"].includes(statusOf(report, c)))
@@ -46,7 +46,9 @@ export function Inbox() {
             {fresh.length} new
           </span>
         )}
-        {fresh.length > 0 && !report.submittedAt && (
+        {fresh.length > 0 && !report.submittedAt && calm === "all" ? (
+          <CalmNote className="ml-auto max-w-48 text-right" />
+        ) : fresh.length > 0 && !report.submittedAt && (
           <Btn
             variant="ai"
             size="sm"
@@ -226,7 +228,7 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
 }
 
 function NewTile({ capture: c }: { capture: InboxCapture }) {
-  const { report, dispatch, draft } = useEditor()
+  const { report, dispatch, draft, calm } = useEditor()
   const drafting = statusOf(report, c) === "drafting"
   const targets = targetsOf(report, c)
 
@@ -258,6 +260,8 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
             <Sparkles className="size-3.5" strokeWidth={1.75} aria-hidden />
             <span className="shimmer font-medium">Drafting into the report…</span>
           </span>
+        ) : calm === scopeKey({ capture: c.id }) ? (
+          <CalmNote />
         ) : (
           <>
             <IconBtn label="Dismiss" className="-ml-1.5" onClick={() => dispatch({ type: "dismiss", id: c.id })}>

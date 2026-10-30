@@ -109,3 +109,12 @@ export const fakeModel: ReportModel = {
   extract: async (request) => recordedExtract(request.captures),
   enhance: async ({ text, start, end }) => ({ text: enhanceText(text, { start, end }) }),
 }
+
+/**
+ * The canned fallback when the real model fails (ADR 0001): recorded answers for the seeded
+ * Captures only, so anything typed during the demo stays New instead of getting a made-up Draft.
+ */
+export const fallbackModel: ReportModel = {
+  extract: async (request) => ({ drafts: request.captures.flatMap((c) => RECORDED[c.id] ?? []) }),
+  enhance: fakeModel.enhance,
+}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { applySaved, extract, fakeModel, parseSaveAction, reducer, seedReport, type Action, type Report, type SaveAction } from "."
+import { applySaved, extract, fakeModel, fallbackModel, parseSaveAction, reducer, seedReport, type Action, type Report, type ReportModel, type SaveAction } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -140,6 +140,20 @@ describe("applySaved: the server applies the same rules as the screen", () => {
     const strip = (x: Report) => ({ ...x, captures: x.captures.map(({ drafting, ...c }) => c) })
     expect(strip(saved)).toEqual(strip(screen))
     expect(saved.blocks.length + saved.incidents.length).toBeGreaterThan(r.blocks.length + r.incidents.length)
+  })
+
+  test("Draft when the model fails: seeded Captures save from the fallback, a typed one is refused as degraded", async () => {
+    const down: ReportModel = { extract: async () => Promise.reject(new Error("429")), enhance: async () => ({ text: "" }) }
+    const r = seedReport("end")
+    const seeded = await applySaved(r, { type: "draft", scope: { capture: "c2" } }, down, { fallback: fallbackModel })
+    expect(seeded).toMatchObject({ ok: true, degraded: false })
+    expect(seeded.ok && seeded.report.incidents.some((i) => i.sources.includes("c2"))).toBe(true)
+
+    const typed = await save(r, { type: "addCapture", text: "Fridge 2 is warm" })
+    expect(await applySaved(typed, { type: "draft", scope: { capture: "m6" } }, down, { fallback: fallbackModel })).toEqual({
+      ok: false,
+      degraded: true,
+    })
   })
 
   test("Enhance runs on the stored report and only on the manager's own words", async () => {

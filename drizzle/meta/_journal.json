@@ -15,6 +15,13 @@
       "when": 1793318380611,
       "tag": "0001_closed_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793319418282,
+      "tag": "0002_calm_garia",
+      "breakpoints": true
     }
   ]
 }

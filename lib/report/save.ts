@@ -20,7 +20,8 @@ export type SaveAction =
   | { type: "draft"; scope: ExtractScope }
   | { type: "enhance"; target: EnhanceTarget; text?: string; span?: EnhanceSpan }
 
-export type Saved = { ok: true; report: Report } | { ok: false }
+/** `degraded`: Draft only. The model failed and the fallback didn't cover every Capture (calm message, story 24). */
+export type Saved = { ok: true; report: Report; degraded?: boolean } | { ok: false; degraded?: boolean }
 
 const SECTION_IDS = new Set<string>(SECTIONS.map((s) => s.id))
 const FIELDS = new Set<string>(["occurredAt", "location", "type"] satisfies IncidentField[])
@@ -153,14 +154,20 @@ function allowed(r: Report, a: SaveAction): boolean {
   }
 }
 
-/** Applies a browser action to the stored report, or refuses it. Draft and Enhance run `model` here. */
-export async function applySaved(r: Report, a: SaveAction, model: ReportModel): Promise<Saved> {
+/**
+ * Applies a browser action to the stored report, or refuses it. Draft and Enhance run `model` here;
+ * Draft asks `fallback` when the model fails.
+ */
+export async function applySaved(r: Report, a: SaveAction, model: ReportModel, { fallback }: { fallback?: ReportModel } = {}): Promise<Saved> {
   if (!allowed(r, a)) return { ok: false }
   switch (a.type) {
     case "draft": {
       const ids = capturesInScope(r, a.scope).map((c) => c.id)
-      const out = await runExtract(reducer(r, { type: "startDrafting", ids }), a.scope, model)
-      return out.degraded ? { ok: false } : { ok: true, report: out.report }
+      const start = reducer(r, { type: "startDrafting", ids })
+      const out = await runExtract(start, a.scope, model, { fallback })
+      if (out.report === start) return { ok: false, degraded: true }
+      // Captures the fallback couldn't draft stay New, not stuck "Drafting…".
+      return { ok: true, report: reducer(out.report, { type: "draftFailed", ids }), degraded: out.degraded }
     }
     case "enhance": {
       const out = await runEnhance(r, a.target, model, { text: a.text, span: a.span })

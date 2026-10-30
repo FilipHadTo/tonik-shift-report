@@ -10,7 +10,8 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { DraftLabel } from "@/components/draft-label"
 import { useEditor } from "./report-editor"
-import { SECTIONS, hasContent, newCapturesFor, orderedIncidents, type Block, type SectionId } from "./data"
+import { SECTIONS, hasContent, newCapturesFor, orderedIncidents, scopeKey, type Block, type SectionId } from "./data"
+import { CalmNote } from "./ui"
 import { IncidentBlock } from "./incident"
 import { EnhanceBar, Enhancing } from "./enhance"
 
@@ -103,8 +104,9 @@ function HowItWorks() {
 }
 
 function Section({ id, name }: { id: SectionId; name: string }) {
-  const { report, dispatch, draft, flash } = useEditor()
+  const { report, dispatch, draft, calm, flash } = useEditor()
   const fresh = newCapturesFor(report, id)
+  const calmHere = calm === scopeKey({ section: id })
   const blocks = report.blocks.filter((b) => b.section === id)
   const locked = !!report.submittedAt
   const canHide = !hasContent(report, id)
@@ -126,8 +128,15 @@ function Section({ id, name }: { id: SectionId; name: string }) {
           </span>
         )}
         {!locked && (
-          <span className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/section:opacity-100 group-hover/section:opacity-100">
-            {fresh.length > 0 && (
+          <span
+            className={cn(
+              "ml-auto flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/section:opacity-100 group-hover/section:opacity-100",
+              calmHere && "opacity-100",
+            )}
+          >
+            {calmHere ? (
+              <CalmNote />
+            ) : fresh.length > 0 && (
               <Btn size="sm" variant="ai" onClick={() => draft({ section: id })}>
                 <Sparkles strokeWidth={1.75} />
                 Draft from inbox · {fresh.length}

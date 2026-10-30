@@ -5,7 +5,8 @@
 
 import { Camera, MessagesSquare, Mic, Type } from "lucide-react"
 import { encode, QrCodeDataType } from "uqr"
-import type { Capture } from "./data"
+import { cn } from "@/lib/utils"
+import { AI_CALM, type Capture } from "./data"
 
 const KIND = {
   photo: { icon: Camera, label: "Photo" },
@@ -56,5 +57,14 @@ export function Qr({ value, size = 152 }: { value: string; size?: number }) {
       {finder(n - 7, 0)}
       {finder(0, n - 7)}
     </svg>
+  )
+}
+
+/** Story 24: in place of the Draft button that was pressed, when the AI failed. Nothing was lost. */
+export function CalmNote({ className }: { className?: string }) {
+  return (
+    <span role="status" className={cn("appear text-xs leading-[1.4] text-balance text-ink-2", className)}>
+      {AI_CALM}
+    </span>
   )
 }

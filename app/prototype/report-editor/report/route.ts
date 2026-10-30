@@ -23,12 +23,12 @@ export async function PUT(request: Request) {
 /**
  * A manager action (ticket 09): applied with the report domain's rules to the stored report, then saved.
  * Answers with the saved report either way; 409 when the rules refuse the action, so the screen shows what is saved.
- * Draft and Enhance run the fake model here until tickets 14 and 15 bring in Gemini.
+ * Draft has its own route (./draft, Gemini); Enhance runs the fake model here until ticket 15.
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const action = parseSaveAction(body?.action)
-  if (!action) return Response.json({ error: "Unknown action" }, { status: 400 })
+  if (!action || action.type === "draft") return Response.json({ error: "Unknown action" }, { status: 400 })
   const demoId = demoIdOf(body?.d)
   const stored = await loadReport(demoId)
   if (!stored) return Response.json({ error: "No report for this demo" }, { status: 404 })

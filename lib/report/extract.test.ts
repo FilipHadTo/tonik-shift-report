@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { fakeModel, reducer, runExtract, seedReport, statusOf, type Action, type Report, type ReportModel } from "."
+import { fakeModel, fallbackModel, reducer, runExtract, seedReport, statusOf, type Action, type Report, type ReportModel } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -225,5 +225,44 @@ describe("Extract", () => {
     const r = withTyped(TYPED)
     const hanging: ReportModel = { extract: () => new Promise(() => {}), enhance: () => new Promise(() => {}) }
     expect(await runExtract(r, { all: true }, hanging, { timeoutMs: 10 })).toEqual({ report: r, degraded: true })
+  })
+})
+
+describe("Extract fallback (ADR 0001: the demo never dies)", () => {
+  const down = failing(new Error("503 Service Unavailable"))
+
+  test("when the model fails, seeded Captures draft from their recorded answers, not degraded", async () => {
+    const r = seedReport("end")
+    const out = await runExtract(r, { capture: "c2" }, down, { fallback: fallbackModel })
+    expect(out.degraded).toBe(false)
+    expect(out).toEqual(await runExtract(r, { capture: "c2" }, fakeModel))
+  })
+
+  test("bad output from the model also falls back", async () => {
+    const r = seedReport("end")
+    const out = await runExtract(r, { capture: "c2" }, answers("{ drafts: [ oops"), { fallback: fallbackModel })
+    expect(out.degraded).toBe(false)
+    expect(out.report.incidents.some((i) => i.sources.includes("c2"))).toBe(true)
+  })
+
+  test("a Capture with no recorded answer stays New and the run is degraded, report unchanged", async () => {
+    const r = withTyped(TYPED)
+    expect(await runExtract(r, { capture: "m6" }, down, { fallback: fallbackModel })).toEqual({ report: r, degraded: true })
+  })
+
+  test("Draft all with seeded and typed Captures: seeded ones are drafted, the typed one stays New, degraded", async () => {
+    const r = withTyped(TYPED)
+    const { report, degraded } = await runExtract(r, { all: true }, down, { fallback: fallbackModel })
+    expect(degraded).toBe(true)
+    expect(statusOf(report, report.captures.find((c) => c.id === "m6")!)).toBe("new")
+    expect(report.blocks.some((b) => b.sources.includes("c4"))).toBe(true)
+  })
+
+  test("the fallback is never asked when the model answers", async () => {
+    const r = withTyped(TYPED)
+    let asked = false
+    const spy: ReportModel = { extract: async () => ((asked = true), { drafts: [] }), enhance: async () => ({ text: "" }) }
+    await runExtract(r, { capture: "m6" }, answers({ drafts: [incident()] }), { fallback: spy })
+    expect(asked).toBe(false)
   })
 })

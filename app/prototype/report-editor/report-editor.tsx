@@ -3,11 +3,12 @@
 // PROTOTYPE — Report screen, variant E: Inbox | Document | Sections.
 // Loads the reviewer's report from the server and saves every manager action there (ticket 09):
 // the screen applies an action at once and settles on the server's result. Also holds the AI
-// "drafting" delay and the Capture ↔ report cross-highlight shared by all three columns.
+// "drafting" wait, the calm message when the AI is down, and the Capture ↔ report cross-highlight
+// shared by all three columns.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, REPORT_API, capturesInScope, demoSession, enhance as enhanceWith, extract, fakeModel, reducer, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
+import { CAPTURES_API, DRAFT_API, REPORT_API, capturesInScope, demoSession, enhance as enhanceWith, fakeModel, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -20,8 +21,10 @@ type Hot = { captures: string[]; from: "inbox" | "doc" } | null
 type Ctx = {
   report: Report
   dispatch: React.Dispatch<Action>
-  /** Extract with the fake model: one Capture, one Section or everything New (ADR 0007). */
+  /** Extract on the server (Gemini): one Capture, one Section or everything New (ADR 0007). */
   draft: (scope: ExtractScope) => void
+  /** scopeKey of the Draft button showing the calm message (story 24), if any. */
+  calm: string | null
   /** Enhance with the fake model: `text` is what's on screen, `span` the selection in it (story 27). */
   enhance: (target: EnhanceTarget, text: string, span: EnhanceSpan) => Promise<EnhanceOutcome["status"]>
   /** Id of the block or Incident being enhanced right now. */
@@ -69,7 +72,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
     settle()
   }, [settle])
 
-  /** Queues a request after everything already sent; dropped if a reset came in between. */
+  /** Queues a request after everything already sent; dropped if a reset came in between. Resolves once it is done. */
   const queue = useCallback((send: () => Promise<Report | null>) => {
     const cur = s.current
     const gen = cur.gen
@@ -83,6 +86,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
       // Offline or the database is down: the screen keeps what it shows, so the demo goes on.
       .catch(() => {})
       .finally(release)
+    return cur.chain
   }, [release])
 
   const save = useCallback(
@@ -92,6 +96,26 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
         // 409: the rules refused it; the answer is the saved report, and the screen shows that.
         return res.ok || res.status === 409 ? ((await res.json()) as Report) : null
       }),
+    [queue],
+  )
+
+  /**
+   * Draft runs Extract on the server, in order with the other saves. Resolves with whether the AI was
+   * degraded, or null when the server couldn't be reached.
+   */
+  const draftOnServer = useCallback(
+    async (scope: ExtractScope) => {
+      let answer: { degraded: boolean } | null = null
+      await queue(async () => {
+        const res = await fetch(DRAFT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), scope }) })
+        // 409: nothing could be drafted; the answer is the saved report, unchanged.
+        if (!res.ok && res.status !== 409) return null
+        const out: { report: Report; degraded: boolean } = await res.json()
+        answer = { degraded: out.degraded }
+        return out.report
+      })
+      return answer as { degraded: boolean } | null
+    },
     [queue],
   )
 
@@ -111,7 +135,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
   /** The save generation when nothing is in flight, else null: a poll answer is only safe to apply if it is unchanged. */
   const quiet = useCallback(() => (s.current.busy === 0 ? s.current.gen : null), [])
 
-  return { save, hold, release, reseed, quiet }
+  return { save, draftOnServer, hold, release, reseed, quiet }
 }
 
 export function useEditor() {
@@ -121,6 +145,7 @@ export function useEditor() {
 }
 
 const DRAFTING_MS = 1100
+const CALM_MS = 5000
 const POLL_MS = 2000
 
 /**
@@ -156,7 +181,7 @@ function Editor({ initial }: { initial: Report }) {
   const router = useRouter()
   const pathname = usePathname()
   const [report, apply] = useReducer(screenReducer, initial)
-  const { save, hold, release, reseed, quiet } = useSaving(apply)
+  const { save, draftOnServer, hold, release, reseed, quiet } = useSaving(apply)
   /** What the components dispatch: shown at once, saved on the server. */
   const dispatch = useCallback(
     (a: Action) => {
@@ -168,6 +193,8 @@ function Editor({ initial }: { initial: Report }) {
   const [hot, setHot] = useState<Hot>(null)
   const [flash, setFlash] = useState<string | null>(null)
   const [enhancing, setEnhancing] = useState<string | null>(null)
+  const [calm, setCalm] = useState<string | null>(null)
+  const calmTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [invite, setInvite] = useState({ open: false, halo: false })
   const docRef = useRef<HTMLDivElement>(null)
   const flashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -181,14 +208,22 @@ function Editor({ initial }: { initial: Report }) {
     const r = latest.current
     const ids = capturesInScope(r, scope).map((c) => c.id)
     if (!ids.length) return
+    const key = scopeKey(scope)
+    setCalm((k) => (k === key ? null : k))
+    // Held for at least the drafting beat, so a fast answer doesn't flash "Drafting…".
     hold()
     apply({ type: "startDrafting", ids })
-    const [result] = await Promise.all([extract(r, scope, fakeModel), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
-    apply(result ? { type: "extracted", result } : { type: "draftFailed", ids })
-    // The server runs Extract itself on the stored report; it never takes the result from here.
-    if (result) save({ type: "draft", scope })
+    // The server runs Extract on the stored report and the screen settles on its answer.
+    const [answer] = await Promise.all([draftOnServer(scope), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
+    // Unreachable server: nothing changed, the Captures go back to New.
+    if (!answer) apply({ type: "draftFailed", ids })
+    if (!answer || answer.degraded) {
+      setCalm(key)
+      clearTimeout(calmTimer.current)
+      calmTimer.current = setTimeout(() => setCalm(null), CALM_MS)
+    }
     release()
-  }, [hold, release, save])
+  }, [hold, release, draftOnServer])
 
   const enhance = useCallback(async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
     // The fake answers at once, so "Already reads clean" shows without a wait, as in E.
@@ -257,8 +292,8 @@ function Editor({ initial }: { initial: Report }) {
   }, [quiet])
 
   const value = useMemo(
-    () => ({ report, dispatch, draft, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite }),
-    [report, dispatch, draft, enhance, enhancing, hot, flash, reveal, setScene, invite],
+    () => ({ report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite }),
+    [report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite],
   )
 
   return (

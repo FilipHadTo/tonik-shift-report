@@ -62,10 +62,26 @@ export async function extract(
   }
 }
 
-/** Extract and apply in one go: what the server routes and the tests use. */
-export async function runExtract(r: Report, scope: ExtractScope, model: ReportModel, options?: { timeoutMs?: number }) {
+export type ExtractOptions = {
+  timeoutMs?: number
+  /** Asked when `model` fails or answers nonsense (ADR 0001). Its answer goes through the same rules. */
+  fallback?: ReportModel
+}
+
+/**
+ * Extract and apply in one go: what the server routes and the tests use. Degraded when the model failed
+ * and the fallback didn't cover every Capture in scope; whatever the fallback did draft is kept.
+ */
+export async function runExtract(r: Report, scope: ExtractScope, model: ReportModel, { fallback, ...options }: ExtractOptions = {}) {
   const result = await extract(r, scope, model, options)
-  return result ? { report: applyExtract(r, result), degraded: false } : { report: r, degraded: true }
+  if (result) return { report: applyExtract(r, result), degraded: false }
+  const backup = fallback ? await extract(r, scope, fallback, options) : null
+  if (!backup) return { report: r, degraded: true }
+  const covered = Object.keys(backup.found)
+  if (!covered.length) return { report: r, degraded: true }
+  // Only Captures the fallback answered for count as read: the rest stays New, untouched.
+  const report = applyExtract(r, { ...backup, read: backup.read.filter((id) => covered.includes(id)) })
+  return { report, degraded: covered.length < backup.read.length }
 }
 
 export function withTimeout<T>(p: Promise<T>, ms: number) {

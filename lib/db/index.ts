@@ -1,6 +1,7 @@
 // Server-only data access for the demo reports. The browser reaches it through route handlers.
 
 import "server-only"
+import { createHash } from "node:crypto"
 import { neon } from "@neondatabase/serverless"
 import { drizzle } from "drizzle-orm/neon-http"
 import { and, asc, eq, sql } from "drizzle-orm"
@@ -9,7 +10,7 @@ import { receivePhoneCapture, seedReport, type PhoneCapture, type PhoneCaptureIn
 import { fromRecords, toRecords } from "./records"
 import * as schema from "./schema"
 
-const { reports, captures, incidents, blocks } = schema
+const { reports, captures, incidents, blocks, aiCalls } = schema
 
 let client: ReturnType<typeof drizzle<typeof schema>> | undefined
 
@@ -146,4 +147,26 @@ export async function addPhoneCapture(demoId: string, input: PhoneCaptureInput):
       .where(eq(reports.demoId, demoId)),
   ])
   return asPhoneCapture(row)
+}
+
+/** Paid AI calls allowed per IP and window (ticket 14). AI_RATE_LIMIT overrides the count. */
+export const AI_WINDOW_MS = 10 * 60_000
+const aiLimit = () => Number(process.env.AI_RATE_LIMIT) || 20
+
+/**
+ * Counts one paid AI call for this IP and says whether it is within the limit. One atomic upsert, so
+ * it holds across Vercel instances. The IP is stored only as a hash.
+ */
+export async function takeAiCall(ip: string): Promise<boolean> {
+  const ipHash = createHash("sha256").update(`shift-report:${ip}`).digest("hex")
+  const window = Math.floor(Date.now() / AI_WINDOW_MS)
+  const d = db()
+  const [row] = await d
+    .insert(aiCalls)
+    .values({ ipHash, window, count: 1 })
+    .onConflictDoUpdate({ target: [aiCalls.ipHash, aiCalls.window], set: { count: sql`${aiCalls.count} + 1` } })
+    .returning({ count: aiCalls.count })
+  // Old windows are never read again; clear them now and then so the table stays tiny.
+  if (row.count === 1) await d.delete(aiCalls).where(sql`${aiCalls.window} < ${window - 1}`)
+  return row.count <= aiLimit()
 }
