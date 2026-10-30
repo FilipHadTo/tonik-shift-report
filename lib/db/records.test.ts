@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { reducer, seedReport, type Action, type Report } from "../report"
+import { cleanReport, reducer, seedReport, type Action, type Report } from "../report"
 import { fromRecords, toRecords } from "./records"
 
 /** `drafting` is a transient UI flag and is never stored. */
@@ -10,6 +10,18 @@ describe("report records", () => {
   it.each(["start", "end"] as const)("round-trip the %s scene unchanged", (scene) => {
     const r = seedReport(scene)
     expect(fromRecords(toRecords(r))).toEqual(stored(r))
+  })
+
+  it("round-trip a clean report, keyed by its own id in the demo id's list", () => {
+    const r = cleanReport(new Date("2026-10-30T21:40:00Z"))
+    const rec = toRecords(r, { id: "r-abc", demoId: "demo1" })
+    expect(rec.report).toMatchObject({ id: "r-abc", demoId: "demo1", kind: "clean" })
+    expect(fromRecords(rec)).toEqual(r)
+  })
+
+  it("key every Capture, Incident and block by the report id", () => {
+    const rec = toRecords(seedReport("end"), { id: "demo1", demoId: "demo1" })
+    for (const row of [...rec.captures, ...rec.incidents, ...rec.blocks]) expect(row.reportId).toBe("demo1")
   })
 
   it("round-trip manager edits, kept and Enhance Drafts, dismissed and handled Captures", () => {

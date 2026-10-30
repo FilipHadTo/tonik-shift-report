@@ -6,7 +6,7 @@ import type { Block, Field, Incident, InboxCapture, IncidentField, Report } from
 import type { blocks, captures, CaptureUse, FieldRecord, incidents, Provenance, reports } from "./schema"
 
 export type Records = {
-  report: Omit<typeof reports.$inferInsert, "updatedAt">
+  report: Omit<typeof reports.$inferInsert, "updatedAt" | "createdAt">
   captures: (typeof captures.$inferSelect)[]
   incidents: (typeof incidents.$inferSelect)[]
   blocks: (typeof blocks.$inferSelect)[]
@@ -50,10 +50,13 @@ function field(rec: FieldRecord): Field {
   }
 }
 
-export function toRecords(r: Report, demoId = ""): Records {
+/** `id`: the report's own id, which keys its rows; `demoId`: whose Reports list it is in. */
+export function toRecords(r: Report, { id: reportId, demoId }: { id: string; demoId: string } = { id: "", demoId: "" }): Records {
   return {
     report: {
+      id: reportId,
       demoId,
+      kind: r.kind,
       scene: r.scene,
       venue: r.venue,
       night: r.night,
@@ -72,7 +75,7 @@ export function toRecords(r: Report, demoId = ""): Records {
       ),
     },
     captures: r.captures.map((c, position) => ({
-      demoId,
+      reportId,
       id: c.id,
       position,
       kind: c.kind,
@@ -90,7 +93,7 @@ export function toRecords(r: Report, demoId = ""): Records {
       const confirmed = !!i.confirmedAt
       const [occurredAt, location, type] = FIELDS.map((f) => fieldRecord(i.fields[f], confirmed))
       return {
-        demoId,
+        reportId,
         id: i.id,
         position,
         provenance: i.manual ? "manager-entered" : confirmed ? "confirmed" : "ai-drafted",
@@ -109,7 +112,7 @@ export function toRecords(r: Report, demoId = ""): Records {
       }
     }),
     blocks: r.blocks.map((b, position) => ({
-      demoId,
+      reportId,
       id: b.id,
       position,
       section: b.section,
@@ -128,6 +131,7 @@ const byPosition = (a: { position: number }, b: { position: number }) => a.posit
 export function fromRecords(rec: Records): Report {
   const r = rec.report
   return {
+    kind: r.kind,
     venue: r.venue,
     night: r.night,
     scene: r.scene,

@@ -4,7 +4,16 @@
 export * from "@/lib/report"
 import type { ExtractScope } from "@/lib/report"
 
-/** This browser's demo report, stored in Neon (./report/route.ts). */
+/** Reports, the public link (stories 59, 63): this browser's list (./page.tsx). */
+export const REPORTS_PATH = "/prototype/report-editor"
+
+/** A report's own page (ADR 0009): the demo report's id is the demo id, a clean one's `r-…`. */
+export const reportPath = (id: string) => `${REPORTS_PATH}/r/${id}`
+
+/** This browser's Reports list and "New report", stored in Neon (./reports/route.ts). */
+export const REPORTS_API = "/prototype/report-editor/reports"
+
+/** One report, stored in Neon (./report/route.ts). */
 export const REPORT_API = "/prototype/report-editor/report"
 
 /** Draft into report / from inbox / all: Extract with Gemini on the server (./report/draft/route.ts). */
@@ -27,12 +36,12 @@ export function scopeKey(scope: ExtractScope) {
 /** Live Inbox endpoint shared by the desktop and the capture page, stored in Neon (./captures/route.ts). */
 export const CAPTURES_API = "/prototype/report-editor/captures"
 
-/** A phone photo's stored image (./captures/photo/route.ts), scoped by demo id. */
-export const photoSrc = (demo: string, capture: string) => `${CAPTURES_API}/photo?d=${demo}&id=${capture}`
+/** A phone photo's stored image (./captures/photo/route.ts), scoped by report id. */
+export const photoSrc = (report: string, capture: string) => `${CAPTURES_API}/photo?r=${report}&id=${capture}`
 
 /**
- * One demo per browser: the desktop's id goes into the QR link (`?d=…`), so each reviewer's
- * phones write into their own Report screen and nobody's Reset wipes anyone else's Captures.
+ * One demo per browser: the id keys this reviewer's Reports list (story 71) and is the id of its demo
+ * report, so nobody's Reset wipes anyone else's Captures. The QR link carries the report, not this.
  */
 export function demoSession() {
   try {

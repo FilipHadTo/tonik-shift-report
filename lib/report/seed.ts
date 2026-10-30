@@ -5,7 +5,9 @@ import { applyExtract, validateExtract } from "./extract"
 import { recordedExtract } from "./fake-model"
 import type { Author, InboxCapture, Report, Scene } from "./types"
 
-const alex: Author = { name: "Alex Morgan", role: "Closing Manager" }
+/** The demo's one venue and its Closing Manager. */
+export const VENUE = "Halo Club"
+export const alex: Author = { name: "Alex Morgan", role: "Closing Manager" }
 const marek: Author = { name: "Marek", role: "Door" }
 const jess: Author = { name: "Jess", role: "Bar" }
 
@@ -17,7 +19,8 @@ function drafted(r: Report, id: string): Report {
 
 export function seedReport(scene: Scene = "end"): Report {
   const base: Report = {
-    venue: "Halo Club",
+    kind: "demo",
+    venue: VENUE,
     night: "Sat 24 Oct",
     scene,
     startedAt: SCENES.start.at,

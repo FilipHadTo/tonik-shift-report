@@ -1,14 +1,13 @@
-// PROTOTYPE — throwaway route. Question: does an inbox of Captures the Closing
-// Manager curates by hand, next to a Notion-like report document and a Section
-// rail, make the end-of-night flow obvious? Desktop only.
+// PROTOTYPE — the public link lands on Reports (stories 59, 63–65): the reviewer's Shift Reports,
+// the demo report pinned first, and "New report". Each report opens on ./r/[id].
 
 import { Suspense } from "react"
-import { ReportEditor } from "./report-editor"
+import { Reports } from "./reports"
 
 export default function Page() {
   return (
     <Suspense>
-      <ReportEditor />
+      <Reports />
     </Suspense>
   )
 }

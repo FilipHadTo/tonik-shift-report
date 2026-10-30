@@ -1,14 +1,14 @@
 "use client"
 
 // PROTOTYPE — Report screen, variant E: Inbox | Document | Sections.
-// Loads the reviewer's report from the server and saves every manager action there (ticket 09):
+// Loads one report of the reviewer's Reports list from the server (its id is in the URL, ADR 0009) and saves every manager action there (ticket 09):
 // the screen applies an action at once and settles on the server's result. Also holds the AI
 // "drafting" wait, the calm message when the AI is down, and the Capture ↔ report cross-highlight
 // shared by all three columns.
 
 import { Suspense, createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, capturesInScope, demoSession, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
+import { CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, REPORTS_PATH, capturesInScope, cleanReport, demoSession, onClock, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -20,6 +20,8 @@ import "./editor.css"
 type Hot = { captures: string[]; from: "inbox" | "doc" } | null
 
 type Ctx = {
+  /** The report's id: its capture link, its API calls, its photos. */
+  id: string
   report: Report
   dispatch: React.Dispatch<Action>
   /** Extract on the server (Gemini): one Capture, one Section or everything New (ADR 0007). */
@@ -45,9 +47,12 @@ type Ctx = {
 
 const EditorCtx = createContext<Ctx | null>(null)
 
-/** The screen's reducer: the domain's, plus "saved" to settle on what the server stored. */
+/**
+ * The screen's reducer: the domain's, plus "saved" to settle on what the server stored. A clean report
+ * stamps on the real clock (ADR 0009), so what the screen shows at once matches what the server saves.
+ */
 type ScreenAction = Action | { type: "saved"; report: Report }
-const screenReducer = (r: Report, a: ScreenAction) => (a.type === "saved" ? a.report : reducer(r, a))
+const screenReducer = (r: Report, a: ScreenAction) => (a.type === "saved" ? a.report : reducer(onClock(r, new Date()), a))
 
 /** Actions that carry an AI result or a reset never go to the server as they are (see SaveAction); phone Captures are already stored. */
 const LOCAL_ONLY = new Set<Action["type"]>(["startDrafting", "draftFailed", "extracted", "enhanced", "receive", "reset"])
@@ -57,7 +62,7 @@ const LOCAL_ONLY = new Set<Action["type"]>(["startDrafting", "draftFailed", "ext
  * nothing is in flight. Anything still pending (a request, a drafting delay) holds the settle back,
  * so the screen never jumps back to an older state and then forward again.
  */
-function useSaving(apply: React.Dispatch<ScreenAction>) {
+function useSaving(apply: React.Dispatch<ScreenAction>, r: string) {
   const s = useRef({ busy: 0, gen: 0, chain: Promise.resolve(), saved: null as Report | null })
 
   const settle = useCallback(() => {
@@ -95,11 +100,11 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
   const save = useCallback(
     (action: SaveAction) =>
       queue(async () => {
-        const res = await fetch(REPORT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), action }) })
+        const res = await fetch(REPORT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), r, action }) })
         // 409: the rules refused it; the answer is the saved report, and the screen shows that.
         return res.ok || res.status === 409 ? ((await res.json()) as Report) : null
       }),
-    [queue],
+    [queue, r],
   )
 
   /**
@@ -110,7 +115,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
     async (scope: ExtractScope) => {
       let answer: { degraded: boolean } | null = null
       await queue(async () => {
-        const res = await fetch(DRAFT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), scope }) })
+        const res = await fetch(DRAFT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), r, scope }) })
         // 409: nothing could be drafted; the answer is the saved report, unchanged.
         if (!res.ok && res.status !== 409) return null
         const out: { report: Report; degraded: boolean } = await res.json()
@@ -119,7 +124,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
       })
       return answer as { degraded: boolean } | null
     },
-    [queue],
+    [queue, r],
   )
 
   /**
@@ -130,7 +135,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
     async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
       let status: EnhanceOutcome["status"] = "degraded"
       await queue(async () => {
-        const res = await fetch(ENHANCE_API, { method: "POST", body: JSON.stringify({ d: demoSession(), target, text, span }) })
+        const res = await fetch(ENHANCE_API, { method: "POST", body: JSON.stringify({ d: demoSession(), r, target, text, span }) })
         // 409: nothing was saved; the answer is the saved report, unchanged.
         if (!res.ok && res.status !== 409) return null
         const out: { report: Report; status: EnhanceOutcome["status"] } = await res.json()
@@ -139,10 +144,10 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
       })
       return status
     },
-    [queue],
+    [queue, r],
   )
 
-  /** Scene switch / Reset: drops anything not yet sent, then reseeds after what is in flight. */
+  /** Scene switch / Reset (demo report only): drops anything not yet sent, then reseeds after what is in flight. */
   const reseed = useCallback(
     (scene: Scene) => {
       s.current.gen++
@@ -172,42 +177,50 @@ const CALM_MS = 5000
 const POLL_MS = 2000
 
 /**
- * Opening the Report screen loads this browser's demo report from the server (ticket 08).
- * The URL's scene only matters on the way in; later switches go through setScene.
+ * Opening the Report screen loads report `id` from the server (tickets 08, 24). On the demo report the
+ * URL's scene only matters on the way in; later switches go through setScene.
  */
-export function ReportEditor() {
+export function ReportEditor({ id }: { id: string }) {
   const [loaded, setLoaded] = useState<{ report: Report; offline: boolean } | null>(null)
 
   useEffect(() => {
     let stop = false
     // Read from the URL here rather than with useSearchParams, so the skeleton is part of the prerendered page.
     const scene: Scene = new URLSearchParams(window.location.search).get("scene") === "start" ? "start" : "end"
-    fetch(`${REPORT_API}?d=${demoSession()}&scene=${scene}`, { cache: "no-store" })
-      .then((res) => (res.ok ? (res.json() as Promise<Report>) : Promise.reject(res.status)))
-      .then((report) => ({ report, offline: false }))
-      // The demo must never die: without the database the scene still opens, just not saved.
-      .catch(() => ({ report: seedReport(scene), offline: true }))
-      .then((r) => !stop && setLoaded(r))
+    const demo = id === demoSession()
+    fetch(`${REPORT_API}?d=${demoSession()}&r=${id}&scene=${scene}`, { cache: "no-store" })
+      .then((res) => {
+        // Not in this browser's Reports list: back to the list.
+        if (res.status === 404) {
+          window.location.replace(REPORTS_PATH)
+          return null
+        }
+        return res.ok ? (res.json() as Promise<Report>) : Promise.reject(res.status)
+      })
+      .then((report) => report && { report, offline: false })
+      // The demo must never die: without the database the report still opens, just not saved.
+      .catch(() => ({ report: demo ? seedReport(scene) : cleanReport(new Date()), offline: true }))
+      .then((r) => !stop && r && setLoaded(r))
     return () => {
       stop = true
     }
-  }, [])
+  }, [id])
 
   // Until the report arrives, the screen's shape: no stale scene flashes in first.
   if (!loaded) return <ReportSkeleton />
   return (
     <Suspense fallback={<ReportSkeleton />}>
-      <Editor initial={loaded.report} offline={loaded.offline} />
+      <Editor id={id} initial={loaded.report} offline={loaded.offline} />
     </Suspense>
   )
 }
 
-function Editor({ initial, offline }: { initial: Report; offline: boolean }) {
+function Editor({ id, initial, offline }: { id: string; initial: Report; offline: boolean }) {
   const params = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const [report, apply] = useReducer(screenReducer, initial)
-  const { save, draftOnServer, enhanceOnServer, hold, release, reseed, quiet } = useSaving(apply)
+  const { save, draftOnServer, enhanceOnServer, hold, release, reseed, quiet } = useSaving(apply, id)
   /** What the components dispatch: shown at once, saved on the server. */
   const dispatch = useCallback(
     (a: Action) => {
@@ -286,17 +299,16 @@ function Editor({ initial, offline }: { initial: Report; offline: boolean }) {
     [params, pathname, router, reseed],
   )
 
-  // Live Inbox (story 13): phones write into this demo id's stored report; poll for what they sent.
+  // Live Inbox (story 13): phones write into this stored report (its QR carries its id); poll for what they sent.
   // Polls wait while anything is in flight, and an answer that crossed a Reset or scene switch is dropped,
   // so Captures the reseed just deleted never come back.
   useEffect(() => {
     let stop = false
-    const d = demoSession()
     async function poll() {
       const gen = quiet()
       if (gen === null) return
       try {
-        const res = await fetch(`${CAPTURES_API}?d=${d}`, { cache: "no-store" })
+        const res = await fetch(`${CAPTURES_API}?r=${id}`, { cache: "no-store" })
         if (!res.ok) return
         const data: { captures: PhoneCapture[] } = await res.json()
         // Already stored on the server: shown here only, never saved again.
@@ -310,11 +322,11 @@ function Editor({ initial, offline }: { initial: Report; offline: boolean }) {
       stop = true
       clearInterval(t)
     }
-  }, [quiet])
+  }, [quiet, id])
 
   const value = useMemo(
-    () => ({ report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite, offline }),
-    [report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite, offline],
+    () => ({ id, report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite, offline }),
+    [id, report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite, offline],
   )
 
   return (
@@ -327,7 +339,8 @@ function Editor({ initial, offline }: { initial: Report; offline: boolean }) {
           <Rail />
         </div>
       </div>
-      <DemoBar />
+      {/* The Demo controller lives on the demo report only (story 70). */}
+      {report.kind === "demo" && <DemoBar />}
     </EditorCtx.Provider>
   )
 }

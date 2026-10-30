@@ -16,7 +16,20 @@ Migrate existing demo rows so current demo ids keep their report.
 
 **Agent:** Opus, high effort (DB, routes, domain clock)
 
-- [ ] The public link shows the Reports list with the demo report pinned; opening it works like today, scenes and Reset included
-- [ ] "New report" makes a clean report on the real clock; a phone Capture sent through its QR lands only in it, with today's real time
-- [ ] Two reports in one session never share Captures, photos or state; another demo id sees none of them
-- [ ] Reset touches only the demo report; old `?scene=` links still land on the demo report
+- [x] The public link shows the Reports list with the demo report pinned; opening it works like today, scenes and Reset included
+- [x] "New report" makes a clean report on the real clock; a phone Capture sent through its QR lands only in it, with today's real time
+- [x] Two reports in one session never share Captures, photos or state; another demo id sees none of them
+- [x] Reset touches only the demo report; old `?scene=` links still land on the demo report
+
+## Comments
+
+Built. Routes: `/prototype/report-editor` is Reports (bare scaffold from E's pieces: header, `Btn`, a panel with one row per report: Night, Open / Sent, Incidents, sent time and by whom, a "Demo" overline on the pinned row). Each report opens on `/prototype/report-editor/r/[id]` (params resolved inside a Suspense whose fallback is the skeleton). The demo report's id is the browser's demo id; clean reports are `r-` + 10 random chars, so ids never collide with demo ids. Old `?scene=` links on the list redirect to the demo report with the same query; old phone links (`capture?d=…`) still land in the demo report, since `d` is its id. APIs: `reports` (GET list, POST "New report"); `report`, `report/draft`, `report/enhance` take `{ d, r }` and 404 a report outside that demo id's list; `captures` and `captures/photo` take `r` only (the phone has no demo id). PUT (scene / Reset) takes only `d` and reseeds the demo report, never a clean one. The rate limit stays per IP (per report would be bypassed by "New report").
+
+Domain (`lib/report/clock.ts`, test-first): `Report.kind` (`demo` | `clean`); `cleanReport(now)` (empty, Night from `nightOf` as "Fri 30 Oct", started now); `onClock(r, now)` sets a clean report's clock to the real time before anything is stamped (typed or phone Capture, Submit, manual Incident) and leaves the demo report on the demo clock; `reportRow` for the list. The server applies `onClock` in every write route; the screen applies it too, so the optimistic state matches. Venue time zone is `VENUE_TIME_ZONE = "Europe/London"` (open for Filip: Warsaw would match the reviewers' clocks).
+
+Migration `drizzle/0005_many_reports.sql` (applied to Neon): `reports` gets `id` (PK, backfilled from `demo_id`), `kind` (existing rows `demo`), `created_at`; child tables rename `demo_id` to `report_id`. Existing rows keep their report (12 reports, all Captures / Incidents / blocks unchanged). One demo report per demo id is a partial unique index.
+
+Other: the venue crumb in the top bar links back to Reports (story 67). The capture page shows the report's Night from the server instead of the fixed "Sat 24 Oct". The Demo controller renders only on the demo report.
+
+Checked in Chrome (own isolated contexts, test rows removed): list shows the pinned demo report; it opens with scenes and Reset as before; New report opens an empty Fri 30 Oct report on the real clock with no Demo controller; a 390px phone on its QR link sent a Capture that landed in it at the real time and not in the demo report; Reset on the demo report left the clean report's Capture alone; `?scene=start` lands on the demo report; another demo id gets 404 on the clean report; a sent clean report shows Sent, time and Alex Morgan in the list and refuses phone Captures.
+

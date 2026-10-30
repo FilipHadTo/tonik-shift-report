@@ -2,7 +2,7 @@
 
 // PROTOTYPE — the capture page a Staff Member (or the Closing Manager) opens from the QR.
 // No login: name and role are kept on the phone (ADR 0004). Captures are saved in the database
-// through ../captures/route.ts, into the demo id's report, and the desktop Inbox polls for them.
+// through ../captures/route.ts, into the report the QR carries (story 66), and the desktop Inbox polls for them.
 // A photo is downsized on the phone and stored with its Capture (ticket 18). There is no voice recording: people dictate with the phone keyboard's mic (story 9).
 // Laid out like a messaging app, since that's what staff already use mid-shift.
 
@@ -18,6 +18,7 @@ type Identity = Pick<Author, "name" | "role">
 
 const ID_KEY = "shift-report:identity"
 const DEVICE_KEY = "shift-report:device"
+/** The report this phone writes into. Named from before ticket 24, when it held the demo id (still the demo report's id). */
 const SESSION_KEY = "shift-report:capture-demo"
 const POLL_MS = 3000
 /** Ticket 18: photos go up downsized, longest side 1280 px, JPEG of roughly 150 KB. */
@@ -50,9 +51,13 @@ function deviceId() {
 
 const noSubscribe = () => () => {}
 
-/** Demo session from the QR link (`?d=…`), kept so a reload without it still lands in the same Inbox. */
-function demoId() {
-  const fromLink = new URLSearchParams(window.location.search).get("d")
+/**
+ * The report from the QR link (`?r=…`; older links carry `?d=…`, the demo report's id), kept so a reload
+ * without it still lands in the same Inbox.
+ */
+function reportId() {
+  const params = new URLSearchParams(window.location.search)
+  const fromLink = params.get("r") ?? params.get("d")
   if (fromLink) write(SESSION_KEY, fromLink)
   return fromLink ?? read<string>(SESSION_KEY) ?? "public"
 }
@@ -111,8 +116,25 @@ export function CapturePage() {
   )
 }
 
+/** The Night of the report this phone writes into, for the first screen (the list screen polls its own). */
+function useReportNight() {
+  const [night, setNight] = useState<string | null>(null)
+  useEffect(() => {
+    let stop = false
+    fetch(`${CAPTURES_API}?r=${reportId()}&device=${deviceId()}`, { cache: "no-store" })
+      .then((res) => (res.ok ? (res.json() as Promise<{ night: string }>) : null))
+      .then((data) => !stop && data && setNight(data.night))
+      .catch(() => {})
+    return () => {
+      stop = true
+    }
+  }, [])
+  return night
+}
+
 function Overline() {
-  return <p className="text-xs font-medium tracking-[0.04em] text-ink-3 uppercase">Halo Club · Night of Sat 24 Oct</p>
+  const night = useReportNight()
+  return <p className="text-xs font-medium tracking-[0.04em] text-ink-3 uppercase">Halo Club{night && ` · Night of ${night}`}</p>
 }
 
 /** Story 8: name and role, once. */
@@ -197,24 +219,27 @@ type Sent = PhoneCapture & { preview?: string }
  */
 function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) {
   const [sent, setSent] = useState<Sent[]>([])
+  const [night, setNight] = useState<string | null>(null)
   const previews = useRef(new Map<string, string>())
-  const ids = useRef({ device: "", demo: "public" })
+  const ids = useRef({ device: "", report: "public" })
   const listRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     try {
-      const { device, demo } = ids.current
-      const res = await fetch(`${CAPTURES_API}?d=${demo}&device=${device}`, { cache: "no-store" })
-      const data: { captures: PhoneCapture[] } = await res.json()
+      const { device, report } = ids.current
+      const res = await fetch(`${CAPTURES_API}?r=${report}&device=${device}`, { cache: "no-store" })
+      if (!res.ok) return
+      const data: { night: string; captures: PhoneCapture[] } = await res.json()
+      setNight(data.night)
       // Sent from here this session: the local copy, at once. After a reload: the stored one.
       setSent(
-        data.captures.map((c) => ({ ...c, preview: previews.current.get(c.id) ?? (c.photo ? photoSrc(demo, c.id) : undefined) })),
+        data.captures.map((c) => ({ ...c, preview: previews.current.get(c.id) ?? (c.photo ? photoSrc(report, c.id) : undefined) })),
       )
     } catch {}
   }, [])
 
   useEffect(() => {
-    ids.current = { device: deviceId(), demo: demoId() }
+    ids.current = { device: deviceId(), report: reportId() }
     load()
     const t = setInterval(load, POLL_MS)
     return () => clearInterval(t)
@@ -230,7 +255,7 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        d: ids.current.demo,
+        r: ids.current.report,
         device: ids.current.device,
         name: me.name,
         role: me.role,
@@ -254,7 +279,7 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
             <p className="truncate text-[15px] font-medium">
               {me.name} <span className="font-normal text-ink-3">· {me.role}</span>
             </p>
-            <p className="mt-0.5 truncate text-xs text-ink-3">Halo Club · Night of Sat 24 Oct</p>
+            <p className="mt-0.5 truncate text-xs text-ink-3">Halo Club{night && ` · Night of ${night}`}</p>
           </div>
           <Btn variant="ghost" className="-mr-2" onClick={onChangeMe}>
             Change

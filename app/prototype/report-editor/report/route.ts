@@ -1,19 +1,24 @@
-// The reviewer's report, stored in Neon (ticket 08). Everything is scoped by demo id (`d`, one per
-// desktop browser), so a scene switch or Reset never touches another reviewer's demo (story 60).
+// One report in the reviewer's Reports list, stored in Neon (tickets 08, 24). The browser sends its demo id
+// (`d`) and the report's id (`r`): a report outside that demo id's list is not found. Scene switch and Reset
+// act on the demo report only (story 60); clean reports run on the real clock (ADR 0009).
 
-import { demoIdOf, loadReport, openReport, saveReport, seedScene } from "@/lib/db"
-import { applySaved, fakeModel, parseSaveAction, type Scene } from "@/lib/report"
+import { demoIdOf, loadReport, openReport, reportIdOf, saveReport, seedScene } from "@/lib/db"
+import { applySaved, fakeModel, onClock, parseSaveAction, type Scene } from "@/lib/report"
 
 const sceneOf = (v: unknown): Scene => (v === "start" ? "start" : "end")
+const notFound = () => Response.json({ error: "No such report" }, { status: 404 })
 
-/** Opening the Report screen: the saved report, or the URL's scene seeded for a new demo id. */
+/** Opening the Report screen: the saved report; for the demo report, the URL's scene seeded when needed. */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams
-  const report = await openReport(demoIdOf(params.get("d")), sceneOf(params.get("scene")))
+  const reportId = reportIdOf(params.get("r"))
+  if (!reportId) return notFound()
+  const report = await openReport(demoIdOf(params.get("d")), reportId, sceneOf(params.get("scene")))
+  if (!report) return notFound()
   return Response.json(report, { headers: { "Cache-Control": "no-store" } })
 }
 
-/** Scene switch or Reset: reseed that scene for this demo id only. */
+/** Scene switch or Reset: reseed that scene in this demo id's demo report only. */
 export async function PUT(request: Request) {
   const body = await request.json().catch(() => null)
   const report = await seedScene(demoIdOf(body?.d), sceneOf(body?.scene))
@@ -30,11 +35,13 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const action = parseSaveAction(body?.action)
   if (!action || action.type === "draft" || action.type === "enhance") return Response.json({ error: "Unknown action" }, { status: 400 })
-  const demoId = demoIdOf(body?.d)
-  const stored = await loadReport(demoId)
-  if (!stored) return Response.json({ error: "No report for this demo" }, { status: 404 })
+  const reportId = reportIdOf(body?.r)
+  const loaded = reportId && (await loadReport(reportId, demoIdOf(body?.d)))
+  if (!reportId || !loaded) return notFound()
+  // Anything this action stamps (a typed Capture, Submit) is on the report's clock.
+  const stored = onClock(loaded, new Date())
   const out = await applySaved(stored, action, fakeModel)
   if (!out.ok) return Response.json(stored, { status: 409 })
-  await saveReport(demoId, stored, out.report)
+  await saveReport(reportId, stored, out.report)
   return Response.json(out.report)
 }

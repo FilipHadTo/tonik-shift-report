@@ -8,7 +8,8 @@ import { Camera, MessagesSquare, Mic, Type } from "lucide-react"
 import { encode, QrCodeDataType } from "uqr"
 import { cn } from "@/lib/utils"
 import { PhotoThumb } from "@/components/evidence-thumb"
-import { AI_CALM, demoSession, photoSrc, type Capture, type InboxCapture } from "./data"
+import { AI_CALM, photoSrc, type Capture, type InboxCapture } from "./data"
+import { useEditor } from "./report-editor"
 
 const KIND = {
   photo: { icon: Camera, label: "Photo" },
@@ -33,11 +34,12 @@ export function KindLabel({ kind }: { kind: Capture["kind"] }) {
  */
 export function CapturePhoto({ capture: c, className }: { capture: InboxCapture; className?: string }) {
   const [failed, setFailed] = useState(false)
+  const { id } = useEditor()
   if (c.photo !== "upload" || failed) return <PhotoThumb className={className} />
   return (
     // eslint-disable-next-line @next/next/no-img-element -- stored demo photo, already downsized on the phone
     <img
-      src={photoSrc(demoSession(), c.id)}
+      src={photoSrc(id, c.id)}
       alt={c.text ? `Photo: ${c.text}` : `Photo from ${c.author.name}`}
       onError={() => setFailed(true)}
       className={cn("rounded-lg bg-press object-cover outline outline-1 -outline-offset-1 outline-img-outline", className)}

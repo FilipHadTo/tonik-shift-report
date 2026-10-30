@@ -4,6 +4,7 @@
 // Submit always opens the sheet; what's left to do lives in the right rail.
 
 import { useRef, useState } from "react"
+import Link from "next/link"
 import { Dialog } from "@base-ui/react/dialog"
 import { Check, ChevronRight, Circle, CloudOff, Copy, ExternalLink, Link2, Lock, UserPlus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -11,7 +12,7 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
-import { REVIEW_STATEMENT, SECTIONS, demoSession, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
+import { REPORTS_PATH, REVIEW_STATEMENT, SECTIONS, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
 import { Qr } from "./ui"
 
 export function TopBar() {
@@ -26,7 +27,10 @@ export function TopBar() {
         SR
       </span>
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px]">
-        <span className="text-ink-3">{report.venue}</span>
+        {/* Back to Reports (story 67). */}
+        <Link href={REPORTS_PATH} className="text-ink-3 hover:text-ink">
+          {report.venue}
+        </Link>
         <ChevronRight className="size-3.5 text-ink-3" aria-hidden />
         <span className="font-medium">Night of {report.night}</span>
       </nav>
@@ -267,11 +271,12 @@ function InviteStaff() {
 
 export const CAPTURE_PATH = "/prototype/report-editor/capture"
 
-/** QR and link to the capture page. Used by Invite staff and the empty Inbox. */
+/** QR and link to the capture page, carrying this report (story 66). Used by Invite staff and the empty Inbox. */
 export function InviteCard() {
+  const { id } = useEditor()
   const [copied, setCopied] = useState(false)
   const origin = typeof window === "undefined" ? "" : window.location.origin
-  const link = `${CAPTURE_PATH}?d=${typeof window === "undefined" ? "" : demoSession()}`
+  const link = `${CAPTURE_PATH}?r=${id}`
   const href = `${origin}${link}`
   const shown = href.replace(/^https?:\/\//, "")
   const local = /^https?:\/\/(localhost|127\.)/.test(origin)

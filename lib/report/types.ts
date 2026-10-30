@@ -72,7 +72,11 @@ export type Incident = {
   descriptionDraft?: string
 }
 
+/** The demo report (seeded scenes, demo clock, Demo controller) or a clean one from "New report" (ADR 0009). */
+export type ReportKind = "demo" | "clean"
+
 export type Report = {
+  kind: ReportKind
   venue: string
   night: string
   scene: Scene
@@ -92,7 +96,7 @@ export type Report = {
   /** Onboarding steps that happened in this report (story 4). The first Capture is derived. */
   invited: boolean
   drafted: boolean
-  /** Demo clock, in minutes on the Night (see nightMinutes). */
+  /** The report's clock, in minutes on the Night (see nightMinutes): the demo clock, or for a clean report the real time (see onClock). */
   clock: number
 }
 
