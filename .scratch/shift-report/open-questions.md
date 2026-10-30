@@ -44,7 +44,7 @@ Options:
 
 ### 2026-10-30 — Ticket 15: "Enhancing…" timing and failed Enhance message
 
-Blocks: 15 (only these two details; the rest can be built). Raised by ticket 05.
+Raised by ticket 05. Update: Q2 is settled by ticket 15's text (same calm message and fallback as ticket 14). Q1 built with A in ticket 15 (E's existing "Enhancing…" shown during the real wait); flip if you prefer B.
 
 Question 1: with the fake model "Enhancing…" only shows after the answer (instant). With Gemini there is a real wait.
 - A. Show "Enhancing…" before the call; "Already reads clean." appears after the wait.
@@ -82,3 +82,10 @@ Not blocking, built with A. Each demo id has one report and one Night (Sat 24 Oc
 Not blocking (left unchanged).
 1. Desktop copy still says "Invite staff to tonight's report" and mentions voice notes in the Inbox empty state (Story 12 covered staff copy only). A. leave it; B. drop the voice-note mention in 2c Polish.
 2. Role picker: five roles in two columns leaves Other alone at half width on the last row. A. keep; B. make Other full width.
+
+### 2026-10-30 — Ticket 14: where the "AI is catching up" message goes
+
+Not blocking, built with A. Shown when Gemini fails, times out or the IP is over the rate limit (20 calls / 10 min).
+- A. (built) Replaces the pressed button for 5 s, E's existing in-place failure style; in the Inbox header it wraps to two right-aligned lines.
+- B. Inline note under the button, stays until the next action.
+- C. Toast.
