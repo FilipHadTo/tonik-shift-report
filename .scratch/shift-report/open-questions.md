@@ -140,3 +140,12 @@ Not blocking, built as A.
 
 Not blocking, built as A. "Offline. Changes aren't saved." shows only when the report fails to load on open; later failed saves stay silent.
 - A. (built) in the top bar next to the "Open since" pill; B. elsewhere (Filip picks in 2c).
+
+### 2026-10-31 — Ticket 24: Halo Club time zone, and small UI additions (review)
+
+Time zone (`VENUE_TIME_ZONE`, one constant), built with A:
+- A. (built) Europe/London: fits the seed and tests; reviewers in Poland see times an hour behind.
+- B. Europe/Warsaw: matches reviewers in Poland.
+- C. Reviewer's browser time zone: more code, not a venue rule.
+
+To eyeball: "Halo Club" breadcrumb links back to Reports; "Demo" label on the demo row; the capture page shows the report's real Night instead of a fixed "Sat 24 Oct".
