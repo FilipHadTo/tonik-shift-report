@@ -13,7 +13,7 @@ Legend for the source tags at the end of each section:
 
 ## 1. Example: a submitted report
 
-The submitted report reads like a document, not an app screen (Spec 57). Provenance is stored for every field but not printed; the footer says the report is AI-assisted.
+The submitted report reads like a document, not an app screen (Spec 57). It opens as a Preview from the venue's Reports list (Spec 68, ADR 0009). Provenance is stored for every field but not printed; the footer says the report is AI-assisted.
 
 > **Shift Report: Halo Club, Night of Sat 24 Oct 2026**
 > Closing Manager: Alex Morgan

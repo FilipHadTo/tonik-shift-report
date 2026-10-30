@@ -9,7 +9,7 @@ The person running the venue at close who authors and submits the Shift Report.
 _Avoid_: user, staff, operator
 
 **Staff Member**:
-Anyone else working the night (door, bar, security) who can add Captures to tonight's Shift Report via a shared link. Cannot see Drafts, confirm, or submit. In UI copy, "staff" means the Staff Members as a group ("Invite staff").
+Anyone else working the night (door, bar, security) who can add Captures to tonight's Shift Report via that report's shared link. Cannot see Drafts, confirm, or submit. In UI copy, "staff" means the Staff Members as a group ("Invite staff").
 _Avoid_: employee, worker, contributor
 
 **Owner**:
@@ -19,8 +19,16 @@ _Avoid_: admin, client
 ## Report
 
 **Shift Report**:
-One venue's record of one Night, authored by the Closing Manager. Started by the Closing Manager at the start of the shift, open until Submission, then locked.
+One venue's record of one Night, authored by the Closing Manager. Started by the Closing Manager at the start of the shift, open until Submission, then locked. In UI copy its status is "Open" before Submission and "Sent" after.
 _Avoid_: log, form, summary
+
+**Reports**:
+The venue's list of its Shift Reports, where the Closing Manager starts a new one ("New report"), continues an open one, or opens a submitted one as a Preview. Each row shows the Night, its status (Open / Sent), the number of Incidents, and when and by whom it was submitted.
+_Avoid_: dashboard, history, archive
+
+**Preview**:
+A submitted Shift Report shown as a clean, read-only document, the way the next team or an Owner reads it. Not an editing mode.
+_Avoid_: print view, export, read-only mode
 
 **Capture**:
 A raw input the Closing Manager or a Staff Member adds to a Shift Report, attributed to its author — typed or dictated text, a photo/video/document, or a pasted group chat. Kept verbatim, never edited by AI.
@@ -73,7 +81,7 @@ The business date a Shift Report belongs to: the date the shift started, so Capt
 _Avoid_: day, shift date
 
 **Submission**:
-The Closing Manager's act of finalising a Shift Report, including a statement that they reviewed it, after which it is locked and marked as AI-assisted.
+The Closing Manager's act of finalising a Shift Report, including a statement that they reviewed it, after which it is locked and marked as AI-assisted. UI copy calls a submitted report "Sent"; in the domain and the docs it is submitted.
 _Avoid_: send, publish, close
 
 **Addendum**:
