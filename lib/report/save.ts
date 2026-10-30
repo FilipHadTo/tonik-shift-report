@@ -93,8 +93,9 @@ export function parseSaveAction(raw: unknown): SaveAction | null {
     case "addIncident":
     case "keepAll":
     case "invited":
-    case "submit":
       return { type: a.type }
+    case "submit":
+      return { type: "submit", statement: a.statement === true }
     case "draft": {
       const scope = scopeOf(a.scope)
       return scope && { type: "draft", scope }
@@ -119,6 +120,8 @@ export function parseSaveAction(raw: unknown): SaveAction | null {
 
 /** Whether the stored report allows the action. The screen only offers what passes; the server checks again. */
 function allowed(r: Report, a: SaveAction): boolean {
+  // Locked after Submission (story 56): no change to Captures, Drafts or Incidents. Addenda are out of scope.
+  if (r.submittedAt) return false
   const capture = (id: string) => r.captures.find((c) => c.id === id)
   const incident = (id: string) => r.incidents.find((i) => i.id === id)
   const block = (id: string) => r.blocks.find((b) => b.id === id)

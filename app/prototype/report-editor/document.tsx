@@ -50,7 +50,7 @@ export function Document() {
         {report.submittedAt && (
           <p className="mt-6 flex items-center gap-2 rounded-lg bg-raise px-3 py-2.5 text-[13px] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
             <Lock className="size-4 text-ink-3" aria-hidden />
-            Submitted {report.submittedAt} by {report.manager.name}. Locked. Changes only as an Addendum.
+            Submitted {report.submittedAt} by {(report.submittedBy ?? report.manager).name}. Locked. Changes only as an Addendum.
           </p>
         )}
 

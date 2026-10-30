@@ -20,7 +20,12 @@ function dismiss(c: InboxCapture, undo?: boolean): InboxCapture {
 
 const tick = (r: Report): Report => ({ ...r, clock: r.clock + 1 })
 
+/** The reviewer statement the Closing Manager ticks at Submission (story 54). */
+export const REVIEW_STATEMENT = "I reviewed this report and it matches what I remember."
+
 export function reducer(r: Report, a: Action): Report {
+  // A submitted report is locked (story 56): only Reset (a fresh demo scene) changes it.
+  if (r.submittedAt && a.type !== "reset") return r
   switch (a.type) {
     case "startDrafting":
       return { ...r, drafted: true, captures: r.captures.map((c) => (a.ids.includes(c.id) ? { ...c, drafting: true } : c)) }
@@ -159,7 +164,9 @@ export function reducer(r: Report, a: Action): Report {
         visible: r.visible.includes(a.section) ? r.visible.filter((s) => s !== a.section) : [...r.visible, a.section],
       }
     case "submit":
-      return readiness(r, { statement: true }).ready ? { ...r, submittedAt: clockLabel(r) } : r
+      return readiness(r, { statement: a.statement }).ready
+        ? { ...r, submittedAt: clockLabel(r), submittedBy: r.manager, statement: REVIEW_STATEMENT, aiAssisted: true }
+        : r
     case "reset":
       return seedReport(a.scene)
   }

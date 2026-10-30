@@ -11,7 +11,7 @@ import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { Pop } from "@/components/pop"
 import { useEditor } from "./report-editor"
-import { SECTIONS, demoSession, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
+import { REVIEW_STATEMENT, SECTIONS, demoSession, hasContent, orderedIncidents, readiness, statusOf, type Blocker } from "./data"
 import { Qr } from "./ui"
 
 export function TopBar() {
@@ -150,9 +150,7 @@ function SubmitSheet() {
                 onChange={(e) => setReviewed(e.target.checked)}
                 className="mt-0.5 size-4 shrink-0 accent-ink"
               />
-              <span className="text-[13px] leading-[1.5]">
-                I reviewed this report and it matches what I remember.
-              </span>
+              <span className="text-[13px] leading-[1.5]">{REVIEW_STATEMENT}</span>
             </label>
             <p className="mt-3 text-xs leading-[1.5] text-ink-3">
               The report will say: “AI-assisted. Reviewed and submitted by {report.manager.name}.” After submitting it
@@ -166,7 +164,7 @@ function SubmitSheet() {
               variant="primary"
               disabled={!check.ready}
               onClick={() => {
-                dispatch({ type: "submit" })
+                dispatch({ type: "submit", statement: reviewed })
                 setOpen(false)
               }}
             >

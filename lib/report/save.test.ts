@@ -53,7 +53,7 @@ describe("parseSaveAction: what the browser may send", () => {
     { type: "enhance", target: { incident: "i-m3" }, text: "abc", span: { start: 0, end: 3 } },
     { type: "keepAll" },
     { type: "invited" },
-    { type: "submit" },
+    { type: "submit", statement: true },
   ])("accepts $type", (a) => {
     expect(parseSaveAction(JSON.parse(JSON.stringify(a)))).toEqual(a)
   })
@@ -120,7 +120,7 @@ describe("applySaved: the server applies the same rules as the screen", () => {
   })
 
   test("refuses Submit while blockers are left", async () => {
-    expect((await applySaved(seedReport("end"), { type: "submit" }, fakeModel)).ok).toBe(false)
+    expect((await applySaved(seedReport("end"), { type: "submit", statement: true }, fakeModel)).ok).toBe(false)
   })
 
   test("a typed Capture gets its Captured-at from the stored report's clock", async () => {

@@ -82,7 +82,13 @@ export type Report = {
   blocks: Block[]
   incidents: Incident[]
   visible: SectionId[]
+  /** Submission (stories 54–56): set together, once, by Submit; after that the report is locked. */
   submittedAt?: string
+  submittedBy?: Author
+  /** The reviewer statement the Closing Manager ticked, as worded at Submission. */
+  statement?: string
+  /** Every report made in this app is AI-assisted; the flag records that the submitted report says so. */
+  aiAssisted?: boolean
   /** Onboarding steps that happened in this report (story 4). The first Capture is derived. */
   invited: boolean
   drafted: boolean
@@ -116,7 +122,8 @@ export type Action =
   | { type: "discardIncidentDraft"; incident: string }
   | { type: "receive"; captures: PhoneCapture[] }
   | { type: "invited" }
-  | { type: "submit" }
+  /** `statement`: the reviewer statement is ticked (story 54). */
+  | { type: "submit"; statement: boolean }
   | { type: "reset"; scene: Scene }
 
 

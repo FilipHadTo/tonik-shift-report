@@ -22,6 +22,13 @@
       "when": 1793319418282,
       "tag": "0002_calm_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793320777521,
+      "tag": "0003_exotic_la_nuit",
+      "breakpoints": true
     }
   ]
 }

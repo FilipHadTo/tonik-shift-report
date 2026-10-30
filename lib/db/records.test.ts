@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { reducer, seedReport, type Report } from "../report"
+import { reducer, seedReport, type Action, type Report } from "../report"
 import { fromRecords, toRecords } from "./records"
 
 /** `drafting` is a transient UI flag and is never stored. */
@@ -36,6 +36,17 @@ describe("report records", () => {
     expect(window.location).toMatchObject({ state: "gap", sources: [] })
     expect(window.confirmedAt).toBeNull()
     expect(rec.blocks.find((b) => b.id === "b-sec-1")).toMatchObject({ provenance: "manager-entered", sources: [] })
+  })
+
+  it("round-trip a submitted report: who, when, the statement and the AI-assisted mark", () => {
+    const r = [
+      { type: "setField", incident: "i-c1", field: "location", value: null },
+      { type: "confirm", incident: "i-c1" },
+      { type: "discard", block: "b-c1-maintenance" },
+      { type: "submit", statement: true },
+    ].reduce((x, a) => reducer(x, a as Action), seedReport("end"))
+    expect(r.submittedBy).toBeDefined()
+    expect(fromRecords(toRecords(r))).toEqual(stored(r))
   })
 
   it("never store the transient drafting flag", () => {

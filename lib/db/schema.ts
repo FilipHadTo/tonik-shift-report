@@ -35,6 +35,10 @@ export const reports = pgTable("reports", {
   /** Demo clock, minutes on the Night. */
   clock: integer("clock").notNull(),
   submittedAt: text("submitted_at"),
+  /** Submission (ticket 16): who submitted, the reviewer statement they ticked, and the AI-assisted mark. */
+  submittedBy: jsonb("submitted_by").$type<Author>(),
+  statement: text("statement"),
+  aiAssisted: boolean("ai_assisted").notNull().default(false),
   captureUse: jsonb("capture_use").$type<Record<string, CaptureUse>>().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 })
