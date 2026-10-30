@@ -8,7 +8,7 @@ import { VENUE, alex } from "./seed"
 import type { Report } from "./types"
 
 /** Where Halo Club is. The demo has one venue, so one time zone. */
-export const VENUE_TIME_ZONE = "Europe/London"
+export const VENUE_TIME_ZONE = "Europe/Warsaw"
 
 /** The local time (HH:MM, 24h) of a moment in the venue's time zone. */
 export function localTime(at: Date, timeZone: string) {

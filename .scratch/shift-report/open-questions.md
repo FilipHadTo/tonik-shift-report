@@ -149,3 +149,5 @@ Time zone (`VENUE_TIME_ZONE`, one constant), built with A:
 - C. Reviewer's browser time zone: more code, not a venue rule.
 
 To eyeball: "Halo Club" breadcrumb links back to Reports; "Demo" label on the demo row; the capture page shows the report's real Night instead of a fixed "Sat 24 Oct".
+
+Answered 2026-10-31 (Filip): Halo Club time zone is Europe/Warsaw (B).
