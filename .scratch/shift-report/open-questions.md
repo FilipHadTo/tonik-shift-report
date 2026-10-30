@@ -117,3 +117,13 @@ Not blocking. After Submit the Inbox still shows Draft into report, Dismiss and 
 8. "AI is catching up" placement and wording: as built.
 9. Inbox after Submit: C, read-only with a locked note (ticket 21).
 Also: light mode is out of scope, dark only (ticket 20).
+
+### 2026-10-31 — Ticket 18: copy for an unreadable photo (review)
+
+Not blocking, built with A. Phone shows "Couldn't open that photo. Try taking it again." when the browser can't decode the picked image.
+- A. (built) keep; B. Filip rewrites it; C. drop the message.
+
+### 2026-10-31 — Reports list shaping (2b.1)
+
+1. Public link lands on: A. (assumed) the demo report, Reports one click away; B. the Reports list.
+2. Reset / scene switch: A. (assumed) demo report only; B. clears the whole session incl. clean reports.
