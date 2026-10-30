@@ -1,9 +1,10 @@
-// The real model behind Extract (ticket 14): Gemini Flash on the paid key (ADR 0001). Server-only, so
+// The real model behind Extract and Enhance (tickets 14, 15): Gemini Flash on the paid key (ADR 0001). Server-only, so
 // the key never reaches the browser. Its answers are untrusted: the report domain checks every one.
 
 import "server-only"
-import { GoogleGenAI, ThinkingLevel } from "@google/genai"
-import { EXTRACT_TIMEOUT_MS, type ReportModel } from "../report"
+import { GoogleGenAI, ThinkingLevel, type GenerateContentResponse } from "@google/genai"
+import { ENHANCE_TIMEOUT_MS, EXTRACT_TIMEOUT_MS, type ReportModel } from "../report"
+import { ENHANCE_INSTRUCTIONS, ENHANCE_SCHEMA, enhancePrompt } from "./enhance-prompt"
 import { EXTRACT_INSTRUCTIONS, extractPrompt, extractSchema } from "./extract-prompt"
 
 /** A current Flash model; GEMINI_MODEL overrides it without a deploy of new code. */
@@ -31,12 +32,27 @@ export const geminiModel: ReportModel = {
         httpOptions: { timeout: EXTRACT_TIMEOUT_MS },
       },
     })
-    if (!res.text) throw new Error(`No answer (${res.candidates?.[0]?.finishReason ?? res.promptFeedback?.blockReason ?? "empty"})`)
     // A JSON string: Extract parses it and treats anything malformed as a failed call.
-    return res.text
+    return answer(res)
   },
-  // Enhance moves to Gemini in ticket 15; until then the routes use the rule-based one.
-  async enhance() {
-    throw new Error("Enhance doesn't run on Gemini yet")
+  async enhance(request) {
+    const res = await gemini().models.generateContent({
+      model: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+      contents: enhancePrompt(request),
+      config: {
+        systemInstruction: ENHANCE_INSTRUCTIONS,
+        responseMimeType: "application/json",
+        responseJsonSchema: ENHANCE_SCHEMA,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        httpOptions: { timeout: ENHANCE_TIMEOUT_MS },
+      },
+    })
+    // `{ text }` as JSON: Enhance parses it and treats anything else as a failed call.
+    return answer(res)
   },
+}
+
+function answer(res: GenerateContentResponse) {
+  if (!res.text) throw new Error(`No answer (${res.candidates?.[0]?.finishReason ?? res.promptFeedback?.blockReason ?? "empty"})`)
+  return res.text
 }

@@ -10,8 +10,14 @@ export const REPORT_API = "/prototype/report-editor/report"
 /** Draft into report / from inbox / all: Extract with Gemini on the server (./report/draft/route.ts). */
 export const DRAFT_API = "/prototype/report-editor/report/draft"
 
+/** Enhance on selected text: Gemini on the server (./report/enhance/route.ts). */
+export const ENHANCE_API = "/prototype/report-editor/report/enhance"
+
 /** Story 24: shown on the Draft button that was pressed when the AI failed, was slow or rate limited. */
 export const AI_CALM = "AI is catching up, your Captures are safe"
+
+/** Story 24 for Enhance, on its button: it never touches Captures, so the note speaks of the manager's text. */
+export const AI_CALM_ENHANCE = "AI is catching up, your text is safe"
 
 /** Which Draft button a scope belongs to, so only that one shows the calm message. */
 export function scopeKey(scope: ExtractScope) {

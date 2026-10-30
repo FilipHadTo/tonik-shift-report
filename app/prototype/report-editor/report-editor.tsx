@@ -8,7 +8,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, DRAFT_API, REPORT_API, capturesInScope, demoSession, enhance as enhanceWith, fakeModel, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
+import { CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, capturesInScope, demoSession, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -25,7 +25,7 @@ type Ctx = {
   draft: (scope: ExtractScope) => void
   /** scopeKey of the Draft button showing the calm message (story 24), if any. */
   calm: string | null
-  /** Enhance with the fake model: `text` is what's on screen, `span` the selection in it (story 27). */
+  /** Enhance on the server (Gemini): `text` is what's on screen, `span` the selection in it (story 27). */
   enhance: (target: EnhanceTarget, text: string, span: EnhanceSpan) => Promise<EnhanceOutcome["status"]>
   /** Id of the block or Incident being enhanced right now. */
   enhancing: string | null
@@ -119,6 +119,26 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
     [queue],
   )
 
+  /**
+   * Enhance runs on the server too, in order with the other saves, so the words it rewrites are the
+   * ones typed just before. Resolves with its outcome; "degraded" when the server couldn't be reached.
+   */
+  const enhanceOnServer = useCallback(
+    async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
+      let status: EnhanceOutcome["status"] = "degraded"
+      await queue(async () => {
+        const res = await fetch(ENHANCE_API, { method: "POST", body: JSON.stringify({ d: demoSession(), target, text, span }) })
+        // 409: nothing was saved; the answer is the saved report, unchanged.
+        if (!res.ok && res.status !== 409) return null
+        const out: { report: Report; status: EnhanceOutcome["status"] } = await res.json()
+        status = out.status
+        return out.report
+      })
+      return status
+    },
+    [queue],
+  )
+
   /** Scene switch / Reset: drops anything not yet sent, then reseeds after what is in flight. */
   const reseed = useCallback(
     (scene: Scene) => {
@@ -135,7 +155,7 @@ function useSaving(apply: React.Dispatch<ScreenAction>) {
   /** The save generation when nothing is in flight, else null: a poll answer is only safe to apply if it is unchanged. */
   const quiet = useCallback(() => (s.current.busy === 0 ? s.current.gen : null), [])
 
-  return { save, draftOnServer, hold, release, reseed, quiet }
+  return { save, draftOnServer, enhanceOnServer, hold, release, reseed, quiet }
 }
 
 export function useEditor() {
@@ -181,7 +201,7 @@ function Editor({ initial }: { initial: Report }) {
   const router = useRouter()
   const pathname = usePathname()
   const [report, apply] = useReducer(screenReducer, initial)
-  const { save, draftOnServer, hold, release, reseed, quiet } = useSaving(apply)
+  const { save, draftOnServer, enhanceOnServer, hold, release, reseed, quiet } = useSaving(apply)
   /** What the components dispatch: shown at once, saved on the server. */
   const dispatch = useCallback(
     (a: Action) => {
@@ -226,20 +246,15 @@ function Editor({ initial }: { initial: Report }) {
   }, [hold, release, draftOnServer])
 
   const enhance = useCallback(async (target: EnhanceTarget, text: string, span: EnhanceSpan) => {
-    // The fake answers at once, so "Already reads clean" shows without a wait, as in E.
-    // A real model (ticket 15) will want the Enhancing state in front of this call.
-    const outcome = await enhanceWith(latest.current, target, fakeModel, { text, span })
-    if (outcome.status !== "drafted") return outcome.status
+    // "Enhancing…" for the whole wait, at least the drafting beat so a fast answer doesn't flash it;
+    // "Already reads clean" or the calm note come after it. The screen settles on the saved report.
     setEnhancing("block" in target ? target.block : target.incident)
     hold()
-    setTimeout(() => {
-      apply({ type: "enhanced", result: outcome.result })
-      save({ type: "enhance", target, text, span })
-      setEnhancing(null)
-      release()
-    }, DRAFTING_MS)
-    return outcome.status
-  }, [hold, release, save])
+    const [status] = await Promise.all([enhanceOnServer(target, text, span), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
+    setEnhancing(null)
+    release()
+    return status
+  }, [hold, release, enhanceOnServer])
 
   const reveal = useCallback((anchor: string) => {
     const el = document.getElementById(anchor)

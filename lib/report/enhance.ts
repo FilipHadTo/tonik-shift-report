@@ -102,14 +102,26 @@ export function applyEnhance(r: Report, { target, original, text }: Enhanced): R
   }
 }
 
+export type EnhanceOptions = NonNullable<Parameters<typeof enhance>[3]> & {
+  /**
+   * Asked when `model` fails or answers nonsense (ADR 0001). Only its rewrite is used: if it would change
+   * nothing, the run stays degraded, since the real model never said the text reads clean.
+   */
+  fallback?: ReportModel
+}
+
 /** Enhance and apply in one go: what the server route and the tests use. */
 export async function runEnhance(
   r: Report,
   target: EnhanceTarget,
   model: ReportModel,
-  options?: Parameters<typeof enhance>[3],
+  { fallback, ...options }: EnhanceOptions = {},
 ): Promise<{ report: Report; status: EnhanceOutcome["status"] }> {
-  const outcome = await enhance(r, target, model, options)
+  let outcome = await enhance(r, target, model, options)
+  if (outcome.status === "degraded" && fallback) {
+    const backup = await enhance(r, target, fallback, options)
+    if (backup.status === "drafted") outcome = backup
+  }
   return { report: outcome.status === "drafted" ? applyEnhance(r, outcome.result) : r, status: outcome.status }
 }
 

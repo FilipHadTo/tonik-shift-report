@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { fakeModel, reducer, runEnhance, seedReport, type Action, type Report, type ReportModel } from "."
+import { fakeModel, fallbackModel, reducer, runEnhance, seedReport, type Action, type Report, type ReportModel } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -124,6 +124,49 @@ describe("Enhance", () => {
     const hanging: ReportModel = { ...failing, enhance: () => new Promise(() => {}) }
     const { report, status } = await runEnhance(r, { block: "b-sec-1" }, hanging, { timeoutMs: 10 })
     expect(status).toBe("degraded")
+    expect(report).toBe(r)
+  })
+})
+
+describe("Enhance fallback (ADR 0001: the demo never dies)", () => {
+  test("when the model fails, the rule-based rewrite becomes the Draft, not degraded", async () => {
+    const { report, status } = await runEnhance(seedReport("end"), { block: "b-sec-1" }, failing, { fallback: fallbackModel })
+    expect(status).toBe("drafted")
+    expect(block(report)).toMatchObject({
+      text: "Two security staff short until 22:00, Kuba covered the side door.",
+      status: "draft",
+      original: { text: ROUGH, status: "manual" },
+    })
+  })
+
+  test("a model answering nonsense also falls back", async () => {
+    const { status } = await runEnhance(seedReport("end"), { block: "b-sec-1" }, answers({ nope: true }), { fallback: fallbackModel })
+    expect(status).toBe("drafted")
+  })
+
+  test("when the fallback would change nothing either, it stays degraded: the model never said the text is clean", async () => {
+    const r = run(seedReport("end"), { type: "editBlock", block: "b-sec-1", text: "Two security staff short until 22:00." })
+    const { report, status } = await runEnhance(r, { block: "b-sec-1" }, failing, { fallback: fallbackModel })
+    expect(status).toBe("degraded")
+    expect(report).toBe(r)
+  })
+
+  test("when the fallback fails too, degraded and unchanged", async () => {
+    const r = seedReport("end")
+    const { report, status } = await runEnhance(r, { block: "b-sec-1" }, failing, { fallback: failing })
+    expect(status).toBe("degraded")
+    expect(report).toBe(r)
+  })
+
+  test("a working model is used as it is, never the fallback", async () => {
+    const { report } = await runEnhance(seedReport("end"), { block: "b-sec-1" }, answers({ text: "Security was two short." }), { fallback: fallbackModel })
+    expect(block(report).text).toBe("Security was two short.")
+  })
+
+  test("a model saying the text is clean is trusted: no Draft, no fallback", async () => {
+    const r = seedReport("end")
+    const { report, status } = await runEnhance(r, { block: "b-sec-1" }, answers({ text: ROUGH }), { fallback: fallbackModel })
+    expect(status).toBe("unchanged")
     expect(report).toBe(r)
   })
 })

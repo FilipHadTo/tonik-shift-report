@@ -162,6 +162,18 @@ describe("applySaved: the server applies the same rules as the screen", () => {
     expect(out.ok && out.report.blocks[0]).toMatchObject({ status: "draft", original: { status: "manual" } })
     expect((await applySaved(r, { type: "enhance", target: { block: "b-c1-maintenance" } }, fakeModel)).ok).toBe(false)
   })
+
+  test("Enhance says why nothing was saved: clean text, a refused target, or a failed model", async () => {
+    const r = seedReport("end")
+    const clean = run(r, { type: "editBlock", block: "b-sec-1", text: "Two security staff short until 22:00." })
+    const down: ReportModel = { extract: async () => ({ drafts: [] }), enhance: async () => Promise.reject(new Error("429")) }
+    expect(await applySaved(clean, { type: "enhance", target: { block: "b-sec-1" } }, fakeModel)).toEqual({ ok: false, status: "unchanged" })
+    expect(await applySaved(r, { type: "enhance", target: { block: "b-c1-maintenance" } }, fakeModel)).toEqual({ ok: false })
+    expect(await applySaved(r, { type: "enhance", target: { block: "b-sec-1" } }, down)).toEqual({ ok: false, status: "degraded", degraded: true })
+    const fell = await applySaved(r, { type: "enhance", target: { block: "b-sec-1" } }, down, { fallback: fallbackModel })
+    expect(fell).toMatchObject({ ok: true, status: "drafted" })
+    expect(fell.ok && fell.report.blocks[0]).toMatchObject({ status: "draft", original: { status: "manual" } })
+  })
 })
 
 describe("ids stay unique", () => {
