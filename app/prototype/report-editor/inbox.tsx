@@ -12,6 +12,7 @@ import {
   ChevronRight,
   CornerDownRight,
   CornerLeftDown,
+  Lock,
   Mic,
   Paperclip,
   PenLine,
@@ -31,6 +32,8 @@ import { dictationMessage, joinDictation, useDictation } from "./dictation"
 
 export function Inbox() {
   const { report, draft, calm } = useEditor()
+  // After Submit the Inbox stays as a record of what went in, but nothing in it can change the report.
+  const locked = Boolean(report.submittedAt)
   const [showDismissed, setShowDismissed] = useState(false)
   const byTime = [...report.captures].sort((a, b) => nightMinutes(b.capturedAt) - nightMinutes(a.capturedAt))
   const fresh = byTime.filter((c) => ["new", "drafting"].includes(statusOf(report, c)))
@@ -63,9 +66,9 @@ export function Inbox() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
-        {!report.invited && !report.submittedAt && report.captures.length > 0 && <InviteNudge />}
+        {!report.invited && !locked && report.captures.length > 0 && <InviteNudge />}
         {report.captures.length === 0 ? (
-          <EmptyInbox />
+          !locked && <EmptyInbox />
         ) : fresh.length > 0 ? (
           <ul className="flex flex-col gap-2.5">
             {fresh.map((c) => (
@@ -73,18 +76,22 @@ export function Inbox() {
             ))}
           </ul>
         ) : (
-          <div className="flex flex-col items-center rounded-xl px-6 py-8 text-center shadow-[inset_0_0_0_1px_var(--line)]">
-            <Check className="size-5 text-ok" strokeWidth={2} aria-hidden />
-            <p className="mt-2.5 text-[13px] font-medium">You&apos;re through the inbox</p>
-            <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
-              New Captures from you and your staff show up here.
-            </p>
-          </div>
+          !locked && (
+            <div className="flex flex-col items-center rounded-xl px-6 py-8 text-center shadow-[inset_0_0_0_1px_var(--line)]">
+              <Check className="size-5 text-ok" strokeWidth={2} aria-hidden />
+              <p className="mt-2.5 text-[13px] font-medium">You&apos;re through the inbox</p>
+              <p className="mt-1 text-xs leading-[1.5] text-pretty text-ink-3">
+                New Captures from you and your staff show up here.
+              </p>
+            </div>
+          )
         )}
 
         {processed.length > 0 && (
           <>
-            <GroupLabel count={processed.length}>Processed</GroupLabel>
+            <GroupLabel count={processed.length} first={locked && fresh.length === 0}>
+              Processed
+            </GroupLabel>
             <ul className="flex flex-col gap-0.5">
               {processed.map((c) => (
                 <QuietTile key={c.id} capture={c} />
@@ -116,7 +123,7 @@ export function Inbox() {
         )}
       </div>
 
-      <Composer />
+      {locked ? <LockedNote /> : <Composer />}
     </aside>
   )
 }
@@ -198,9 +205,19 @@ function InviteNudge() {
   )
 }
 
-function GroupLabel({ children, count }: { children: React.ReactNode; count: number }) {
+/** Sits where the composer was once the report is sent (story 67). */
+function LockedNote() {
   return (
-    <h3 className="mt-7 mb-2 flex items-center gap-1.5 px-2 text-xs font-medium text-ink-3">
+    <p className="flex shrink-0 items-center gap-2 border-t border-line px-5 py-4 text-xs text-ink-3">
+      <Lock className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+      Report sent. The Inbox is locked.
+    </p>
+  )
+}
+
+function GroupLabel({ children, count, first }: { children: React.ReactNode; count: number; first?: boolean }) {
+  return (
+    <h3 className={cn(first ? "mt-2" : "mt-7", "mb-2 flex items-center gap-1.5 px-2 text-xs font-medium text-ink-3")}>
       {children}
       <span className="tabular-nums">{count}</span>
     </h3>
@@ -229,6 +246,7 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
 
 function NewTile({ capture: c }: { capture: InboxCapture }) {
   const { report, dispatch, draft, calm } = useEditor()
+  const locked = Boolean(report.submittedAt)
   const drafting = statusOf(report, c) === "drafting"
   const targets = targetsOf(report, c)
 
@@ -255,7 +273,9 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
       )}
 
       <div className="mt-4 flex h-8 items-center gap-0.5">
-        {drafting ? (
+        {locked ? (
+          <span className="text-xs text-ink-3">Not in the report</span>
+        ) : drafting ? (
           <span className="flex items-center gap-1.5 text-xs text-ai" role="status">
             <Sparkles className="size-3.5" strokeWidth={1.75} aria-hidden />
             <span className="shimmer font-medium">Drafting into the report…</span>
@@ -288,6 +308,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
 
 function QuietTile({ capture: c }: { capture: InboxCapture }) {
   const { report, dispatch, hot, setHot, reveal } = useEditor()
+  const locked = Boolean(report.submittedAt)
   const status = statusOf(report, c)
   const targets = targetsOf(report, c)
   const lit = hot?.from === "doc" && hot.captures.includes(c.id)
@@ -316,9 +337,11 @@ function QuietTile({ capture: c }: { capture: InboxCapture }) {
         {status === "dismissed" ? (
           <>
             <span className="text-ink-3">Not in the report</span>
-            <Btn size="sm" variant="ghost" className="-my-1 ml-auto" onClick={() => dispatch({ type: "dismiss", id: c.id, undo: true })}>
-              Restore
-            </Btn>
+            {!locked && (
+              <Btn size="sm" variant="ghost" className="-my-1 ml-auto" onClick={() => dispatch({ type: "dismiss", id: c.id, undo: true })}>
+                Restore
+              </Btn>
+            )}
           </>
         ) : (
           <>
