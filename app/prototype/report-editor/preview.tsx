@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, ChevronRight, Download, Lock, SquareCheck } from "lucide-react"
 import { Btn } from "@/components/btn"
+import { cn } from "@/lib/utils"
 import {
   REPORT_API,
   REPORTS_PATH,
@@ -86,14 +87,14 @@ export function ReportPreview({ id }: { id: string }) {
 
   return (
     <div className="rx flex min-h-dvh flex-col bg-canvas text-[14px] print:bg-transparent">
-      <header className="flex h-16 shrink-0 items-center gap-3.5 px-5 print:hidden">
+      <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-3.5 gap-y-2 px-4 py-3 sm:px-5 print:hidden">
         <span
           aria-hidden
           className="grid size-8 place-items-center rounded-lg bg-panel text-[11px] font-bold tracking-tight text-ink-2 shadow-panel"
         >
           SR
         </span>
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px]">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[13px] whitespace-nowrap">
           <Link href={REPORTS_PATH} className="text-ink-3 hover:text-ink">
             {report?.venue ?? "Reports"}
           </Link>
@@ -107,7 +108,7 @@ export function ReportPreview({ id }: { id: string }) {
           )}
         </nav>
         {report && (
-          <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-panel px-2.5 text-xs text-ink-2 shadow-panel tabular-nums">
+          <span className="hidden h-6 items-center gap-1.5 rounded-full bg-panel px-2.5 text-xs text-ink-2 shadow-panel tabular-nums sm:inline-flex">
             <Lock className="size-3" aria-hidden />
             Sent {report.submittedAt}
           </span>
@@ -116,10 +117,11 @@ export function ReportPreview({ id }: { id: string }) {
           <div className="ml-auto flex items-center gap-2">
             {pdf === "failed" && (
               <span role="status" className="appear mr-1 text-xs text-ink-2">
-                Unable to make the PDF. Try again, or print with ⌘P.
+                Unable to make the PDF. Try again, or print it from your browser.
               </span>
             )}
-            <Btn nativeButton={false} render={<Link href={reportPath(id)} />}>
+            {/* The editor is a desktop layout: on a phone the Preview is the whole report. */}
+            <Btn nativeButton={false} render={<Link href={reportPath(id)} />} className="max-sm:hidden">
               Open in editor
             </Btn>
             <Btn variant="primary" aria-busy={pdf === "busy"} onClick={savePdf} className="min-w-[8.5rem]">
@@ -133,7 +135,7 @@ export function ReportPreview({ id }: { id: string }) {
       <main className="flex-1 px-3 pb-3 print:p-0">
         <div
           ref={doc}
-          className="mx-auto w-full max-w-[832px] rounded-2xl bg-panel px-14 pt-16 pb-20 shadow-panel print:max-w-none print:rounded-none print:bg-transparent print:p-0 print:shadow-none"
+          className="mx-auto w-full max-w-[832px] rounded-2xl bg-panel px-5 pt-10 pb-14 shadow-panel sm:px-14 sm:pt-16 sm:pb-20 print:max-w-none print:rounded-none print:bg-transparent print:p-0 print:shadow-none"
         >
           {failed ? (
             <p role="status" className="text-[13px] text-ink-2">
@@ -164,7 +166,7 @@ function ReportDocument({ id, report: r }: { id: string; report: Report }) {
         <h1 id="doc-title" className="mt-2 text-[32px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance">
           Night of {r.night}
         </h1>
-        <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-[13px] leading-[1.5]">
+        <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 sm:gap-x-6 text-[13px] leading-[1.5]">
           <dt className="text-ink-3">Closing Manager</dt>
           <dd>{r.manager.name}</dd>
           <dt className="text-ink-3">Shift</dt>
@@ -213,11 +215,19 @@ function ReportDocument({ id, report: r }: { id: string; report: Report }) {
 
         {attachments.length > 0 && (
           <DocSection title="Attachments">
-            <div className="grid grid-cols-2 gap-x-5 gap-y-6">
+            <div className="grid gap-x-5 gap-y-6 sm:grid-cols-2">
               {attachments.map(({ capture: c, incidents: nums }) => (
-                <figure key={c.id} className="break-inside-avoid">
-                  <StoredPhoto report={id} capture={c} className="aspect-[4/3] w-full rounded-xl" />
-                  <figcaption className="mt-2.5 text-[13px] leading-[1.5]">
+                // A seeded demo photo has no image: a thumbnail-sized placeholder beside its caption, not a big empty frame.
+                <figure
+                  key={c.id}
+                  className={cn("break-inside-avoid", c.photo !== "upload" && "flex items-start gap-4 sm:col-span-full")}
+                >
+                  <StoredPhoto
+                    report={id}
+                    capture={c}
+                    className={c.photo === "upload" ? "aspect-[4/3] w-full rounded-xl" : "h-16 w-24 shrink-0"}
+                  />
+                  <figcaption className={cn("text-[13px] leading-[1.5]", c.photo === "upload" && "mt-2.5")}>
                     <span className="font-medium">
                       {nums.map((n) => `Incident ${n}: ${incidents[n - 1].title}`).join(", ")}
                     </span>
@@ -232,7 +242,11 @@ function ReportDocument({ id, report: r }: { id: string; report: Report }) {
         )}
 
         <DocSection title="Captures" note="Verbatim, as they came in. Never edited.">
-          <CaptureTable id={id} report={r} attached={attachments.map((a) => a.capture.id)} />
+          {r.captures.length === 0 ? (
+            <p className="text-[15px] leading-[1.65] text-ink-2">No Captures came in for this Night.</p>
+          ) : (
+            <CaptureTable id={id} report={r} attached={attachments.map((a) => a.capture.id)} />
+          )}
         </DocSection>
 
         <section aria-label="Submission" className="break-inside-avoid border-t border-line pt-8">
@@ -301,7 +315,7 @@ function IncidentEntry({ incident: i, number, report: r }: { incident: Incident;
 function CaptureTable({ id, report: r, attached }: { id: string; report: Report; attached: string[] }) {
   return (
     <table className="w-full text-left text-[13px] leading-[1.5]">
-      <thead className="text-xs text-ink-3">
+      <thead className="text-xs text-ink-3 max-sm:sr-only">
         <tr>
           <th scope="col" className="w-14 pb-2 font-medium">
             Time
@@ -321,13 +335,14 @@ function CaptureTable({ id, report: r, attached }: { id: string; report: Report;
         {[...r.captures]
           .sort((a, b) => nightMinutes(a.capturedAt) - nightMinutes(b.capturedAt))
           .map((c) => (
-            <tr key={c.id} className="break-inside-avoid border-t border-line align-top">
-              <td className="py-3 pr-3 tabular-nums">{c.capturedAt}</td>
-              <td className="py-3 pr-3">{who(c.author)}</td>
-              <td className="py-3 pr-3 whitespace-nowrap">
+            // On a phone each row stacks: time, author and kind on one line, the content under them.
+            <tr key={c.id} className="break-inside-avoid border-t border-line align-top max-sm:grid max-sm:grid-cols-[auto_auto_1fr]">
+              <td className="py-3 pr-3 tabular-nums max-sm:pb-0">{c.capturedAt}</td>
+              <td className="py-3 pr-3 max-sm:pb-0 max-sm:text-ink-2">{who(c.author)}</td>
+              <td className="py-3 pr-3 whitespace-nowrap max-sm:pb-0">
                 <KindLabel kind={c.kind} />
               </td>
-              <td className="py-3 text-pretty">
+              <td className="py-3 text-pretty max-sm:col-span-3 max-sm:pt-1">
                 <CaptureContent id={id} capture={c} attached={attached.includes(c.id)} />
                 {c.dismissed && <span className="mt-1 block text-xs text-ink-3">Dismissed, not in the report</span>}
               </td>

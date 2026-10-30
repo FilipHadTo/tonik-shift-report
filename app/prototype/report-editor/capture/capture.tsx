@@ -281,7 +281,7 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
             </p>
             <p className="mt-0.5 truncate text-xs text-ink-3">Halo Club{night && ` · Night of ${night}`}</p>
           </div>
-          <Btn variant="ghost" className="-mr-2" onClick={onChangeMe}>
+          <Btn variant="ghost" className="-mr-2 h-11" onClick={onChangeMe}>
             Change
           </Btn>
         </div>
