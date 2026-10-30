@@ -4,7 +4,7 @@
 
 New screen, so Filip designs it first (in E, with `better-*` skills, from `docs/design-system.md`); then it can be built.
 
-**Blocked by:** 16
+**Blocked by:** 16, the reports list shaping (PROCESS.md 2b.1)
 
 **Status:** ready-for-human
 
@@ -14,3 +14,7 @@ New screen, so Filip designs it first (in E, with `better-*` skills, from `docs/
 - [ ] Opening a submitted report shows the document; it prints cleanly
 - [ ] Share is a stub
 - [ ] Looks like it belongs to prototype E, per `docs/design-system.md`; dark first, then light
+
+## Comments
+
+2026-10-31, Filip: same route (option A). After Submit the manager stays on the Report screen, sees it's sent and goes home; the clean document opens as a Preview of a closed report from the reports list (shaping in PROCESS.md 2b.1). Light mode is out of scope.

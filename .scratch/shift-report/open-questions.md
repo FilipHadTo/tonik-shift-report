@@ -104,3 +104,16 @@ Not blocking. After Submit the Inbox still shows Draft into report, Dismiss and 
 - A. Leave it, fold into ticket 17 / 2c Polish.
 - B. Hide those controls once submitted.
 - C. Keep the Inbox visible but read-only with a "Locked" note.
+
+### 2026-10-31 — Filip's answers to Phase 2b
+
+1. Ticket 17: A, same route. The manager wants to leave the club: after Submit stay on the Report screen with a clear "Sent"; the clean document is a Preview of a closed report, reached from a new reports list (shaping, PROCESS.md 2b.1).
+2. "Enhancing…" during the wait: OK as built.
+3. Partly dismissed Capture: A as built.
+4. Submit sheet row layout: OK as built.
+5. Loading/fallback: skeleton while loading, keep the seed fallback but show an offline note (ticket 22). URL scene wins: as built.
+6. Demo clock for phone Captures: as built, for the demo report. A new clean report will use the real clock + `nightOf` (reports list shaping).
+7. Drop voice-note mentions on desktop; Other full width (ticket 22).
+8. "AI is catching up" placement and wording: as built.
+9. Inbox after Submit: C, read-only with a locked note (ticket 21).
+Also: light mode is out of scope, dark only (ticket 20).
