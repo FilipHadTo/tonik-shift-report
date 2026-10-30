@@ -27,6 +27,8 @@ export const ENHANCE_API = "/prototype/report-editor/report/enhance"
 
 /** Story 24: shown on the Draft button that was pressed when the AI failed, was slow or rate limited. */
 export const AI_CALM = "AI is catching up, your Captures are safe"
+/** Ticket 27: the AI answered, but nothing in the Captures belongs in the report. They stay New. */
+export const AI_NOTHING = "Nothing to add to the report from this"
 
 /** Story 24 for Enhance, on its button: it never touches Captures, so the note speaks of the manager's text. */
 export const AI_CALM_ENHANCE = "AI is catching up, your text is safe"

@@ -193,18 +193,23 @@ export async function phoneCaptures(reportId: string): Promise<PhoneCapture[]> {
   return rows.map(asPhoneCapture)
 }
 
-/** The capture page (story 11): the report's Night, and only what this phone sent. Null when there is no such report. */
-export async function deviceCaptures(reportId: string, device: string): Promise<{ night: string; captures: PhoneCapture[] } | null> {
+/** The capture page (story 11): the report's Night, whether it was submitted, and only what this phone sent. Null when there is no such report. */
+export async function deviceCaptures(
+  reportId: string,
+  device: string,
+): Promise<{ night: string; submitted: boolean; captures: PhoneCapture[] } | null> {
   const d = db()
   const [[report], rows] = await Promise.all([
-    d.select({ night: reports.night }).from(reports).where(eq(reports.id, reportId)),
+    d.select({ night: reports.night, submittedAt: reports.submittedAt }).from(reports).where(eq(reports.id, reportId)),
     d
       .select()
       .from(captures)
       .where(and(eq(captures.reportId, reportId), eq(captures.device, device)))
       .orderBy(asc(captures.position)),
   ])
-  return report ? { night: report.night, captures: rows.map(asPhoneCapture) } : null
+  return report
+    ? { night: report.night, submitted: report.submittedAt !== null, captures: rows.map(asPhoneCapture) }
+    : null
 }
 
 /**

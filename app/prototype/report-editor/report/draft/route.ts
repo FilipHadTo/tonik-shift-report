@@ -11,7 +11,7 @@ import { applySaved, onClock, capturesInScope, fallbackModel, parseSaveAction, t
 // Gemini's own timeout is 20s (EXTRACT_TIMEOUT_MS); leave room for the database around it.
 export const maxDuration = 30
 
-/** Body: { d, r, scope } (demo id, report id). Answers { report, degraded } with the saved report; 409 when nothing was drafted. */
+/** Body: { d, r, scope } (demo id, report id). Answers { report, degraded, empty } with the saved report (`empty`: the AI found nothing to add); 409 when nothing was drafted. */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const action = parseSaveAction({ type: "draft", scope: body?.scope })
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const out = await applySaved(stored, action, rateLimitedGemini(request), { fallback: fallbackModel, images })
   if (!out.ok) return Response.json({ report: stored, degraded: !!out.degraded }, { status: 409 })
   await saveReport(reportId, stored, out.report)
-  return Response.json({ report: out.report, degraded: !!out.degraded })
+  return Response.json({ report: out.report, degraded: !!out.degraded, empty: !!out.empty })
 }
 
 /** The stored images of the uploaded photos this Draft covers, for Gemini to read. */

@@ -8,7 +8,7 @@
 
 import { Suspense, createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, REPORTS_PATH, capturesInScope, cleanReport, demoSession, onClock, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
+import { AI_CALM, AI_NOTHING, CAPTURES_API, DRAFT_API, ENHANCE_API, REPORT_API, REPORTS_PATH, capturesInScope, cleanReport, demoSession, onClock, reducer, scopeKey, seedReport, type Action, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget, type ExtractScope, type PhoneCapture, type Report, type SaveAction, type Scene } from "./data"
 import { Inbox } from "./inbox"
 import { Document } from "./document"
 import { Rail } from "./rail"
@@ -28,6 +28,8 @@ type Ctx = {
   draft: (scope: ExtractScope) => void
   /** scopeKey of the Draft button showing the calm message (story 24), if any. */
   calm: string | null
+  /** What the calm note says: the AI is catching up, or it found nothing to add (ticket 27). */
+  calmText: string
   /** Enhance on the server (Gemini): `text` is what's on screen, `span` the selection in it (story 27). */
   enhance: (target: EnhanceTarget, text: string, span: EnhanceSpan) => Promise<EnhanceOutcome["status"]>
   /** Id of the block or Incident being enhanced right now. */
@@ -113,16 +115,16 @@ function useSaving(apply: React.Dispatch<ScreenAction>, r: string) {
    */
   const draftOnServer = useCallback(
     async (scope: ExtractScope) => {
-      let answer: { degraded: boolean } | null = null
+      let answer: { degraded: boolean; empty: boolean } | null = null
       await queue(async () => {
         const res = await fetch(DRAFT_API, { method: "POST", body: JSON.stringify({ d: demoSession(), r, scope }) })
         // 409: nothing could be drafted; the answer is the saved report, unchanged.
         if (!res.ok && res.status !== 409) return null
-        const out: { report: Report; degraded: boolean } = await res.json()
-        answer = { degraded: out.degraded }
+        const out: { report: Report; degraded: boolean; empty?: boolean } = await res.json()
+        answer = { degraded: out.degraded, empty: !!out.empty }
         return out.report
       })
-      return answer as { degraded: boolean } | null
+      return answer as { degraded: boolean; empty: boolean } | null
     },
     [queue, r],
   )
@@ -233,6 +235,7 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
   const [flash, setFlash] = useState<string | null>(null)
   const [enhancing, setEnhancing] = useState<string | null>(null)
   const [calm, setCalm] = useState<string | null>(null)
+  const [calmText, setCalmText] = useState(AI_CALM)
   const calmTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const [invite, setInvite] = useState({ open: false, halo: false })
   const docRef = useRef<HTMLDivElement>(null)
@@ -256,7 +259,8 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
     const [answer] = await Promise.all([draftOnServer(scope), new Promise((ok) => setTimeout(ok, DRAFTING_MS))])
     // Unreachable server: nothing changed, the Captures go back to New.
     if (!answer) apply({ type: "draftFailed", ids })
-    if (!answer || answer.degraded) {
+    if (!answer || answer.degraded || answer.empty) {
+      setCalmText(answer?.empty && !answer.degraded ? AI_NOTHING : AI_CALM)
       setCalm(key)
       clearTimeout(calmTimer.current)
       calmTimer.current = setTimeout(() => setCalm(null), CALM_MS)
@@ -325,8 +329,8 @@ function Editor({ id, initial, offline }: { id: string; initial: Report; offline
   }, [quiet, id])
 
   const value = useMemo(
-    () => ({ id, report, dispatch, draft, calm, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite, offline }),
-    [id, report, dispatch, draft, calm, enhance, enhancing, hot, flash, reveal, setScene, invite, offline],
+    () => ({ id, report, dispatch, draft, calm, calmText, enhance, enhancing, hot, setHot, flash, reveal, docRef, setScene, invite, setInvite, offline }),
+    [id, report, dispatch, draft, calm, calmText, enhance, enhancing, hot, flash, reveal, setScene, invite, offline],
   )
 
   return (

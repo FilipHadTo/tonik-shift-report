@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { extractRequest, reducer, seedReport } from "../report"
-import { extractContents, extractPrompt, extractSchema } from "./extract-prompt"
+import { EXTRACT_INSTRUCTIONS, extractContents, extractPrompt, extractSchema } from "./extract-prompt"
 
 describe("Gemini Extract prompt", () => {
   const request = extractRequest(seedReport("end"), { all: true })
@@ -9,8 +9,12 @@ describe("Gemini Extract prompt", () => {
     const prompt = extractPrompt(request)
     expect(prompt).toContain('"author": "Alex Morgan (Closing Manager)"')
     expect(prompt).not.toMatch(/"photo"|window\.jpg/)
-    // The pasted chat keeps its line timestamps, so Occurred-at can come from them.
+    // The pasted chat keeps its line timestamps; a line saying "just now" gives Occurred-at, its posting time alone never does.
     expect(prompt).toContain('"at": "01:42"')
+  })
+
+  test("tells the model a chat line's posting time isn't when the event happened (ticket 27)", () => {
+    expect(EXTRACT_INSTRUCTIONS).toContain("is not when the event happened")
   })
 
   test("the schema only allows this request's Captures as sources", () => {

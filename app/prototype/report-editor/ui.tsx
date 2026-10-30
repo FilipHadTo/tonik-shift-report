@@ -87,11 +87,11 @@ export function Qr({ value, size = 152 }: { value: string; size?: number }) {
   )
 }
 
-/** Story 24: in place of the Draft button that was pressed, when the AI failed. Nothing was lost. */
-export function CalmNote({ className }: { className?: string }) {
+/** Story 24: in place of the Draft button that was pressed, when the AI failed (nothing was lost) or found nothing to add (ticket 27). */
+export function CalmNote({ className, text = AI_CALM }: { className?: string; text?: string }) {
   return (
     <span role="status" className={cn("appear text-xs leading-[1.4] text-balance text-ink-2", className)}>
-      {AI_CALM}
+      {text}
     </span>
   )
 }

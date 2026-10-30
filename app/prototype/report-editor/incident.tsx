@@ -5,7 +5,7 @@
 // Evidence, then a per-Incident Confirm. Delete sits at the end of the title row, away from Confirm.
 
 import { useState } from "react"
-import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
+import { Check, Clock, HelpCircle, MapPin, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
@@ -229,19 +229,13 @@ function Body({ incident: i, editable }: MetaProps) {
         </p>
       )}
 
-      {i.evidence.length > 0 ? (
+      {/* No "Add Evidence" (ticket 27): it had nothing behind it. Evidence comes only with its Captures. */}
+      {i.evidence.length > 0 && (
         <div className="mt-3 flex items-center gap-2">
           {evidence.map((c) =>
             c.kind === "photo" ? <CapturePhoto key={c.id} capture={c} className="h-16 w-24" /> : <VoiceThumb key={c.id} />,
           )}
         </div>
-      ) : (
-        editable && (
-          <Btn variant="ghost" size="sm" className="mt-2 -ml-2.5 text-ink-3">
-            <Paperclip strokeWidth={1.75} />
-            Add Evidence
-          </Btn>
-        )
       )}
     </div>
   )

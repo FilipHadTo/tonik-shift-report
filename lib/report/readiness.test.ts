@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { fakeModel, readiness, reducer, runExtract, seedReport, type Action, type Report } from "."
+import { fakeModel, readiness, reducer, runExtract, sectionState, seedReport, type Action, type Report } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -67,5 +67,11 @@ describe("Submission readiness", () => {
       { type: "discard", block: "b-c1-maintenance" },
     )
     expect(readiness(r, { statement: true })).toEqual({ ready: true })
+  })
+})
+
+describe("Section state in the outline", () => {
+  test("Incidents with none drafted reads Empty, never a 'None' claim (GLOSSARY, ticket 27)", () => {
+    expect(sectionState(seedReport("start"), "incidents")).toEqual({ state: "empty", label: "Empty" })
   })
 })

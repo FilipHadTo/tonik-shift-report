@@ -68,7 +68,7 @@ export function sectionState(r: Report, id: SectionId): { state: SectionState; l
     if (gaps) return { state: "gap", label: gaps === 1 ? "1 Gap" : `${gaps} Gaps` }
     if (open) return { state: "confirm", label: `${open} to confirm` }
     if (r.incidents.length) return { state: "done", label: `${r.incidents.length}` }
-    return { state: "empty", label: "None" }
+    return { state: "empty", label: "Empty" }
   }
   const blocks = r.blocks.filter((b) => b.section === id)
   if (blocks.some((b) => b.status === "draft")) return { state: "draft", label: "Draft" }

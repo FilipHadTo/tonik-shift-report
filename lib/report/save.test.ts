@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { applySaved, extract, fakeModel, fallbackModel, parseSaveAction, reducer, seedReport, type Action, type Report, type ReportModel, type SaveAction } from "."
+import { applySaved, extract, fakeModel, fallbackModel, parseSaveAction, reducer, seedReport, statusOf, type Action, type Report, type ReportModel, type SaveAction } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -154,6 +154,17 @@ describe("applySaved: the server applies the same rules as the screen", () => {
       ok: false,
       degraded: true,
     })
+  })
+
+  test("Draft that finds nothing says so, and the Capture stays New (ticket 27)", async () => {
+    const blank: ReportModel = { extract: async () => ({ drafts: [] }), enhance: async () => ({ text: "" }) }
+    const typed = await save(seedReport("end"), { type: "addCapture", text: "Nothing much happened" })
+    const out = await applySaved(typed, { type: "draft", scope: { capture: "m6" } }, blank)
+    expect(out).toMatchObject({ ok: true, empty: true })
+    expect(out.ok && statusOf(out.report, out.report.captures.find((c) => c.id === "m6")!)).toBe("new")
+
+    const found = await applySaved(seedReport("end"), { type: "draft", scope: { capture: "c2" } }, fakeModel)
+    expect(found.ok && found.empty).toBeFalsy()
   })
 
   test("Enhance runs on the stored report and only on the manager's own words", async () => {

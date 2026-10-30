@@ -23,9 +23,10 @@ export type SaveAction =
 /**
  * `degraded`: the model failed and the fallback didn't cover it (calm message, story 24): for Draft, not
  * every Capture; for Enhance, no rewrite. `status`: Enhance only, its outcome ("unchanged" = already reads clean).
+ * `empty`: Draft only, the model answered but found nothing to add (ticket 27); the Captures stay New.
  */
 export type Saved =
-  | { ok: true; report: Report; degraded?: boolean; status?: EnhanceOutcome["status"] }
+  | { ok: true; report: Report; degraded?: boolean; empty?: boolean; status?: EnhanceOutcome["status"] }
   | { ok: false; degraded?: boolean; status?: EnhanceOutcome["status"] }
 
 const SECTION_IDS = new Set<string>(SECTIONS.map((s) => s.id))
@@ -180,7 +181,9 @@ export async function applySaved(
       const out = await runExtract(start, a.scope, model, { fallback, images })
       if (out.report === start) return { ok: false, degraded: true }
       // Captures the fallback couldn't draft stay New, not stuck "Drafting…".
-      return { ok: true, report: reducer(out.report, { type: "draftFailed", ids }), degraded: out.degraded }
+      const report = reducer(out.report, { type: "draftFailed", ids })
+      const empty = !out.degraded && report.incidents.length === r.incidents.length && report.blocks.length === r.blocks.length
+      return { ok: true, report, degraded: out.degraded, ...(empty && { empty }) }
     }
     case "enhance": {
       const { report, status } = await runEnhance(r, a.target, model, { text: a.text, span: a.span, fallback })

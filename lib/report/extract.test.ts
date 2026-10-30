@@ -99,6 +99,12 @@ describe("Extract", () => {
     expect(made_up.report.incidents.find((x) => x.sources.includes("c4"))!.fields.occurredAt).toMatchObject({ value: "02:10" })
   })
 
+  test("a chat line posted at 01:42 saying 'sometime before midnight' doesn't make 01:42 its Occurred-at (ticket 27)", async () => {
+    const { report } = await runExtract(seedReport("end"), { capture: "c4" }, fakeModel)
+    const theft = report.incidents.find((x) => x.sources.includes("c4"))!
+    expect(theft.fields.occurredAt).toMatchObject({ status: "draft", value: "02:10" })
+  })
+
   test("an off-list type becomes Other with the model's text", async () => {
     const r = withTyped(TYPED)
     const { report } = await runExtract(r, { capture: "m6" }, answers({ drafts: [incident({ type: { value: "Slip and fall" } })] }))

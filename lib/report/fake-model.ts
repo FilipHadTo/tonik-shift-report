@@ -52,8 +52,7 @@ export const RECORDED: Record<string, Recorded[]> = {
       description:
         "Guest reported her phone stolen from her coat in the cloakroom. Manager took her number and advised her to report it to police.",
       sources: ["c4"],
-      // "Before midnight" isn't a time, so Occurred-at is the line that reported it.
-      occurredAt: { value: "01:42", source: "c4" },
+      // "Sometime before midnight" isn't a time and the line's 01:42 is only when it was posted (ticket 27): no Occurred-at.
       location: { value: "Cloakroom", source: "c4", quote: "cloakroom" },
       type: { value: "Theft" },
     },

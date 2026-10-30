@@ -31,7 +31,7 @@ import { CalmNote, CapturePhoto, KindLabel } from "./ui"
 import { dictationMessage, joinDictation, useDictation } from "./dictation"
 
 export function Inbox() {
-  const { report, draft, calm } = useEditor()
+  const { report, draft, calm, calmText } = useEditor()
   // After Submit the Inbox stays as a record of what went in, but nothing in it can change the report.
   const locked = Boolean(report.submittedAt)
   const [showDismissed, setShowDismissed] = useState(false)
@@ -50,7 +50,7 @@ export function Inbox() {
           </span>
         )}
         {fresh.length > 0 && !report.submittedAt && calm === "all" ? (
-          <CalmNote className="ml-auto max-w-48 text-right" />
+          <CalmNote className="ml-auto max-w-48 text-right" text={calmText} />
         ) : fresh.length > 0 && !report.submittedAt && (
           <Btn
             variant="ai"
@@ -249,7 +249,7 @@ function Byline({ capture: c, size = 28 }: { capture: InboxCapture; size?: numbe
 }
 
 function NewTile({ capture: c }: { capture: InboxCapture }) {
-  const { report, dispatch, draft, calm } = useEditor()
+  const { report, dispatch, draft, calm, calmText } = useEditor()
   const locked = Boolean(report.submittedAt)
   const drafting = statusOf(report, c) === "drafting"
   const targets = targetsOf(report, c)
@@ -285,7 +285,7 @@ function NewTile({ capture: c }: { capture: InboxCapture }) {
             <span className="shimmer font-medium">Drafting into the report…</span>
           </span>
         ) : calm === scopeKey({ capture: c.id }) ? (
-          <CalmNote />
+          <CalmNote text={calmText} />
         ) : (
           <>
             <IconBtn label="Dismiss" className="-ml-1.5" onClick={() => dispatch({ type: "dismiss", id: c.id })}>

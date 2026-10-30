@@ -7,7 +7,7 @@
 // Laid out like a messaging app, since that's what staff already use mid-shift.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { ArrowUp, Camera, Check, X } from "lucide-react"
+import { ArrowUp, Camera, Check, Lock, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
@@ -220,6 +220,8 @@ type Sent = PhoneCapture & { preview?: string }
 function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) {
   const [sent, setSent] = useState<Sent[]>([])
   const [night, setNight] = useState<string | null>(null)
+  // Ticket 27: once the report is submitted the link is closed, so the composer goes.
+  const [closed, setClosed] = useState(false)
   const previews = useRef(new Map<string, string>())
   const ids = useRef({ device: "", report: "public" })
   const listRef = useRef<HTMLDivElement>(null)
@@ -229,8 +231,9 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
       const { device, report } = ids.current
       const res = await fetch(`${CAPTURES_API}?r=${report}&device=${device}`, { cache: "no-store" })
       if (!res.ok) return
-      const data: { night: string; captures: PhoneCapture[] } = await res.json()
+      const data: { night: string; submitted: boolean; captures: PhoneCapture[] } = await res.json()
       setNight(data.night)
+      setClosed(data.submitted)
       // Sent from here this session: the local copy, at once. After a reload: the stored one.
       setSent(
         data.captures.map((c) => ({ ...c, preview: previews.current.get(c.id) ?? (c.photo ? photoSrc(report, c.id) : undefined) })),
@@ -264,6 +267,10 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
         ...(photo && { photo }),
       }),
     })
+    if (res.status === 409) {
+      setClosed(true)
+      return
+    }
     if (!res.ok) throw new Error("Not sent")
     const c: PhoneCapture = await res.json()
     if (photo) previews.current.set(c.id, photo)
@@ -289,7 +296,7 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <ol className="mx-auto flex min-h-full max-w-[480px] flex-col justify-end gap-3 px-4 py-4">
-          {sent.length === 0 && (
+          {sent.length === 0 && !closed && (
             <li className="my-auto px-6 text-center">
               <p className="text-[15px] font-medium">Saw something? Send it.</p>
               <p className="mt-1.5 text-[13px] leading-[1.5] text-pretty text-ink-3">
@@ -304,8 +311,23 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
         </ol>
       </div>
 
-      <Composer onSend={send} />
+      {closed ? <ClosedNote /> : <Composer onSend={send} />}
     </>
+  )
+}
+
+/** Sits where the composer was once the report is sent (ticket 27), like the Inbox's locked note. */
+function ClosedNote() {
+  return (
+    <footer className="shrink-0 bg-canvas shadow-[inset_0_1px_0_var(--line)]">
+      <p
+        role="status"
+        className="mx-auto flex max-w-[480px] items-center gap-2 px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))] text-[13px] text-ink-3"
+      >
+        <Lock className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+        This report was sent. The link is closed.
+      </p>
+    </footer>
   )
 }
 

@@ -143,7 +143,7 @@ function HowItWorks() {
 }
 
 function Section({ id, name }: { id: SectionId; name: string }) {
-  const { report, dispatch, draft, calm, flash } = useEditor()
+  const { report, dispatch, draft, calm, calmText, flash } = useEditor()
   const fresh = newCapturesFor(report, id)
   const calmHere = calm === scopeKey({ section: id })
   const blocks = report.blocks.filter((b) => b.section === id)
@@ -174,7 +174,7 @@ function Section({ id, name }: { id: SectionId; name: string }) {
             )}
           >
             {calmHere ? (
-              <CalmNote />
+              <CalmNote text={calmText} />
             ) : fresh.length > 0 && (
               <Btn size="sm" variant="ai" onClick={() => draft({ section: id })}>
                 <Sparkles strokeWidth={1.75} />
