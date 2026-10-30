@@ -1,7 +1,7 @@
 // Phone Captures (stories 10, 11, 13): what the capture page may send, and how the server files it.
 // Captured-at and the id are never taken from the phone.
 
-import type { Author, Capture } from "./catalog"
+import { ROLES, type Author, type Capture } from "./catalog"
 import { clockLabel } from "./derived"
 import type { InboxCapture, Report } from "./types"
 
@@ -14,7 +14,7 @@ export type PhoneCaptureInput = {
 }
 
 const KINDS = new Set<string>(["photo", "voice", "text"] satisfies PhoneCaptureInput["kind"][])
-const ROLES = new Set<string>(["Closing Manager", "Door", "Bar", "Security"] satisfies Author["role"][])
+const ROLE_SET = new Set<string>(ROLES)
 const DEVICE = /^[a-z0-9]{1,40}$/
 const MAX_NAME = 40
 const MAX_TEXT = 2000
@@ -24,7 +24,7 @@ export function parsePhoneCapture(raw: unknown): PhoneCaptureInput | null {
   const v = raw as Record<string, unknown>
   if (typeof v.device !== "string" || !DEVICE.test(v.device)) return null
   if (typeof v.kind !== "string" || !KINDS.has(v.kind)) return null
-  if (typeof v.role !== "string" || !ROLES.has(v.role)) return null
+  if (typeof v.role !== "string" || !ROLE_SET.has(v.role)) return null
   if (typeof v.name !== "string" || typeof v.text !== "string") return null
   const name = v.name.trim().slice(0, MAX_NAME)
   const text = v.text.trim().slice(0, MAX_TEXT)

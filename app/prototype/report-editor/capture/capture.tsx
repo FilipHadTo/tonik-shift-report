@@ -3,20 +3,19 @@
 // PROTOTYPE — the capture page a Staff Member (or the Closing Manager) opens from the QR.
 // No login: name and role are kept on the phone (ADR 0004). Captures are saved in the database
 // through ../captures/route.ts, into the demo id's report, and the desktop Inbox polls for them.
-// Upload and voice are fake.
+// Upload is fake. There is no voice recording: people dictate with the phone keyboard's mic (story 9).
 // Laid out like a messaging app, since that's what staff already use mid-shift.
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
-import { ArrowUp, Camera, Check, Mic, X } from "lucide-react"
+import { ArrowUp, Camera, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar } from "@/components/avatar"
 import { Btn, IconBtn } from "@/components/btn"
 import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
-import { CAPTURES_API, type Author, type PhoneCapture } from "../data"
+import { CAPTURES_API, ROLES, type Author, type PhoneCapture } from "../data"
 
 type Identity = Pick<Author, "name" | "role">
 
-const ROLES: Author["role"][] = ["Door", "Bar", "Security", "Closing Manager"]
 const ID_KEY = "shift-report:identity"
 const DEVICE_KEY = "shift-report:device"
 const SESSION_KEY = "shift-report:capture-demo"
@@ -103,11 +102,11 @@ function Identify({ initial, onDone }: { initial: Identity | null; onDone: (id: 
       }}
     >
       <h1 className="mt-2 text-[32px] leading-[1.15] font-semibold tracking-[-0.02em] text-balance">
-        Add to tonight&apos;s report
+        Send to the manager
       </h1>
       <p className="mt-3 text-[15px] leading-[1.55] text-pretty text-ink-2">
-        Photos, voice notes and texts go straight to the manager, with your name and the time. No account, and you
-        only see what you sent.
+        Photos and texts go straight to the manager, with your name and the time. No account, and you only see what
+        you sent.
       </p>
 
       <label htmlFor="name" className="mt-8 text-xs font-medium text-ink-3">
@@ -164,17 +163,9 @@ function Identify({ initial, onDone }: { initial: Identity | null; onDone: (id: 
 
 type Sent = PhoneCapture & { preview?: string }
 
-// Voice is simulated: plain-http LAN addresses get no microphone, and the real transcript
-// comes from Gemini on the server. Canned lines keep the demo moving.
-const DEMO_TRANSCRIPTS = [
-  "Guy at the side door says his mate lost a wallet on the dance floor, told him to come back tomorrow.",
-  "Toilets on the left are out of paper again, someone should restock before the rush.",
-  "Two lads tried to get in with a fake ID, turned them away, they left without trouble.",
-]
-
 /**
  * Stories 9–11, laid out like a messaging app: your Captures are the messages you sent,
- * the composer sits on the keyboard. Attach a photo, type, or hold a voice note.
+ * the composer sits on the keyboard. Attach a photo or type; the keyboard mic covers talking.
  */
 function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) {
   const [sent, setSent] = useState<Sent[]>([])
@@ -238,8 +229,8 @@ function Captures({ me, onChangeMe }: { me: Identity; onChangeMe: () => void }) 
             <li className="my-auto px-6 text-center">
               <p className="text-[15px] font-medium">Saw something? Send it.</p>
               <p className="mt-1.5 text-[13px] leading-[1.5] text-pretty text-ink-3">
-                A photo, a voice note or a line of text. It goes to the manager with your name and the time. Only you
-                see this list.
+                A photo or a line of text. Tap the keyboard mic to talk instead of typing. It goes to the manager
+                with your name and the time. Only you see this list.
               </p>
             </li>
           )}
@@ -277,23 +268,14 @@ function Bubble({ capture: c }: { capture: Sent }) {
   )
 }
 
-type Kind = "text" | "photo" | "voice"
+type Kind = "text" | "photo"
 
 function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: string) => Promise<void> }) {
   const [text, setText] = useState("")
   const [photo, setPhoto] = useState<string | null>(null)
-  const [voice, setVoice] = useState<"off" | "recording" | "transcribing">("off")
-  const [seconds, setSeconds] = useState(0)
   const [state, setState] = useState<"idle" | "sending" | "failed">("idle")
   const fileRef = useRef<HTMLInputElement>(null)
-  const voiceCount = useRef(0)
   const canSend = (!!text.trim() || !!photo) && state !== "sending"
-
-  useEffect(() => {
-    if (voice !== "recording") return
-    const t = setInterval(() => setSeconds((n) => n + 1), 1000)
-    return () => clearInterval(t)
-  }, [voice])
 
   async function run(kind: Kind, body: string, image?: string) {
     setState("sending")
@@ -315,17 +297,6 @@ function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: strin
     }
   }
 
-  async function stopRecording() {
-    setVoice("transcribing")
-    await new Promise((r) => setTimeout(r, 900))
-    const line = DEMO_TRANSCRIPTS[voiceCount.current++ % DEMO_TRANSCRIPTS.length]
-    await run("voice", line)
-    setVoice("off")
-    setSeconds(0)
-  }
-
-  const clock = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-
   return (
     <footer className="shrink-0 bg-canvas shadow-[inset_0_1px_0_var(--line)]">
       <div className="mx-auto max-w-[480px] px-3 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))]">
@@ -344,67 +315,32 @@ function Composer({ onSend }: { onSend: (kind: Kind, text: string, photo?: strin
           </div>
         )}
 
-        {voice === "off" ? (
-          <div className="flex items-end gap-2">
-            <RoundBtn label="Add a photo" onClick={() => fileRef.current?.click()}>
-              <Camera className="size-5" strokeWidth={1.75} />
-            </RoundBtn>
-            <label htmlFor="capture-text" className="sr-only">
-              {photo ? "Caption" : "What happened"}
-            </label>
-            <textarea
-              id="capture-text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  sendTyped()
-                }
-              }}
-              rows={1}
-              enterKeyHint="send"
-              placeholder={photo ? "Add a line about it" : "What did you see?"}
-              className="max-h-32 min-h-11 flex-1 resize-none rounded-[22px] bg-raise px-4 py-2.5 text-base leading-6 shadow-[inset_0_0_0_1px_var(--line)] outline-none [field-sizing:content] placeholder:text-ink-3 focus:shadow-[inset_0_0_0_1px_var(--line-2)]"
-            />
-            {canSend || state === "sending" ? (
-              <RoundBtn label="Send" primary disabled={!canSend} onClick={sendTyped}>
-                <ArrowUp className="size-5" strokeWidth={2.25} />
-              </RoundBtn>
-            ) : (
-              <RoundBtn label="Record a voice note" onClick={() => setVoice("recording")}>
-                <Mic className="size-5" strokeWidth={1.75} />
-              </RoundBtn>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <RoundBtn
-              label="Cancel voice note"
-              disabled={voice === "transcribing"}
-              onClick={() => {
-                setVoice("off")
-                setSeconds(0)
-              }}
-            >
-              <X className="size-5" strokeWidth={1.75} />
-            </RoundBtn>
-            <div className="flex h-11 flex-1 items-center gap-2.5 rounded-[22px] bg-raise px-4 shadow-[inset_0_0_0_1px_var(--line)]" role="status">
-              {voice === "recording" ? (
-                <>
-                  <span className="size-2 rounded-full bg-ink" aria-hidden />
-                  <span className="text-[15px] tabular-nums">{clock}</span>
-                  <span className="text-[13px] text-ink-3">Recording, demo only</span>
-                </>
-              ) : (
-                <span className="shimmer text-[15px]">Writing it down…</span>
-              )}
-            </div>
-            <RoundBtn label="Send voice note" primary disabled={voice === "transcribing"} onClick={stopRecording}>
-              <ArrowUp className="size-5" strokeWidth={2.25} />
-            </RoundBtn>
-          </div>
-        )}
+        <div className="flex items-end gap-2">
+          <RoundBtn label="Add a photo" onClick={() => fileRef.current?.click()}>
+            <Camera className="size-5" strokeWidth={1.75} />
+          </RoundBtn>
+          <label htmlFor="capture-text" className="sr-only">
+            {photo ? "Caption" : "What happened"}
+          </label>
+          <textarea
+            id="capture-text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                sendTyped()
+              }
+            }}
+            rows={1}
+            enterKeyHint="send"
+            placeholder={photo ? "Add a line about it" : "What did you see?"}
+            className="max-h-32 min-h-11 flex-1 resize-none rounded-[22px] bg-raise px-4 py-2.5 text-base leading-6 shadow-[inset_0_0_0_1px_var(--line)] outline-none [field-sizing:content] placeholder:text-ink-3 focus:shadow-[inset_0_0_0_1px_var(--line-2)]"
+          />
+          <RoundBtn label="Send" primary disabled={!canSend} onClick={sendTyped}>
+            <ArrowUp className="size-5" strokeWidth={2.25} />
+          </RoundBtn>
+        </div>
       </div>
 
       <input

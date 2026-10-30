@@ -11,7 +11,21 @@
 
 **Agent:** Sonnet 5.5, high effort (contained change)
 
-- [ ] Heading and tab title read "Send to the manager"
-- [ ] Other can be picked, is saved on the phone, and a Capture from it shows "Other" on the desktop
-- [ ] No mic or recording UI on the page; text and photo still send
-- [ ] Looks and works like prototype E, per `docs/design-system.md`; checked at phone width in Chrome, dark first, then light (touch sizes `h-11`, 16px input text)
+- [x] Heading and tab title read "Send to the manager"
+- [x] Other can be picked, is saved on the phone, and a Capture from it shows "Other" on the desktop
+- [x] No mic or recording UI on the page; text and photo still send
+- [x] Looks and works like prototype E, per `docs/design-system.md`; checked at phone width in Chrome, dark first, then light (touch sizes `h-11`, 16px input text)
+
+## Comments
+
+Built:
+- Heading and page `<title>` now read "Send to the manager"; intro and empty-state copy no longer mention voice notes (empty state: "A photo or a line of text. Tap the keyboard mic to talk instead of typing.").
+- Roles: `ROLES` is now one fixed list in `lib/report/catalog.ts` (Door, Bar, Security, Closing Manager, Other); `Author["role"]` derives from it, and both server validation (`parsePhoneCapture`) and the capture page read it. Test added first in `phone.test.ts`.
+- Composer: mic button, recording bar and canned transcripts removed. It is camera, growing text field and Send. Send is always visible (disabled until there is text or a photo) instead of swapping with the mic.
+
+Decisions:
+- `voice` stays a valid phone kind in `parsePhoneCapture` and in the data (seeded 01:15 voice note); the page just never sends it.
+- Manager-facing desktop copy ("Invite staff to tonight's report", Inbox empty state mentioning voice notes) is unchanged: story 12 covers staff-facing copy only.
+- With five roles the 2-column grid leaves Other alone on the last row, half width.
+
+Checked in Chrome at 390px, dark then light: picked Other, sent a text and a photo, both showed on the desktop Inbox as "Other". Test report removed from Neon.

@@ -1,11 +1,11 @@
 // PROTOTYPE — mobile capture page (stories 7–12, 61). Reached from the Invite staff QR.
-// Identify once, then add a photo, voice note or text; see only your own Captures.
+// Identify once, then send a photo or text (dictated with the keyboard mic); see only your own Captures.
 
 import type { Metadata, Viewport } from "next"
 import { CapturePage } from "./capture"
 
 export const metadata: Metadata = {
-  title: "Add to tonight's report",
+  title: "Send to the manager",
 }
 
 export const viewport: Viewport = {

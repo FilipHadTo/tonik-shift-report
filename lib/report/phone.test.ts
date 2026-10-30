@@ -28,6 +28,12 @@ describe("parsePhoneCapture: what a phone may send", () => {
     })
   })
 
+  test("takes every role on the fixed list, Other included", () => {
+    for (const role of ["Door", "Bar", "Security", "Closing Manager", "Other"]) {
+      expect(parsePhoneCapture({ ...valid, role })?.author.role).toBe(role)
+    }
+  })
+
   test("a photo may come without a caption", () => {
     expect(parsePhoneCapture({ ...valid, kind: "photo", text: "" })).toMatchObject({ kind: "photo", text: "" })
   })

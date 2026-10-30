@@ -2,7 +2,10 @@
 
 import type { Scene, SectionId } from "./types"
 
-export type Author = { name: string; role: "Closing Manager" | "Door" | "Bar" | "Security" }
+/** Story 8: the fixed role list, in the order the capture page offers it. */
+export const ROLES = ["Door", "Bar", "Security", "Closing Manager", "Other"] as const
+
+export type Author = { name: string; role: (typeof ROLES)[number] }
 
 export type Capture = {
   id: string
