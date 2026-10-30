@@ -13,11 +13,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
-  // Hex approximations of --canvas (light / dark): the meta tag can't read CSS variables.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f4f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0d0f" },
-  ],
+  // Hex approximation of the dark --canvas (the app is dark only): the meta tag can't read CSS variables.
+  themeColor: "#0c0d0f",
+  colorScheme: "dark",
 }
 
 export default function Page() {

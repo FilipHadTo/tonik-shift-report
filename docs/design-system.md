@@ -7,7 +7,7 @@ Read this before building or changing any UI. The look comes from prototype E (`
 - Tokens are the only styling path. No raw colors, no hex, no `oklch()` in components. If a value is missing, add a token to `app/globals.css` rather than inlining it.
 - Build from `components/` (E's primitives). `components/ui/` is stock shadcn, kept for behaviour only (e.g. a future mobile form); it follows the tokens through the shadcn names, but don't reach for it when an E primitive exists.
 - Base UI (`@base-ui/react`) supplies behaviour and accessibility: focus, dismissal, positioning, portals. Never restyle by fighting Base UI; style the parts with our classes.
-- Dark is the default and primary theme; light must work from the same tokens and gets polished last (`.dark` on `<html>`, via next-themes).
+- Dark only (ticket 20): `ThemeProvider` forces `.dark` on `<html>` (next-themes `forcedTheme`), so a stored or system light preference can't apply. The `:root` light values stay in `globals.css` but aren't shipped or polished.
 - Desktop app shell: three columns `336px | 1fr | 280px`, `gap-3`, `px-3 pb-3`, min width 1180px. Mobile capture is a separate page.
 
 ## Tokens
@@ -33,6 +33,7 @@ Utilities come from `@theme` in `app/globals.css`: write `bg-raise`, `text-ink-2
 | `cta` / `cta-ink` | Primary button and tooltip (inverted surface) |
 | `img-outline` | 1px outline on real images |
 | `shadow-panel` / `shadow-pop` | Column edge / floating layers (popover, sheet) |
+| `shadow-lift` | The demo controller only: white hairline + faint white halo, so a `raise` pill lifts off the dark page |
 | `ease-out` / `ease-drawer` | See Motion |
 
 Radius scale in use: `rounded-md` (chips, icon buttons, tooltip), `rounded-lg` (buttons, inputs, small cards), `rounded-xl` (Capture cards, popovers, Section blocks), `rounded-2xl` (columns, Incident, sheet), `rounded-full` (avatars, pills, status dots). Nested radii shrink inward.
@@ -126,7 +127,7 @@ Do
 - Give one primary `Btn` per area: the next step.
 - Label every icon-only control (`IconBtn label`), keep visible focus (the global `ai` outline), keep 36px hit areas.
 - Show what's blocking Submit as Gaps in place and in "Before you submit", not as disabled buttons without a reason.
-- Check dark first, then light, in the browser.
+- Check the result in the browser (dark only).
 
 Don't
 - Don't use stock shadcn styling, purple/blue gradients, glassmorphism or drop shadows on in-flow content (shadows are for floating layers only).

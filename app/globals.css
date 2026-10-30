@@ -31,6 +31,7 @@
   --color-img-outline: var(--img-outline);
   --shadow-pop: var(--elevation-pop);
   --shadow-panel: var(--elevation-panel);
+  --shadow-lift: var(--elevation-lift);
 
   /* Stock shadcn names, mapped onto the tokens above so components/ui follows the same look. */
   --color-background: var(--background);
@@ -108,6 +109,7 @@
   --img-outline: oklch(0 0 0 / 0.1);
   --elevation-pop: 0 0 0 1px oklch(0 0 0 / 0.06), 0 8px 24px -6px oklch(0 0 0 / 0.16), 0 2px 6px -2px oklch(0 0 0 / 0.08);
   --elevation-panel: 0 0 0 1px oklch(0 0 0 / 0.05), 0 1px 2px oklch(0 0 0 / 0.04);
+  --elevation-lift: var(--elevation-pop);
 
   --background: var(--canvas);
   --foreground: var(--ink);
@@ -169,6 +171,8 @@
   --img-outline: oklch(1 0 0 / 0.1);
   --elevation-pop: 0 0 0 1px oklch(1 0 0 / 0.08), 0 12px 32px -8px oklch(0 0 0 / 0.6);
   --elevation-panel: 0 0 0 1px oklch(1 0 0 / 0.06);
+  /* Demo controller: a dark drop shadow vanishes on the dark page, so a faint white halo lifts it instead. */
+  --elevation-lift: 0 0 0 1px oklch(1 0 0 / 0.09), 0 0 24px -2px oklch(1 0 0 / 0.07), 0 12px 32px -8px oklch(0 0 0 / 0.6);
 
   --destructive: oklch(0.704 0.191 22.216);
 }
