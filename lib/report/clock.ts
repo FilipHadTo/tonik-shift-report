@@ -61,6 +61,8 @@ export function onClock(r: Report, now: Date, timeZone = VENUE_TIME_ZONE): Repor
 /** A row of Reports (story 64). */
 export type ReportRow = {
   night: string
+  /** "Open since" on the list; tells apart two reports on the same Night. */
+  startedAt: string
   status: "open" | "sent"
   incidents: number
   demo: boolean
@@ -70,10 +72,11 @@ export type ReportRow = {
 
 /** Takes a whole Report, or just what a row needs (the list never loads Captures or blocks). */
 export function reportRow(
-  r: Pick<Report, "kind" | "night" | "submittedAt" | "submittedBy"> & { incidents: { length: number } },
+  r: Pick<Report, "kind" | "night" | "startedAt" | "submittedAt" | "submittedBy"> & { incidents: { length: number } },
 ): ReportRow {
   return {
     night: r.night,
+    startedAt: r.startedAt,
     status: r.submittedAt ? "sent" : "open",
     incidents: r.incidents.length,
     demo: r.kind === "demo",

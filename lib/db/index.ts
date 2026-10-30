@@ -106,6 +106,7 @@ export async function listReports(demoId: string): Promise<(ReportRow & { id: st
       id: reports.id,
       kind: reports.kind,
       night: reports.night,
+      startedAt: reports.startedAt,
       submittedAt: reports.submittedAt,
       submittedBy: reports.submittedBy,
     })
@@ -126,6 +127,7 @@ export async function listReports(demoId: string): Promise<(ReportRow & { id: st
       reportRow({
         kind: r.kind,
         night: r.night,
+        startedAt: r.startedAt,
         submittedAt: r.submittedAt ?? undefined,
         submittedBy: r.submittedBy ?? undefined,
         incidents: { length: n.get(r.id) ?? 0 },

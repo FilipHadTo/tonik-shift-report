@@ -66,8 +66,15 @@ describe("clock per report kind (ADR 0009)", () => {
 })
 
 describe("Reports row (story 64)", () => {
-  test("an open report: Night, Open, Incident count, nothing sent", () => {
-    expect(reportRow(seedReport("end"))).toEqual({ night: "Sat 24 Oct", status: "open", incidents: 2, demo: true })
+  test("an open report: Night, Open since when, Incident count, nothing sent", () => {
+    const demo = seedReport("end")
+    expect(reportRow(demo)).toEqual({
+      night: "Sat 24 Oct",
+      startedAt: demo.startedAt,
+      status: "open",
+      incidents: 2,
+      demo: true,
+    })
   })
 
   test("a sent report: when and by whom", () => {
@@ -75,6 +82,7 @@ describe("Reports row (story 64)", () => {
     const sent = reducer(r, { type: "submit", statement: true })
     expect(reportRow(sent)).toEqual({
       night: "Fri 30 Oct",
+      startedAt: r.startedAt,
       status: "sent",
       incidents: 0,
       demo: false,
