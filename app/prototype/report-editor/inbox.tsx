@@ -12,10 +12,12 @@ import {
   ChevronRight,
   CornerDownRight,
   CornerLeftDown,
+  Mic,
   Paperclip,
   PenLine,
   Smartphone,
   Sparkles,
+  Square,
   UserPlus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -25,6 +27,7 @@ import { PhotoThumb, VoiceThumb } from "@/components/evidence-thumb"
 import { useEditor } from "./report-editor"
 import { statusOf, targetsOf, nightMinutes, type InboxCapture } from "./data"
 import { KindLabel } from "./ui"
+import { dictationMessage, joinDictation, useDictation } from "./dictation"
 
 export function Inbox() {
   const { report, draft } = useEditor()
@@ -373,13 +376,25 @@ function Composer() {
   const [text, setText] = useState("")
   const [focused, setFocused] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
-  const open = focused || text.length > 0
+  // What was in the field when dictation started: spoken words go after it.
+  const before = useRef("")
+  const dictation = useDictation((said) => setText(joinDictation(before.current, said)))
+  const message = dictationMessage[dictation.state]
+  const open = focused || text.length > 0 || dictation.listening
 
   function send() {
     const t = text.trim()
     if (!t) return
+    dictation.cancel()
     dispatch({ type: "addCapture", text: t })
     setText("")
+    ref.current?.focus()
+  }
+
+  function toggleDictation() {
+    if (dictation.listening) return dictation.stop()
+    before.current = text
+    dictation.start()
     ref.current?.focus()
   }
 
@@ -400,7 +415,12 @@ function Composer() {
           id="composer"
           ref={ref}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            // Typing takes over from dictation; the words said so far stay.
+            if (dictation.listening) dictation.stop()
+            else if (message) dictation.reset()
+            setText(e.target.value)
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           onKeyDown={(e) => {
@@ -419,11 +439,34 @@ function Composer() {
           <IconBtn label="Attach photo, video or document">
             <Paperclip strokeWidth={1.75} />
           </IconBtn>
+          {dictation.supported && (
+            <IconBtn
+              label={dictation.listening ? "Stop dictation" : "Dictate"}
+              // Keep focus (and the open composer) in the textarea while dictating.
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={toggleDictation}
+              className={cn(dictation.listening && "bg-press text-ink hover:bg-press [&_svg]:size-3")}
+            >
+              {dictation.listening ? <Square className="fill-current" strokeWidth={1.75} /> : <Mic strokeWidth={1.75} />}
+            </IconBtn>
+          )}
           <span
-            className={cn("ml-1 text-xs text-ink-3 transition-opacity duration-150", open ? "opacity-100" : "opacity-0")}
-            aria-hidden={!open}
+            role="status"
+            className={cn(
+              "ml-1 min-w-0 truncate text-xs text-ink-3 transition-opacity duration-150",
+              open || message ? "opacity-100" : "opacity-0",
+              message && "text-ink-2",
+            )}
           >
-            Kept as written · <kbd className="font-sans">↵</kbd> to add
+            {message ??
+              (dictation.listening ? (
+                "Listening…"
+              ) : open ? (
+                // Visual hint only; the live region announces dictation, not focus.
+                <span aria-hidden>
+                  Kept as written · <kbd className="font-sans">↵</kbd> to add
+                </span>
+              ) : null)}
           </span>
           <button
             type="button"
