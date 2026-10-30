@@ -2,9 +2,10 @@
 
 // PROTOTYPE — Preview (stories 57, 68, ticket 17): a sent Shift Report as a clean document, the way the
 // next team reads it. The Report screen's route in document mode (`?view=document`). Read-only, no
-// app chrome inside the page; "Download PDF" prints it (print styles: light ink on white, no top bar).
+// app chrome inside the page. "Download PDF" saves it as it looks here, dark (ticket 26, `pdf.ts`);
+// printing (Cmd+P) keeps its own styles: light ink on white, no top bar.
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, ChevronRight, Download, Lock, SquareCheck } from "lucide-react"
 import { Btn } from "@/components/btn"
@@ -27,6 +28,7 @@ import {
   type Incident,
   type Report,
 } from "./data"
+import { downloadPdf, pdfName } from "./pdf"
 import { KindLabel, StoredPhoto } from "./ui"
 import "./editor.css"
 
@@ -38,6 +40,26 @@ const valueOr = (f: Field, unknown: string) => (f.status === "filled" || f.statu
 export function ReportPreview({ id }: { id: string }) {
   const [report, setReport] = useState<Report | null>(null)
   const [failed, setFailed] = useState(false)
+  const [pdf, setPdf] = useState<"idle" | "busy" | "failed">("idle")
+  const doc = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (pdf !== "failed") return
+    const t = setTimeout(() => setPdf("idle"), 5000)
+    return () => clearTimeout(t)
+  }, [pdf])
+
+  const savePdf = async () => {
+    const article = doc.current?.querySelector("article")
+    if (pdf === "busy" || !article || !report) return
+    setPdf("busy")
+    try {
+      await downloadPdf(article, pdfName(report.venue, report.night))
+      setPdf("idle")
+    } catch {
+      setPdf("failed")
+    }
+  }
 
   useEffect(() => {
     let stop = false
@@ -92,20 +114,27 @@ export function ReportPreview({ id }: { id: string }) {
         )}
         {report && (
           <div className="ml-auto flex items-center gap-2">
+            {pdf === "failed" && (
+              <span role="status" className="appear mr-1 text-xs text-ink-2">
+                Unable to make the PDF. Try again, or print with ⌘P.
+              </span>
+            )}
             <Btn nativeButton={false} render={<Link href={reportPath(id)} />}>
               Open in editor
             </Btn>
-            {/* Stub (story 58): the browser's print dialog, where "Save as PDF" makes the file. */}
-            <Btn variant="primary" onClick={() => window.print()}>
+            <Btn variant="primary" aria-busy={pdf === "busy"} onClick={savePdf} className="min-w-[8.5rem]">
               <Download strokeWidth={1.75} />
-              Download PDF
+              {pdf === "busy" ? "Making PDF…" : "Download PDF"}
             </Btn>
           </div>
         )}
       </header>
 
       <main className="flex-1 px-3 pb-3 print:p-0">
-        <div className="mx-auto w-full max-w-[832px] rounded-2xl bg-panel px-14 pt-16 pb-20 shadow-panel print:max-w-none print:rounded-none print:bg-transparent print:p-0 print:shadow-none">
+        <div
+          ref={doc}
+          className="mx-auto w-full max-w-[832px] rounded-2xl bg-panel px-14 pt-16 pb-20 shadow-panel print:max-w-none print:rounded-none print:bg-transparent print:p-0 print:shadow-none"
+        >
           {failed ? (
             <p role="status" className="text-[13px] text-ink-2">
               Unable to load this report. Check your connection and reload the page.
@@ -327,7 +356,8 @@ function CaptureContent({ id, capture: c, attached }: { id: string; capture: Inb
     )
   return (
     <>
-      {c.text ? <q>{c.text}</q> : <span className="text-ink-3">No caption</span>}
+      {/* Typed quotes, not <q>: the PDF capture prints its CSS quotes as text. */}
+      {c.text ? `“${c.text}”` : <span className="text-ink-3">No caption</span>}
       {c.kind === "photo" &&
         (attached ? (
           <span className="mt-1 block text-xs text-ink-3">Photo in Attachments</span>
