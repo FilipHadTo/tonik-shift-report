@@ -127,3 +127,5 @@ Not blocking, built with A. Phone shows "Couldn't open that photo. Try taking it
 
 1. Public link lands on: A. (assumed) the demo report, Reports one click away; B. the Reports list.
 2. Reset / scene switch: A. (assumed) demo report only; B. clears the whole session incl. clean reports.
+
+Answered 2026-10-31 (Filip): 1. B, the public link lands on the Reports list (spec story 59 updated). 2. A, Reset and the scene switch touch the demo report only. Ticket 18 copy: no answer, kept as built.
