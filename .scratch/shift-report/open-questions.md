@@ -129,3 +129,9 @@ Not blocking, built with A. Phone shows "Couldn't open that photo. Try taking it
 2. Reset / scene switch: A. (assumed) demo report only; B. clears the whole session incl. clean reports.
 
 Answered 2026-10-31 (Filip): 1. B, the public link lands on the Reports list (spec story 59 updated). 2. A, Reset and the scene switch touch the demo report only. Ticket 18 copy: no answer, kept as built.
+
+### 2026-10-31 — Ticket 21: two small calls in the locked Inbox (review)
+
+Not blocking, built as A.
+1. New Captures left unhandled at Submit: A. (built) show "Not in the report" where their buttons were; B. show nothing.
+2. "N new" count in the Inbox header after Submit: A. (built) stays; B. hidden once sent.
