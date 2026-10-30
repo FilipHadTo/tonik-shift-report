@@ -135,3 +135,8 @@ Answered 2026-10-31 (Filip): 1. B, the public link lands on the Reports list (sp
 Not blocking, built as A.
 1. New Captures left unhandled at Submit: A. (built) show "Not in the report" where their buttons were; B. show nothing.
 2. "N new" count in the Inbox header after Submit: A. (built) stays; B. hidden once sent.
+
+### 2026-10-31 — Ticket 22: offline note placement (review)
+
+Not blocking, built as A. "Offline. Changes aren't saved." shows only when the report fails to load on open; later failed saves stay silent.
+- A. (built) in the top bar next to the "Open since" pill; B. elsewhere (Filip picks in 2c).
