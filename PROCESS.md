@@ -72,6 +72,7 @@ Update after every step. Work happens on `main` (`AI-Exploration` was fast-forwa
   - [x] 01 Vercel + Neon: project linked (Framework preset fixed to Next.js; origin/main was 12 commits behind — pushed), Neon added via Marketplace (Free, Auth/Realtime off, `DATABASE_URL` prefix, all environments), `.env.local` pulled
   - [x] 02 Gemini API key: `GEMINI_API_KEY` set in Vercel (all environments) and `.env.local`; spend cap skipped, Filip's call (small top-up caps exposure instead)
   - [ ] `/implement` per ticket  ← **next**: 03–16 done (domain module, Extract/Enhance on Gemini with fallback, Neon + demo sessions, server-saved actions, live Inbox, capture page, dictation, Submit saves and locks). 17 waits on Filip: layout of the submitted document, plus review items in `open-questions.md` (Phase 2b)
+    - Resume here: (1) test desktop + phone: `pnpm dev -p 3300`, open `http://<LAN IP>:3300/prototype/report-editor` (`ipconfig getifaddr en0`), scan the Invite staff QR, same Wi-Fi; (2) go through `open-questions.md` Phase 2b (review items are built with option A); (3) pick the layout for 17 and design it in E, then an agent builds it; (4) 2c Polish.
 - [ ] 2c. Polish — Report screen first (incident confirmation), then the empty report, then everything; light mode last
 - [ ] 2d. `/code-review`, deploy (Vercel + Neon)
 - [ ] 3. `/retro`, Loom
