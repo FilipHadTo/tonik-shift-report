@@ -83,7 +83,7 @@ const KEYWORDS: [Exclude<SectionId, "incidents">, RegExp][] = [
 
 function routed(c: ModelCapture): Recorded[] {
   const section = KEYWORDS.find(([, re]) => re.test(c.text))?.[0] ?? "overview"
-  // The AI never looks inside a photo, so a bare one only says that it exists.
+  // The fake can't see images (Gemini can, ADR 0008), so a bare photo only says that it exists.
   return [{ kind: "section" as const, section, text: sentence(c.text || `Photo from ${c.author.name}, no caption`), sources: [c.id] }]
 }
 

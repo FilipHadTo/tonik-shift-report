@@ -5,7 +5,7 @@ import "server-only"
 import { GoogleGenAI, ThinkingLevel, type GenerateContentResponse } from "@google/genai"
 import { ENHANCE_TIMEOUT_MS, EXTRACT_TIMEOUT_MS, type ReportModel } from "../report"
 import { ENHANCE_INSTRUCTIONS, ENHANCE_SCHEMA, enhancePrompt } from "./enhance-prompt"
-import { EXTRACT_INSTRUCTIONS, extractPrompt, extractSchema } from "./extract-prompt"
+import { EXTRACT_INSTRUCTIONS, extractContents, extractSchema } from "./extract-prompt"
 
 /** A current Flash model; GEMINI_MODEL overrides it without a deploy of new code. */
 export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
@@ -22,7 +22,8 @@ export const geminiModel: ReportModel = {
   async extract(request) {
     const res = await gemini().models.generateContent({
       model: process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
-      contents: extractPrompt(request),
+      // Text plus any stored photos as inline images (ADR 0008).
+      contents: [{ role: "user", parts: extractContents(request) }],
       config: {
         systemInstruction: EXTRACT_INSTRUCTIONS,
         responseMimeType: "application/json",

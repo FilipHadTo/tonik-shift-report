@@ -12,16 +12,17 @@ Turn the Captures into Drafts the Closing Manager will review:
 A Capture can give both, e.g. a smashed window is an Incident and a maintenance note.
 
 Rules:
-- Use only what the Captures say. Never invent people, numbers, times, places or outcomes. Nothing in a photo is visible to you: a photo Capture is only its caption.
+- Use only what the Captures say or clearly show. Never invent people, numbers, times, places or outcomes.
+- A photo Capture with "hasImage": true has its image after the JSON, labelled with its id. Draft from what the image clearly shows (e.g. broken furniture is property damage and a maintenance note), together with its caption, which may be empty. Describe only what is plainly visible; when the image is unclear, say less. A photo Capture without an image is only its caption.
 - Every Draft lists in "sources" the ids of the Captures it comes from.
 - Write plain, neutral, factual English in the past tense, third person. Fix spelling and slang, keep names. Incident "title" is a few words; "description" says what happened, who was involved and how it ended.
 - "occurredAt" is the time the event happened as HH:MM (24h), only if a Capture states it: an explicit time ("~00:45"), a relative one from its Captured-at ("five minutes ago"), or, in a pasted chat, the timestamp of the line that reports it. Never later than the Capture's Captured-at. Leave it out when nothing says when.
-- "location": only if a Capture's words say where. "quote" is those exact words copied from the Capture; "value" is the matching place from the venue's locations, or a short name if none matches. Leave it out when no words say where.
+- "location": only if a Capture's words say where, never from what an image shows. "quote" is those exact words copied from the Capture; "value" is the matching place from the venue's locations, or a short name if none matches. Leave it out when no words say where.
 - "type": one of the Incident types. Use "Other" with "other" in a few words if none fits. Leave it out when nothing says what kind of Incident it was.
 - Leave out any field you are unsure of: the report shows it as a gap for the manager to fill. A missing field is better than a guess.
 - "section" is one of the Section ids given.`
 
-/** The request as the data part of the prompt. Captures carry their words, author and time only. */
+/** The request as the data part of the prompt. Captures carry their words, author and time; images go as parts after it. */
 export function extractPrompt(request: ExtractRequest) {
   const data = {
     sections: request.sections,
@@ -34,6 +35,7 @@ export function extractPrompt(request: ExtractRequest) {
       author: `${c.author.name} (${c.author.role})`,
       text: c.text,
       ...(c.chatLines && { chatLines: c.chatLines.map((l) => ({ at: l.at, who: l.who, text: l.text })) }),
+      ...(c.image && { hasImage: true }),
     })),
   }
   const focus = !request.focus
@@ -42,6 +44,17 @@ export function extractPrompt(request: ExtractRequest) {
       ? "\n\nOnly Incidents are needed now."
       : `\n\nOnly Drafts for the "${request.focus}" Section are needed now.`
   return `Draft the report from these Captures.${focus}\n\n${JSON.stringify(data, null, 2)}`
+}
+
+/** A Gemini content part: plain objects, so this file stays free of the SDK. */
+export type PromptPart = { text: string; inlineData?: never } | { inlineData: { mimeType: string; data: string }; text?: never }
+
+/** The prompt, then each stored photo as inline data labelled with its Capture id (ADR 0008). */
+export function extractContents(request: ExtractRequest): PromptPart[] {
+  const images = request.captures.flatMap((c): PromptPart[] =>
+    c.image ? [{ text: `Image of Capture ${c.id}:` }, { inlineData: { mimeType: c.image.mime, data: c.image.data } }] : [],
+  )
+  return [{ text: extractPrompt(request) }, ...images]
 }
 
 /** The answer's shape (ExtractOutput in lib/report/model.ts), with ids and lists pinned to this request. */

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { fakeModel, fallbackModel, reducer, runExtract, seedReport, statusOf, type Action, type Report, type ReportModel } from "."
+import { fakeModel, fallbackModel, reducer, runExtract, seedReport, statusOf, type Action, type ExtractRequest, type Report, type ReportModel } from "."
 
 const run = (r: Report, ...actions: Action[]) => actions.reduce(reducer, r)
 
@@ -55,7 +55,7 @@ describe("Extract", () => {
     expect(report.incidents.find((x) => x.sources.includes("m6"))!.fields.location.status).toBe("gap")
   })
 
-  test("the AI never reads a photo: a location quoted from a photo without that text is a Gap", async () => {
+  test("a location quoted from a photo Capture without that text is a Gap", async () => {
     const r = run(seedReport("end"), { type: "deleteIncident", incident: "i-c1" })
     const { report } = await runExtract(
       r,
@@ -264,5 +264,82 @@ describe("Extract fallback (ADR 0001: the demo never dies)", () => {
     const spy: ReportModel = { extract: async () => ((asked = true), { drafts: [] }), enhance: async () => ({ text: "" }) }
     await runExtract(r, { capture: "m6" }, answers({ drafts: [incident()] }), { fallback: spy })
     expect(asked).toBe(false)
+  })
+})
+
+describe("Extract reads photos (ADR 0008)", () => {
+  const STOOL = { mime: "image/jpeg", data: "/9j/c3Rvb2w=" }
+
+  /** 02:15 scene with a photo Marek sent from the phone at 01:30. */
+  const withPhoto = (text = "") =>
+    run(seedReport("end"), {
+      type: "receive",
+      captures: [{ id: "p-a1", kind: "photo", capturedAt: "01:30", author: { name: "Marek", role: "Door" }, text, photo: true }],
+    })
+
+  /** What Gemini answered for a photo of a broken bar stool (recorded, so tests never call it). */
+  const stoolAnswer = (location?: unknown) => ({
+    drafts: [
+      {
+        kind: "incident",
+        title: "Broken bar stool",
+        description: "A bar stool was found broken, with one leg snapped off.",
+        sources: ["p-a1"],
+        type: { value: "Property damage" },
+        ...(location !== undefined && { location }),
+      },
+      { kind: "section", section: "maintenance", text: "Bar stool broken, one leg snapped off. Needs repair or replacing.", sources: ["p-a1"] },
+    ],
+  })
+
+  const spying = (output: unknown) => {
+    const seen: ExtractRequest[] = []
+    const model: ReportModel = { extract: async (req) => (seen.push(req), output), enhance: async () => ({ text: "" }) }
+    return { model, seen }
+  }
+
+  test("a photo's image goes to the model with its Capture; other Captures carry none", async () => {
+    const r = withTyped(TYPED)
+    const { model, seen } = spying({ drafts: [] })
+    await runExtract(withPhoto(), { all: true }, model, { images: { "p-a1": STOOL, c4: STOOL } })
+    const sent = Object.fromEntries(seen[0].captures.map((c) => [c.id, c.image]))
+    expect(sent["p-a1"]).toEqual(STOOL)
+    // Only photo Captures carry an image, whatever the caller passes.
+    expect(sent.c4).toBeUndefined()
+    await runExtract(r, { capture: "m6" }, model, { images: { "p-a1": STOOL } })
+    expect(seen[1].captures.map((c) => c.id)).toEqual(["m6"])
+  })
+
+  test("a photo without a stored image goes as its words only", async () => {
+    const { model, seen } = spying({ drafts: [] })
+    await runExtract(withPhoto("found in smoking room"), { capture: "p-a1" }, model)
+    expect(seen[0].captures[0]).not.toHaveProperty("image")
+  })
+
+  test("a captionless photo drafts an ordinary AI Draft from its image, with Gaps for what it can't tell", async () => {
+    const { report, degraded } = await runExtract(withPhoto(), { capture: "p-a1" }, answers(stoolAnswer()), { images: { "p-a1": STOOL } })
+    expect(degraded).toBe(false)
+    const i = report.incidents.find((x) => x.sources.includes("p-a1"))!
+    expect(i).toMatchObject({ title: "Broken bar stool", evidence: ["p-a1"], fromStaff: { name: "Marek", role: "Door" } })
+    expect(i.fields.type).toMatchObject({ status: "draft", value: "Property damage" })
+    expect(i.fields.location.status).toBe("gap")
+    expect(i.fields.occurredAt).toMatchObject({ status: "draft", value: "01:30", source: "p-a1" })
+    expect(report.blocks.find((b) => b.sources.includes("p-a1"))).toMatchObject({ section: "maintenance", status: "draft" })
+  })
+
+  test("a location read off the image alone is a Gap; one quoted from the caption is drafted", async () => {
+    const seen = { value: "Smoking area", source: "p-a1", quote: "smoking area" }
+    const off = await runExtract(withPhoto(), { capture: "p-a1" }, answers(stoolAnswer(seen)), { images: { "p-a1": STOOL } })
+    expect(off.report.incidents.find((x) => x.sources.includes("p-a1"))!.fields.location.status).toBe("gap")
+
+    const said = { value: "Smoking area", source: "p-a1", quote: "smoking room" }
+    const on = await runExtract(withPhoto("found in smoking room"), { capture: "p-a1" }, answers(stoolAnswer(said)), { images: { "p-a1": STOOL } })
+    expect(on.report.incidents.find((x) => x.sources.includes("p-a1"))!.fields.location).toMatchObject({ status: "draft", value: "Smoking area" })
+  })
+
+  test("when the model fails, a phone photo stays New and the run is degraded", async () => {
+    const r = withPhoto()
+    const down = failing(new Error("503 Service Unavailable"))
+    expect(await runExtract(r, { capture: "p-a1" }, down, { fallback: fallbackModel, images: { "p-a1": STOOL } })).toEqual({ report: r, degraded: true })
   })
 })

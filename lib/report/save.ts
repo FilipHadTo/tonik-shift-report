@@ -4,7 +4,7 @@
 import { SECTIONS, type IncidentField } from "./catalog"
 import { gapsIn } from "./derived"
 import { canEnhance, runEnhance, type EnhanceOutcome, type EnhanceSpan, type EnhanceTarget } from "./enhance"
-import { capturesInScope, runExtract, type ExtractScope } from "./extract"
+import { capturesInScope, runExtract, type CaptureImages, type ExtractScope } from "./extract"
 import type { ReportModel } from "./model"
 import { reducer } from "./reducer"
 import type { Action, Report, SectionId } from "./types"
@@ -166,13 +166,18 @@ function allowed(r: Report, a: SaveAction): boolean {
  * Applies a browser action to the stored report, or refuses it. Draft and Enhance run `model` here
  * and ask `fallback` when the model fails.
  */
-export async function applySaved(r: Report, a: SaveAction, model: ReportModel, { fallback }: { fallback?: ReportModel } = {}): Promise<Saved> {
+export async function applySaved(
+  r: Report,
+  a: SaveAction,
+  model: ReportModel,
+  { fallback, images }: { fallback?: ReportModel; images?: CaptureImages } = {},
+): Promise<Saved> {
   if (!allowed(r, a)) return { ok: false }
   switch (a.type) {
     case "draft": {
       const ids = capturesInScope(r, a.scope).map((c) => c.id)
       const start = reducer(r, { type: "startDrafting", ids })
-      const out = await runExtract(start, a.scope, model, { fallback })
+      const out = await runExtract(start, a.scope, model, { fallback, images })
       if (out.report === start) return { ok: false, degraded: true }
       // Captures the fallback couldn't draft stay New, not stuck "Drafting…".
       return { ok: true, report: reducer(out.report, { type: "draftFailed", ids }), degraded: out.degraded }

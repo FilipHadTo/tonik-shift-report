@@ -3,8 +3,14 @@
 
 import type { Capture, SectionId } from "./types"
 
-/** What the model sees of a Capture: its words, author and time. Never a photo's contents. */
-export type ModelCapture = Pick<Capture, "id" | "kind" | "capturedAt" | "author" | "text" | "chatLines">
+/** A photo's image as the server stored it (ticket 18): its type and base64 bytes. */
+export type ModelImage = { mime: string; data: string }
+
+/**
+ * What the model sees of a Capture: its words, author and time, and for a photo its image when one is
+ * stored (ADR 0008). The caller passes images in; the domain never fetches them.
+ */
+export type ModelCapture = Pick<Capture, "id" | "kind" | "capturedAt" | "author" | "text" | "chatLines"> & { image?: ModelImage }
 
 export type ExtractRequest = {
   captures: ModelCapture[]

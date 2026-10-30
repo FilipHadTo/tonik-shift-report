@@ -27,7 +27,7 @@ No closing manager available to ask — these stay as assumptions for the build.
 - Gap routed to its author: a Staff Member's Capture with a Gap asks *them* (one-tap answer on their capture page), not the Closing Manager.
 - Department check-out: when leaving, a Staff Member gets "Anything from the bar tonight?" — a short voice/text Capture the AI turns into that Section's Draft. Strong Loom "what's next" story even if unbuilt.
 
-Cut: AI photo analysis (Filip, 2026-10-29: the AI never reads photos), the desktop-to-phone QR handoff (the capture page covers it), "I saw it too" witness joins (no witness fields). Also cut: push notifications asking staff for their version of an Incident (would be pure fake in a prototype).
+Cut: the desktop-to-phone QR handoff (the capture page covers it), "I saw it too" witness joins (no witness fields). AI photo analysis, cut on 2026-10-29, is back for the demo (ticket 23, ADR 0008). Also cut: push notifications asking staff for their version of an Incident (would be pure fake in a prototype).
 
 ## Phase 2b
 

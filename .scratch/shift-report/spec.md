@@ -63,7 +63,7 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 
 ### Review — Incidents
 
-32. As a Closing Manager, I want the AI to leave a required Incident field empty when no Capture's text supports it, so that nothing in my report is made up. The AI never reads photo contents; a location comes only from what someone wrote or said.
+32. As a Closing Manager, I want the AI to leave a required Incident field empty when no Capture supports it, so that nothing in my report is made up. The AI reads a photo sent from the phone together with its caption (ADR 0008), so a captionless photo of a broken stool still drafts the right Incident or Section Draft; a location comes only from what someone wrote or said, never from the image.
 33. As a Closing Manager, I want each Gap to show as an amber chip inside the Incident that opens a picker (time, location list, type list), so that I fix it in one tap right where it belongs.
 34. As a Closing Manager, I want to mark Occurred-at or Location as Unknown, so that I can be honest that I don't know without being blocked.
 35. As a Closing Manager, I want Occurred-at to be the time a Capture states, otherwise the Capture's Captured-at, with quick options for "earlier" around it, so that the common case costs nothing and the rare one costs one tap.
@@ -140,7 +140,7 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 - **Incident types (fixed list).** Fight/assault, Injury/medical, Ejection/refused entry, Theft, Property damage, Drugs, Intoxication, Harassment, Police called, Other (Other requires a description).
 - **Sections.** Order: General overview, Incidents, Audience, Security, Artist & crew, Door staff, Production / run of show, Bar staff, Kitchen, Third-party vendors, Private events, Maintenance / equipment, Inventory. Visible by default: General overview, Incidents, Security, Maintenance / equipment. Only Incidents get structured fields; other Sections hold free-text blocks. Incidents are ordered by Captured-at.
 - **Visual language.** As in prototype E and `docs/design-system.md`: Draft = soft blue wash plus an "AI draft from <author> <time>" label, no outline. Gap = amber chip with a dot that opens a picker with "Mark as Unknown". Confirmed Incident = flat in the document, no card, "Confirmed HH:MM", Reopen on hover. Section Drafts and unconfirmed Incidents share one label-line pattern: the label on the left, the actions (Keep / Discard, or Delete and Confirm) on the right. A manual Incident has no wash, but an Enhance Draft inside its "What happened" does. "Keep" means a Draft decision and nothing else; empty-field chips all start with "Add". Amber is used only for Gaps and blue only for AI. The "Before you submit" list is neutral; the amber signal lives on the chip.
-- **Files.** Upload is fake: chips, a short fake progress state, stock thumbnails. The AI never inspects image contents. Photos become Evidence of the Incident drafted from their Capture.
+- **Files.** Photos sent from the phone are real since ticket 18: downsized on the phone and stored with their Capture in Neon. Files attached in the desktop composer are still fake (chips, a short fake progress state, stock thumbnails), and seeded photos keep stock thumbnails. Extract sends a stored photo's image to the AI with its Capture (ADR 0008). Photos become Evidence of the Incident drafted from their Capture.
 - **Demo (ADR 0009).** One seeded venue (Halo Club), one Closing Manager, no auth. State is per reviewer: a demo id, kept by the desktop browser, keys that reviewer's Reports list, so a public link never mixes reviewers. Each report has its own id, and the capture link carries the report, not the demo id. The first report is the demo report, pinned to the top: the only one with the Demo controller and the demo clock (its Captures land on the seeded Night). Two seeded states behind the controller: 20:00 (report started, empty) and 02:15 (the Night below, partly reviewed). The scene is in the URL; switching loads it fresh, Reset restores it, both only for the demo report of that demo id. Clean reports from "New report" start empty and use the real clock and Night assignment. No theme toggle. Invite staff shows a real, scannable QR of the report's capture link. In the real build the store is Neon (an in-memory store doesn't hold across Vercel instances). The 02:15 seed:
   - a 23:40 photo of a broken window (location not stated, so a Gap),
   - a 00:52 door Staff Member Capture about a guest refused re-entry,
@@ -172,8 +172,7 @@ When no Capture supports a required Incident field, the AI leaves it empty (a Ga
 - Flows outside the Shift Report: venue setup, user management, Owner dashboards, analytics. Reports is a plain list: no search, filters or deleting reports.
 - The Report screen, Reports and the Preview on mobile; mobile is the capture page only.
 - Light mode.
-- Real authentication and real file storage or upload.
-- AI analysis of image contents.
+- Real authentication, and file storage or upload beyond phone photos (stored in Neon since ticket 18).
 - Witness fields. Dorota (2026-10-29): the minimum is time, date, place, type and description.
 - Push notifications of any kind.
 - Offline mode.

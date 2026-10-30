@@ -3,7 +3,7 @@
 
 import { INCIDENT_TYPES, LOCATIONS, SECTIONS, nightMinutes } from "./catalog"
 import { freeId, isNew, pendingSectionsOf } from "./derived"
-import type { ExtractRequest, ModelCapture, ReportModel } from "./model"
+import type { ExtractRequest, ModelCapture, ModelImage, ReportModel } from "./model"
 import type { Block, Field, InboxCapture, Incident, Report, SectionId } from "./types"
 
 export type ExtractScope = { capture: string } | { section: SectionId } | { all: true }
@@ -29,9 +29,12 @@ export function capturesInScope(r: Report, scope: ExtractScope) {
   )
 }
 
-export function extractRequest(r: Report, scope: ExtractScope): ExtractRequest {
+/** Stored images of photo Captures, by Capture id (ADR 0008). Loaded by the caller; anything else is ignored. */
+export type CaptureImages = Record<string, ModelImage>
+
+export function extractRequest(r: Report, scope: ExtractScope, images: CaptureImages = {}): ExtractRequest {
   return {
-    captures: capturesInScope(r, scope).map(toModel),
+    captures: capturesInScope(r, scope).map((c) => toModel(c, images)),
     sections: SECTIONS.filter((s) => s.id !== "incidents") as ExtractRequest["sections"],
     incidentTypes: INCIDENT_TYPES,
     locations: LOCATIONS,
@@ -39,8 +42,9 @@ export function extractRequest(r: Report, scope: ExtractScope): ExtractRequest {
   }
 }
 
-function toModel({ id, kind, capturedAt, author, text, chatLines }: InboxCapture): ModelCapture {
-  return { id, kind, capturedAt, author, text, ...(chatLines && { chatLines }) }
+function toModel({ id, kind, capturedAt, author, text, chatLines }: InboxCapture, images: CaptureImages): ModelCapture {
+  const image = kind === "photo" ? images[id] : undefined
+  return { id, kind, capturedAt, author, text, ...(chatLines && { chatLines }), ...(image && { image }) }
 }
 
 /**
@@ -51,9 +55,9 @@ export async function extract(
   r: Report,
   scope: ExtractScope,
   model: ReportModel,
-  { timeoutMs = EXTRACT_TIMEOUT_MS } = {},
+  { timeoutMs = EXTRACT_TIMEOUT_MS, images }: { timeoutMs?: number; images?: CaptureImages } = {},
 ): Promise<Extracted | null> {
-  const request = extractRequest(r, scope)
+  const request = extractRequest(r, scope, images)
   if (!request.captures.length) return { incidents: [], blocks: [], read: [], found: {} }
   try {
     return validateExtract(r, scope, await withTimeout(model.extract(request), timeoutMs))
@@ -64,6 +68,8 @@ export async function extract(
 
 export type ExtractOptions = {
   timeoutMs?: number
+  /** Stored images of the photo Captures in scope, sent to the model with them (ADR 0008). */
+  images?: CaptureImages
   /** Asked when `model` fails or answers nonsense (ADR 0001). Its answer goes through the same rules. */
   fallback?: ReportModel
 }
@@ -219,7 +225,7 @@ function occurredAt(raw: unknown, sources: string[], byId: Map<string, InboxCapt
   return { status: "draft", value, source: c.id }
 }
 
-/** Only from words in a Capture: the AI never reads a photo. */
+/** Only from words in a Capture, never from what a photo shows (ADR 0008): the quote must be checkable. */
 function location(raw: unknown, sources: string[], byId: Map<string, InboxCapture>): Field | null {
   if (!isObject(raw) || typeof raw.value !== "string" || !raw.value.trim()) return null
   if (typeof raw.source !== "string" || !sources.includes(raw.source)) return null
