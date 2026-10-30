@@ -76,3 +76,9 @@ Not blocking, built with A in each case.
 Not blocking, built with A. Each demo id has one report and one Night (Sat 24 Oct, seeded).
 - A. (built) Captured-at comes from the report's demo clock, so phone Captures always land in the seeded Night; `nightOf` not called.
 - B. Real server clock + `nightOf`: Captures at today's real time; the demo would need a report per Night.
+
+### 2026-10-30 — Ticket 11: two UI leftovers on the capture flow
+
+Not blocking (left unchanged).
+1. Desktop copy still says "Invite staff to tonight's report" and mentions voice notes in the Inbox empty state (Story 12 covered staff copy only). A. leave it; B. drop the voice-note mention in 2c Polish.
+2. Role picker: five roles in two columns leaves Other alone at half width on the last row. A. keep; B. make Other full width.
