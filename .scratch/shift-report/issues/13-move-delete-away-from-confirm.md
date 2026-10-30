@@ -8,6 +8,12 @@
 
 **Agent:** Sonnet 5.5, high effort (contained change)
 
-- [ ] Delete is no longer on the label line; Confirm stands alone there
-- [ ] Delete appears on hover and on keyboard focus, has a Tip, and works as before
-- [ ] Looks and works like prototype E, per `docs/design-system.md`; dark first, then light
+- [x] Delete is no longer on the label line; Confirm stands alone there
+- [x] Delete appears on hover and on keyboard focus, has a Tip, and works as before
+- [x] Looks and works like prototype E, per `docs/design-system.md`; dark first, then light
+
+## Comments
+
+Built: Delete left the label line, which now holds only Confirm or the next step. It is an `IconBtn` (Trash2, "Delete Incident", Tip) at the end of the title row, rendered only while the Incident is editable, so confirmed Incidents and a submitted report have none. It reuses Reopen's reveal: `opacity-0`, shown on `group-hover/incident` and `group-focus-within/incident` with a 150ms opacity fade. It stays in the tab order, so tabbing into the Incident or onto the button shows it. `-my-0.5` keeps the 28px button inside the 24px title line, and `-mr-1` lines the glyph up with the label-line action above it. Behaviour is unchanged: the same `deleteIncident` action, so the Capture goes back to New.
+
+Checked in Chrome on the 02:15 scene, dark then light: hidden at rest, shown on hover with its Tip and on keyboard focus, and Enter deletes (Inbox went from 3 to 4 new). The scene was reset afterwards.

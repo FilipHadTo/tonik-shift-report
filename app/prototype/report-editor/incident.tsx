@@ -2,7 +2,7 @@
 
 // PROTOTYPE — an Incident as a structured block inside the document.
 // Properties (Gap = amber chip that opens a picker with Unknown), What happened,
-// Evidence, then a per-Incident Confirm.
+// Evidence, then a per-Incident Confirm. Delete sits at the end of the title row, away from Confirm.
 
 import { useState } from "react"
 import { Check, Clock, HelpCircle, MapPin, Paperclip, Plus, Sparkles, Tag, Trash2, Undo2 } from "lucide-react"
@@ -68,9 +68,6 @@ export function IncidentBlock({
             {i.manual ? <span>Added by {report.manager.name}</span> : <DraftLabel sources={sources} />}
             {editable && (
               <span className="ml-auto flex items-center gap-1">
-                <IconBtn label="Delete Incident" onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}>
-                  <Trash2 strokeWidth={1.75} />
-                </IconBtn>
                 {gap ? (
                   // Confirm can't happen yet, so the button offers the next step instead: it opens the first Gap's picker.
                   <Btn
@@ -109,6 +106,16 @@ export function IncidentBlock({
         >
           {i.title}
         </h3>
+        {editable && (
+          // Away from Confirm on purpose (story 45): a quiet icon that shows on hover or focus, always in the tab order.
+          <IconBtn
+            label="Delete Incident"
+            className="-my-0.5 -mr-1 opacity-0 transition-opacity duration-150 group-focus-within/incident:opacity-100 group-hover/incident:opacity-100 focus-visible:opacity-100"
+            onClick={() => dispatch({ type: "deleteIncident", incident: i.id })}
+          >
+            <Trash2 strokeWidth={1.75} />
+          </IconBtn>
+        )}
         {confirmed && (
           <span className="appear flex h-6 shrink-0 items-center gap-1">
             {!locked && (
